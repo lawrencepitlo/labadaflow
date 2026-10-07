@@ -16,18 +16,18 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        'flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-8',
+        'mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between',
         className
       )}
     >
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+      <div className="min-w-0">
+        <h1 className="text-[17px] font-semibold tracking-tight text-foreground">{title}</h1>
         {description && (
-          <p className="text-muted-foreground text-sm mt-1">{description}</p>
+          <p className="mt-0.5 truncate text-[13px] text-muted-foreground">{description}</p>
         )}
       </div>
       {children && (
-        <div className="flex items-center gap-2 mt-4 sm:mt-0">{children}</div>
+        <div className="flex shrink-0 items-center gap-2">{children}</div>
       )}
     </div>
   )

@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/app/empty-state'
 import { Package } from 'lucide-react'
 import {
@@ -91,20 +90,20 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
         <>
           {/* Desktop table */}
           <Card className="hidden gap-0 overflow-hidden py-0 md:block">
-            <CardHeader className="px-4 py-3 sm:px-6">
-              <CardTitle className="text-sm">Catalog</CardTitle>
+            <CardHeader className="px-4 py-3">
+              <CardTitle className="text-[13px]">Catalog</CardTitle>
               <CardDescription>Inactive services stay hidden from new orders</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table aria-label="Services">
                 <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="pl-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Name</TableHead>
-                    <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Unit price</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Unit</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="h-9 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Name</TableHead>
+                    <TableHead className="h-9 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Unit price</TableHead>
+                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Unit</TableHead>
+                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
                     {canEdit && (
-                      <TableHead className="pr-4 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      <TableHead className="h-9 pr-4 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                         <span className="sr-only">Actions</span>
                       </TableHead>
                     )}
@@ -112,21 +111,22 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
                 </TableHeader>
                 <TableBody>
                   {services.map(s => (
-                    <TableRow key={s.id} className={`hover:bg-muted/40 ${s.is_active ? '' : 'opacity-60'}`}>
+                    <TableRow key={s.id} className={`h-12 hover:bg-muted/40 ${s.is_active ? '' : 'opacity-60'}`}>
                       <TableCell className="pl-4">
-                        <div className="text-sm font-semibold">{s.name}</div>
+                        <div className="text-[13px] font-medium">{s.name}</div>
                         {s.description && <div className="mt-0.5 max-w-sm truncate text-xs text-muted-foreground">{s.description}</div>}
                       </TableCell>
-                      <TableCell className="text-right text-sm font-semibold tabular-nums">{formatMoney(s.unit_price_cents)}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{s.pricing_unit === 'PER_KG' ? 'Per kg' : 'Per piece'}</TableCell>
+                      <TableCell className="tnum text-right text-[13px] font-semibold">{formatMoney(s.unit_price_cents)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{s.pricing_unit === 'PER_KG' ? 'Per kg' : 'Per piece'}</TableCell>
                       <TableCell>
-                        <Badge variant={s.is_active ? 'default' : 'secondary'} aria-label={s.is_active ? `${s.name} active` : `${s.name} inactive`}>
+                        <span className={`inline-flex items-center gap-1.5 text-xs ${s.is_active ? 'text-foreground' : 'text-muted-foreground'}`} aria-label={s.is_active ? `${s.name} active` : `${s.name} inactive`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${s.is_active ? 'bg-green-500' : 'bg-muted-foreground/40'}`} aria-hidden="true" />
                           {s.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
+                        </span>
                       </TableCell>
                       {canEdit && (
                         <TableCell className="pr-4 text-right">
-                          <Button variant="outline" size="sm" onClick={() => toggle(s.id, !s.is_active)} disabled={isPending}>
+                          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => toggle(s.id, !s.is_active)} disabled={isPending}>
                             {s.is_active ? 'Deactivate' : 'Activate'}
                           </Button>
                         </TableCell>
@@ -143,26 +143,27 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
             {services.map(s => (
               <li
                 key={s.id}
-                className={`rounded-lg border bg-card p-3.5 ${s.is_active ? '' : 'opacity-70'}`}
+                className={`rounded-lg border bg-card p-3 ${s.is_active ? '' : 'opacity-70'}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="min-w-0 truncate text-sm font-semibold">{s.name}</p>
-                  <Badge variant={s.is_active ? 'default' : 'secondary'} aria-label={s.is_active ? `${s.name} active` : `${s.name} inactive`}>
+                  <p className="min-w-0 truncate text-[13px] font-medium">{s.name}</p>
+                  <span className={`inline-flex shrink-0 items-center gap-1.5 text-xs ${s.is_active ? 'text-foreground' : 'text-muted-foreground'}`} aria-label={s.is_active ? `${s.name} active` : `${s.name} inactive`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${s.is_active ? 'bg-green-500' : 'bg-muted-foreground/40'}`} aria-hidden="true" />
                     {s.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
+                  </span>
                 </div>
                 {s.description && (
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.description}</p>
                 )}
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <p className="text-sm">
-                    <span className="font-semibold tabular-nums">{formatMoney(s.unit_price_cents)}</span>
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <p className="tnum text-[13px]">
+                    <span className="font-semibold">{formatMoney(s.unit_price_cents)}</span>
                     <span className="ml-1.5 text-xs text-muted-foreground">
                       {s.pricing_unit === 'PER_KG' ? 'Per kg' : 'Per piece'}
                     </span>
                   </p>
                   {canEdit && (
-                    <Button variant="outline" size="sm" onClick={() => toggle(s.id, !s.is_active)} disabled={isPending}>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => toggle(s.id, !s.is_active)} disabled={isPending}>
                       {s.is_active ? 'Deactivate' : 'Activate'}
                     </Button>
                   )}
@@ -176,12 +177,12 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
       {canEdit && (
         <>
           <Card className="gap-0 py-0">
-            <CardHeader className="px-4 py-3 sm:px-6">
-              <CardTitle className="text-sm">New Service</CardTitle>
+            <CardHeader className="px-4 py-3">
+              <CardTitle className="text-[13px]">New Service</CardTitle>
               <CardDescription>Appears in new-order pricing immediately</CardDescription>
             </CardHeader>
-            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
-              <form id="service-create-form" action={submitCreate} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <CardContent className="px-4 pb-4">
+              <form id="service-create-form" action={submitCreate} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name *</Label>
                   <Input id="name" name="name" required maxLength={100} />
@@ -210,7 +211,7 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
                   <Label htmlFor="sort_order">Sort order</Label>
                   <Input id="sort_order" name="sort_order" type="number" defaultValue={0} />
                 </div>
-                {error && <p className="text-sm text-destructive sm:col-span-2" role="alert">{error}</p>}
+                {error && <p className="text-xs text-destructive sm:col-span-2" role="alert">{error}</p>}
                 <div className="sm:col-span-2">
                   <Button type="submit" disabled={isPending}>
                     {isPending ? 'Saving…' : 'Create Service'}
@@ -221,14 +222,14 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
           </Card>
 
           <Card className="gap-0 py-0">
-            <CardHeader className="px-4 py-3 sm:px-6">
-              <CardTitle className="text-sm">Edit Services</CardTitle>
+            <CardHeader className="px-4 py-3">
+              <CardTitle className="text-[13px]">Edit Services</CardTitle>
               <CardDescription>Price changes apply to future orders only</CardDescription>
             </CardHeader>
-            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+            <CardContent className="px-4 pb-4">
               <div className="divide-y divide-border">
                 {services.map(s => (
-                  <form key={s.id} action={fd => submitUpdate(fd, s)} className="grid grid-cols-1 gap-4 py-5 first:pt-0 last:pb-0 sm:grid-cols-2">
+                  <form key={s.id} action={fd => submitUpdate(fd, s)} className="grid grid-cols-1 gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Name</Label>
                     <Input name="name" required maxLength={100} defaultValue={s.name} aria-label={`Name for ${s.name}`} />

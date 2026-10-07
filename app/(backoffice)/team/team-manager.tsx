@@ -4,7 +4,6 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateUserRole, toggleUserActive } from '@/lib/actions/team'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -34,7 +33,7 @@ export function RoleSelect({ member }: { member: TeamMember }) {
           })
         }}
       >
-        <SelectTrigger className="h-8 w-[128px] text-sm" disabled={isPending} aria-label={`Role for ${member.full_name}`}>
+        <SelectTrigger className="w-[128px]" disabled={isPending} aria-label={`Role for ${member.full_name}`}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -56,8 +55,9 @@ export function ActiveToggle({ member }: { member: TeamMember }) {
   return (
     <div>
       <Button
-        variant={member.is_active ? 'outline' : 'default'}
+        variant="ghost"
         size="sm"
+        className="text-muted-foreground"
         disabled={isPending}
         onClick={() => {
           setError(null)
@@ -92,36 +92,34 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
     <>
       {/* Desktop table */}
       <Card className="hidden gap-0 overflow-hidden py-0 md:block">
-        <CardHeader className="px-4 py-3 sm:px-6">
-          <CardTitle className="text-sm">Members</CardTitle>
+        <CardHeader className="px-4 py-3">
+          <CardTitle className="text-[13px]">Members</CardTitle>
           <CardDescription>{activeCount} active · {members.length} total — role changes apply immediately</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <Table aria-label="Team members">
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="pl-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Name</TableHead>
-                <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Email</TableHead>
-                <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Role</TableHead>
-                <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                <TableHead className="pr-4 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="h-9 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Name</TableHead>
+                <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Email</TableHead>
+                <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Role</TableHead>
+                <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
+                <TableHead className="h-9 pr-4 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {members.map(m => (
-                <TableRow key={m.id} className={`hover:bg-muted/40 ${m.is_active ? '' : 'opacity-60'}`}>
-                  <TableCell className="pl-4 text-sm font-semibold">{m.full_name}</TableCell>
-                  <TableCell className="max-w-[14rem] truncate text-sm text-muted-foreground">{m.email}</TableCell>
+                <TableRow key={m.id} className={`h-12 hover:bg-muted/40 ${m.is_active ? '' : 'opacity-60'}`}>
+                  <TableCell className="pl-4 text-[13px] font-medium">{m.full_name}</TableCell>
+                  <TableCell className="max-w-[14rem] truncate text-[13px] text-muted-foreground">{m.email}</TableCell>
                   <TableCell><RoleSelect member={m} /></TableCell>
                   <TableCell>
-                    <Badge
-                      variant={m.is_active ? 'default' : 'secondary'}
-                      aria-label={m.is_active ? `${m.full_name} active` : `${m.full_name} inactive`}
-                    >
+                    <span className={`inline-flex items-center gap-1.5 text-xs ${m.is_active ? 'text-foreground' : 'text-muted-foreground'}`} aria-label={m.is_active ? `${m.full_name} active` : `${m.full_name} inactive`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${m.is_active ? 'bg-green-500' : 'bg-muted-foreground/40'}`} aria-hidden="true" />
                       {m.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
+                    </span>
                   </TableCell>
                   <TableCell className="pr-4 text-right"><ActiveToggle member={m} /></TableCell>
                 </TableRow>
@@ -136,19 +134,17 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
         {members.map(m => (
           <li
             key={m.id}
-            className={`rounded-lg border bg-card p-3.5 ${m.is_active ? '' : 'opacity-70'}`}
+            className={`rounded-lg border bg-card p-3 ${m.is_active ? '' : 'opacity-70'}`}
           >
             <div className="flex items-center justify-between gap-2">
-              <p className="min-w-0 truncate text-sm font-semibold">{m.full_name}</p>
-              <Badge
-                variant={m.is_active ? 'default' : 'secondary'}
-                aria-label={m.is_active ? `${m.full_name} active` : `${m.full_name} inactive`}
-              >
+              <p className="min-w-0 truncate text-[13px] font-medium">{m.full_name}</p>
+              <span className={`inline-flex shrink-0 items-center gap-1.5 text-xs ${m.is_active ? 'text-foreground' : 'text-muted-foreground'}`} aria-label={m.is_active ? `${m.full_name} active` : `${m.full_name} inactive`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${m.is_active ? 'bg-green-500' : 'bg-muted-foreground/40'}`} aria-hidden="true" />
                 {m.is_active ? 'Active' : 'Inactive'}
-              </Badge>
+              </span>
             </div>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{m.email}</p>
-            <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="mt-2.5 flex items-center justify-between gap-2">
               <RoleSelect member={m} />
               <ActiveToggle member={m} />
             </div>

@@ -12,6 +12,7 @@ import {
 import { Search, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
+import { Kbd } from '@/components/ui/kbd'
 
 const STATUS_OPTIONS = [
   { value: 'ALL', label: 'All statuses' },
@@ -35,6 +36,7 @@ export function OrdersFilter({ currentSearch, currentStatus }: OrdersFilterProps
   const [search, setSearch] = useState(currentSearch ?? '')
   const [isPending, startTransition] = useTransition()
   const firstRender = useRef(true)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const pushFilters = useCallback(
     (nextSearch: string, nextStatus?: string) => {
@@ -62,6 +64,19 @@ export function OrdersFilter({ currentSearch, currentStatus }: OrdersFilterProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
 
+  // `/` focuses search from anywhere (unless already typing)
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
+      const target = e.target as HTMLElement | null
+      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
+      e.preventDefault()
+      inputRef.current?.focus()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   // Silence unused warning while keeping searchParams subscribed for future pagination preservation
   void searchParams
 
@@ -69,33 +84,36 @@ export function OrdersFilter({ currentSearch, currentStatus }: OrdersFilterProps
     (currentSearch && currentSearch.length > 0) || (currentStatus && currentStatus !== 'ALL')
 
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row" role="search" aria-label="Filter orders">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+    <div className="mb-4 flex items-center gap-2" role="search" aria-label="Filter orders">
+      <div className="relative min-w-0 flex-1">
+        <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" aria-hidden="true" />
         <Input
+          ref={inputRef}
           placeholder="Search order #, tracking code, or customer…"
           value={search}
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => {
             if (e.key === 'Enter') pushFilters(search)
           }}
-          className="pl-9 pr-9"
+          className="pr-8 pl-8"
           aria-label="Search orders"
         />
-        {search && (
+        {search ? (
           <Button
             type="button"
             variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            size="icon-sm"
+            className="absolute top-1/2 right-0.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             onClick={() => {
               setSearch('')
               pushFilters('')
             }}
             aria-label="Clear search"
           >
-            <X className="h-4 w-4" aria-hidden="true" />
+            <X aria-hidden="true" />
           </Button>
+        ) : (
+          <Kbd className="absolute top-1/2 right-2 -translate-y-1/2">/</Kbd>
         )}
       </div>
       <Select
@@ -103,7 +121,7 @@ export function OrdersFilter({ currentSearch, currentStatus }: OrdersFilterProps
         onValueChange={value => pushFilters(search, value ?? undefined)}
         disabled={isPending}
       >
-        <SelectTrigger className="w-full sm:w-[200px]" aria-label="Filter by status">
+        <SelectTrigger className="w-[142px] shrink-0 sm:w-[172px]" aria-label="Filter by status">
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
         <SelectContent>
@@ -116,13 +134,17 @@ export function OrdersFilter({ currentSearch, currentStatus }: OrdersFilterProps
       </Select>
       {hasActiveFilters && (
         <Button
-          variant="outline"
+          variant="ghost"
+          size="sm"
+          className="shrink-0 text-muted-foreground"
           onClick={() => {
             setSearch('')
             startTransition(() => router.push('/orders'))
           }}
+          aria-label="Clear all filters"
         >
-          Clear filters
+          <X aria-hidden="true" />
+          <span className="hidden sm:inline">Clear</span>
         </Button>
       )}
     </div>

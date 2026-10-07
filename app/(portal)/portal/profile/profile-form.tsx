@@ -42,7 +42,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   }
 
   return (
-    <form action={submit} className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+    <form action={submit} className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
       <div className="space-y-2">
         <Label htmlFor="full_name">Full name *</Label>
         <Input id="full_name" name="full_name" required maxLength={100} defaultValue={profile.full_name} />
@@ -59,8 +59,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         <Label htmlFor="address">Address</Label>
         <Input id="address" name="address" maxLength={255} defaultValue={profile.address ?? ''} autoComplete="street-address" />
       </div>
-      {error && <p className="text-sm text-destructive sm:col-span-2" role="alert">{error}</p>}
-      {success && <p className="text-sm text-emerald-600 sm:col-span-2" role="status">Profile updated.</p>}
+      {error && <p className="text-xs text-destructive sm:col-span-2" role="alert">{error}</p>}
+      {success && <p className="text-xs text-muted-foreground sm:col-span-2" role="status">Profile updated.</p>}
       <div className="sm:col-span-2">
         <Button type="submit" disabled={isPending} aria-live="polite">
           {isPending ? 'Saving…' : 'Save Profile'}

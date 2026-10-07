@@ -2,24 +2,19 @@
 
 import { cn } from 'cn'
 import { STATUS_CONFIG, type OrderStatus } from '@/lib/order-machine'
-import {
-  Package,
-  WashingMachine,
-  Wind,
-  FoldVertical,
-  CheckCircle2,
-  XCircle,
-  ShoppingBag,
-} from 'lucide-react'
 
-const STATUS_ICONS: Record<OrderStatus, React.ElementType> = {
-  RECEIVED: Package,
-  WASHING: WashingMachine,
-  DRYING: Wind,
-  FOLDING: FoldVertical,
-  READY: ShoppingBag,
-  COMPLETED: CheckCircle2,
-  CANCELLED: XCircle,
+/**
+ * Single source of truth for the restrained status dot.
+ * Color carries meaning (workflow stage) — never decoration.
+ */
+export const STATUS_DOT_CLASS: Record<OrderStatus, string> = {
+  RECEIVED: 'bg-sky-500',
+  WASHING: 'bg-cyan-500',
+  DRYING: 'bg-amber-500',
+  FOLDING: 'bg-violet-500',
+  READY: 'bg-green-500',
+  COMPLETED: 'bg-emerald-500',
+  CANCELLED: 'bg-red-500',
 }
 
 interface StatusBadgeProps {
@@ -36,33 +31,29 @@ export function StatusBadge({
   className,
 }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status]
-  const Icon = STATUS_ICONS[status]
 
   const sizeClasses = {
-    sm: 'text-xs px-2 py-0.5 gap-1',
-    md: 'text-sm px-2.5 py-1 gap-1.5',
-    lg: 'text-base px-3 py-1.5 gap-2',
-  }
-
-  const iconSize = {
-    sm: 12,
-    md: 14,
-    lg: 16,
+    sm: 'h-5 px-1.5 text-[11px] gap-1.5',
+    md: 'h-[22px] px-2 text-xs gap-1.5',
+    lg: 'h-6 px-2.5 text-xs gap-2',
   }
 
   return (
     <span
       className={cn(
-        'inline-flex items-center font-medium rounded-full whitespace-nowrap',
-        config.bgColor,
-        config.textColor,
+        'inline-flex items-center rounded-md border bg-muted/40 font-medium whitespace-nowrap text-foreground',
         sizeClasses[size],
         className
       )}
       role="status"
       aria-label={`Status: ${config.label}`}
     >
-      {showIcon && <Icon size={iconSize[size]} aria-hidden="true" />}
+      {showIcon && (
+        <span
+          className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOT_CLASS[status])}
+          aria-hidden="true"
+        />
+      )}
       {config.label}
     </span>
   )

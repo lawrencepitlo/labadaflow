@@ -50,11 +50,11 @@ export function OrderItemsEditor({ orderId, items, services }: OrderItemsEditorP
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {rows.map((row, i) => (
-        <div key={i} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+        <div key={i} className="flex items-center gap-2">
           <Select value={row.service_id} onValueChange={v => { if (v !== null) updateRow(i, { service_id: v }) }}>
-            <SelectTrigger className="flex-1" aria-label={`Service for item ${i + 1}`}>
+            <SelectTrigger className="min-w-0 flex-1" aria-label={`Service for item ${i + 1}`}>
               <SelectValue placeholder="Select service" />
             </SelectTrigger>
             <SelectContent>
@@ -71,32 +71,33 @@ export function OrderItemsEditor({ orderId, items, services }: OrderItemsEditorP
             step="any"
             value={row.quantity}
             onChange={e => updateRow(i, { quantity: Number(e.target.value) })}
-            className="w-full sm:w-32"
+            className="tnum w-20 shrink-0"
             aria-label={`Quantity for item ${i + 1}`}
           />
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
             onClick={() => setRows(rows => rows.filter((_, idx) => idx !== i))}
             aria-label={`Remove item ${i + 1}`}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 />
           </Button>
         </div>
       ))}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 pt-1">
         <Button
           variant="outline"
           size="sm"
           onClick={() => setRows(rows => [...rows, { service_id: '', quantity: 1 }])}
         >
-          <Plus className="w-4 h-4 mr-1" /> Add item
+          <Plus /> Add item
         </Button>
         <Button size="sm" onClick={save} disabled={isPending}>
           {isPending ? 'Saving…' : 'Save items'}
         </Button>
       </div>
-      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+      {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
     </div>
   )
 }

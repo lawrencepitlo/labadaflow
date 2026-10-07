@@ -3,87 +3,88 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Kbd } from '@/components/ui/kbd'
 import { Search, X } from 'lucide-react'
-import { useCallback, useEffect, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 
 export function CustomersSearch({ currentSearch }: { currentSearch?: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [search, setSearch] = useState(currentSearch ?? '')
-  const [debouncedSearch, setDebouncedSearch] = useState(currentSearch ?? '')
   const [, startTransition] = useTransition()
+  const firstRender = useRef(true)
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [search])
-
-  const updateSearch = useCallback((newSearch?: string) => {
+  const pushSearch = useCallback((value: string) => {
     const params = new URLSearchParams()
-    const s = newSearch ?? debouncedSearch
-
-    if (s) params.set('search', s)
-
-    // Preserve page param if not changing search
-    if (newSearch === undefined) {
-      const page = searchParams.get('page')
-      if (page) params.set('page', page)
-    }
-
+    if (value.trim()) params.set('search', value.trim())
     startTransition(() => {
       router.push(`/customers?${params.toString()}`)
     })
-  }, [router, debouncedSearch, searchParams])
+  }, [router])
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearch(value)
+  // Debounced auto-search — resets to page 1
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    const timer = setTimeout(() => {
+      if (search !== (currentSearch ?? '')) pushSearch(search)
+    }, 350)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
+
+  // `/` focuses search from anywhere (unless already typing)
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
+      const target = e.target as HTMLElement | null
+      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
+      e.preventDefault()
+      inputRef.current?.focus()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
-  const handleSearchSubmit = useCallback(() => {
-    updateSearch(search)
-  }, [updateSearch, search])
+  // Silence unused warning while keeping searchParams subscribed for future pagination preservation
+  void searchParams
 
   return (
-    <div className="flex gap-2 mb-6 max-w-md">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+    <div className="mb-4 flex items-center gap-2" role="search" aria-label="Search customers">
+      <div className="relative min-w-0 max-w-md flex-1">
+        <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" aria-hidden="true" />
         <Input
-          placeholder="Search customers..."
+          ref={inputRef}
+          placeholder="Search name, phone, or email…"
           value={search}
-          onChange={e => handleSearchChange(e.target.value)}
+          onChange={e => setSearch(e.target.value)}
           onKeyDown={e => {
-            if (e.key === 'Enter') handleSearchSubmit()
+            if (e.key === 'Enter') pushSearch(search)
           }}
-          className="pl-9"
+          className="pr-8 pl-8"
           aria-label="Search customers"
         />
-        {search && (
+        {search ? (
           <Button
             type="button"
             variant="ghost"
-            size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            size="icon-sm"
+            className="absolute top-1/2 right-0.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             onClick={() => {
               setSearch('')
-              updateSearch('')
+              pushSearch('')
             }}
             aria-label="Clear search"
           >
-            <X className="w-4 h-4" />
+            <X aria-hidden="true" />
           </Button>
+        ) : (
+          <Kbd className="absolute top-1/2 right-2 -translate-y-1/2">/</Kbd>
         )}
       </div>
-      <Button onClick={handleSearchSubmit} disabled={search === currentSearch}>
-        Search
-      </Button>
-      {currentSearch && currentSearch.length > 0 && (
-        <Button variant="outline" size="default" onClick={() => updateSearch('')}>
-          Clear
-        </Button>
-      )}
     </div>
   )
 }

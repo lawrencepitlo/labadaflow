@@ -29,7 +29,7 @@ export function NewCustomerForm() {
   }
 
   return (
-    <form id="new-customer-form" action={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <form id="new-customer-form" action={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <div className="space-y-2">
         <Label htmlFor="full_name">Full name *</Label>
         <Input id="full_name" name="full_name" required maxLength={100} placeholder="e.g. Maria Santos" autoComplete="name" />
@@ -50,8 +50,8 @@ export function NewCustomerForm() {
         <Label htmlFor="notes">Notes</Label>
         <Textarea id="notes" name="notes" maxLength={1000} placeholder="Allergies, preferences…" rows={2} />
       </div>
-      {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive sm:col-span-2" role="alert">{error}</p>}
-      {success && <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-400 sm:col-span-2" role="status">Customer created.</p>}
+      {error && <p className="rounded-md bg-destructive/10 px-3 py-2 text-[13px] text-destructive sm:col-span-2" role="alert">{error}</p>}
+      {success && <p className="rounded-md border px-3 py-2 text-[13px] text-muted-foreground sm:col-span-2" role="status">Customer created.</p>}
       <div className="sm:col-span-2">
         <Button type="submit" disabled={isPending}>
           {isPending ? 'Creating…' : 'Create Customer'}

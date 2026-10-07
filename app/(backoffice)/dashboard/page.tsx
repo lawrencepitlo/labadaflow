@@ -1,26 +1,11 @@
 import Link from 'next/link'
 import { getDashboardStats } from '@/lib/data/orders'
 import { PageHeader } from '@/components/app/page-header'
-import { StatusBadge } from '@/components/app/status-badge'
+import { StatusBadge, STATUS_DOT_CLASS } from '@/components/app/status-badge'
 import { EmptyState } from '@/components/app/empty-state'
 import { formatMoney } from '@/lib/money'
 import { formatDate, formatDateTime, formatRelativeTime } from '@/lib/time'
-import {
-  Users,
-  Banknote,
-  ClipboardList,
-  ArrowRight,
-  Plus,
-  Package,
-  ShoppingBag,
-  CheckCircle2,
-  WashingMachine,
-  Wind,
-  FoldVertical,
-  Inbox,
-  BellRing,
-  CalendarClock,
-} from 'lucide-react'
+import { ArrowRight, Plus, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -42,24 +27,14 @@ import { ORDER_STATUS_FLOW } from '@/lib/order-machine'
 import type { OrderStatus } from '@/lib/order-machine'
 import { cn } from 'cn'
 
-const STATUS_ICONS: Record<OrderStatus, React.ElementType> = {
-  RECEIVED: Package,
-  WASHING: WashingMachine,
-  DRYING: Wind,
-  FOLDING: FoldVertical,
-  READY: ShoppingBag,
-  COMPLETED: CheckCircle2,
-  CANCELLED: Package,
-}
-
-const FLOW_META: Record<OrderStatus, { description: string; barClass: string }> = {
-  RECEIVED: { description: 'Awaiting processing', barClass: 'bg-blue-500' },
-  WASHING: { description: 'In wash cycle', barClass: 'bg-cyan-500' },
-  DRYING: { description: 'In dryers', barClass: 'bg-amber-500' },
-  FOLDING: { description: 'Folding & packing', barClass: 'bg-purple-500' },
-  READY: { description: 'Awaiting pickup', barClass: 'bg-green-600' },
-  COMPLETED: { description: 'Picked up & paid', barClass: 'bg-emerald-600' },
-  CANCELLED: { description: 'Cancelled', barClass: 'bg-red-500' },
+const FLOW_DESCRIPTION: Record<OrderStatus, string> = {
+  RECEIVED: 'Awaiting processing',
+  WASHING: 'In wash cycle',
+  DRYING: 'In dryers',
+  FOLDING: 'Folding & packing',
+  READY: 'Awaiting pickup',
+  COMPLETED: 'Picked up & paid',
+  CANCELLED: 'Cancelled',
 }
 
 type RecentOrder = {
@@ -114,46 +89,31 @@ export default async function DashboardPage() {
   const now = Date.now()
   const todayLabel = formatDate(new Date())
 
-  const metrics = [
+  const overview = [
     {
-      title: 'Active orders',
+      label: 'Active orders',
       value: activeOrders.toLocaleString(),
-      description: 'Not yet completed or cancelled',
-      icon: ClipboardList,
-      iconWrap: 'bg-muted',
-      iconClass: 'text-muted-foreground',
-      href: '/orders?status=ALL',
-      accent: false,
+      sub: 'Across all stages',
+      href: '/orders',
     },
     {
-      title: 'Ready for pickup',
+      label: 'Ready for pickup',
       value: readyForPickup.toLocaleString(),
-      description: readyForPickup > 0 ? 'Awaiting customer collection' : 'Nothing waiting right now',
-      icon: ShoppingBag,
-      iconWrap: 'bg-green-500/15',
-      iconClass: 'text-green-600 dark:text-green-400',
+      sub: readyForPickup > 0 ? 'Notify customers to collect' : 'Nothing waiting right now',
       href: '/orders?status=READY',
-      accent: readyForPickup > 0,
+      dot: readyForPickup > 0 ? 'bg-green-500' : null,
     },
     {
-      title: "Today's revenue",
+      label: "Today's revenue",
       value: formatMoney(stats.todayRevenue),
-      description: 'From orders completed today',
-      icon: Banknote,
-      iconWrap: 'bg-muted',
-      iconClass: 'text-muted-foreground',
+      sub: 'From orders completed today',
       href: '/reports',
-      accent: false,
     },
     {
-      title: 'Customers',
+      label: 'Customers',
       value: stats.customerCount.toLocaleString(),
-      description: 'Registered customer accounts',
-      icon: Users,
-      iconWrap: 'bg-muted',
-      iconClass: 'text-muted-foreground',
+      sub: 'Registered accounts',
       href: '/customers',
-      accent: false,
     },
   ]
 
@@ -163,12 +123,13 @@ export default async function DashboardPage() {
   }))
 
   const recentOrders = (stats.recentOrders ?? []) as RecentOrder[]
+  const needsAttention = readyForPickup > 0 || receivedCount > 0
 
   return (
     <>
       <PageHeader
         title="Dashboard"
-        description={`${todayLabel} · received → washing → ready → pickup`}
+        description={`${todayLabel} · ${activeOrders} active · ${readyForPickup} ready for pickup`}
       >
         <Button render={<Link href="/orders/new" />}>
           <Plus aria-hidden="true" />
@@ -176,135 +137,111 @@ export default async function DashboardPage() {
         </Button>
       </PageHeader>
 
-      {/* Operations metrics */}
-      <section aria-label="Operations metrics" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        {metrics.map(metric => (
-          <Card
-            key={metric.title}
-            className={cn(
-              'gap-0 py-0',
-              metric.accent && 'border-green-500/30 bg-green-500/[0.04]'
-            )}
-          >
-            <CardContent className="p-4">
-              <Link
-                href={metric.href}
-                className="block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                aria-label={`${metric.title}: ${metric.value}`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-md', metric.iconWrap)}>
-                    <metric.icon className={cn('h-4 w-4', metric.iconClass)} aria-hidden="true" />
-                  </span>
-                  <p className="truncate text-xs font-medium text-muted-foreground">{metric.title}</p>
-                </div>
-                <p className="mt-3 text-2xl font-semibold tracking-tight tabular-nums sm:text-[1.75rem]">
-                  {metric.value}
-                </p>
-                <p className="mt-1 truncate text-xs text-muted-foreground">{metric.description}</p>
-              </Link>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Overview — one quiet strip, no decorative cards */}
+      <section aria-label="Overview">
+        <div className="grid grid-cols-2 overflow-hidden rounded-lg border bg-card lg:grid-cols-4">
+          {overview.map(item => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="tnum block p-4 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none odd:border-r lg:odd:border-r-0 lg:[&:not(:first-child)]:border-l [&:nth-child(n+3)]:border-t lg:[&:nth-child(n+3)]:border-t-0"
+              aria-label={`${item.label}: ${item.value}`}
+            >
+              <p className="flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                {item.dot && (
+                  <span className={cn('h-1.5 w-1.5 rounded-full', item.dot)} aria-hidden="true" />
+                )}
+                {item.label}
+              </p>
+              <p className="mt-1 text-xl font-semibold tracking-tight">{item.value}</p>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.sub}</p>
+            </Link>
+          ))}
+        </div>
       </section>
 
-      {/* Needs attention — READY first, visually prioritized */}
+      {/* Needs attention */}
       <Card className="mt-4 gap-0 overflow-hidden py-0">
-        <CardHeader className="px-4 py-3 sm:px-6">
-          <CardTitle className="text-sm">Needs attention</CardTitle>
+        <CardHeader className="px-4 py-3">
+          <CardTitle className="text-[13px]">Needs attention</CardTitle>
           <CardDescription>Orders waiting on staff action</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="flex flex-col divide-y divide-border border-t sm:flex-row sm:divide-x sm:divide-y-0">
-            <Link
-              href="/orders?status=READY"
-              aria-label={`${readyForPickup} orders ready for pickup`}
-              className={cn(
-                'flex flex-1 items-center gap-3 px-4 py-3 outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none sm:px-6',
-                readyForPickup > 0 && 'bg-green-500/[0.06] hover:bg-green-500/[0.09]'
-              )}
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-500/15">
-                <BellRing className="h-4 w-4 text-green-600 dark:text-green-400" aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">
-                  <span className="tabular-nums">{readyForPickup}</span> ready for pickup
-                  {readyForPickup > 0 && (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-green-500/15 px-2 py-0.5 align-middle text-[11px] font-semibold text-green-700 dark:text-green-300">
-                      Action needed
-                    </span>
-                  )}
+          {!needsAttention ? (
+            <p className="border-t px-4 py-4 text-[13px] text-muted-foreground">
+              All clear — nothing is waiting on staff right now.
+            </p>
+          ) : (
+            <div className="flex flex-col divide-y divide-border border-t sm:flex-row sm:divide-x sm:divide-y-0">
+              <Link
+                href="/orders?status=READY"
+                aria-label={`${readyForPickup} orders ready for pickup`}
+                className="flex flex-1 items-center gap-2.5 px-4 py-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" aria-hidden="true" />
+                <span className="tnum min-w-0 flex-1 text-[13px]">
+                  <span className="font-semibold">{readyForPickup} ready for pickup</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    Notify customers to collect
+                  </span>
                 </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  Notify customers to collect
+                {readyForPickup > 0 && (
+                  <span className="shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    Action needed
+                  </span>
+                )}
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/orders?status=RECEIVED"
+                aria-label={`${receivedCount} orders awaiting processing`}
+                className="flex flex-1 items-center gap-2.5 px-4 py-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" aria-hidden="true" />
+                <span className="tnum min-w-0 flex-1 text-[13px]">
+                  <span className="font-semibold">{receivedCount} awaiting processing</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    Received orders not yet in wash
+                  </span>
                 </span>
-              </span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            </Link>
-            <Link
-              href="/orders?status=RECEIVED"
-              aria-label={`${receivedCount} orders awaiting processing`}
-              className="flex flex-1 items-center gap-3 px-4 py-3 outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none sm:px-6"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                <Inbox className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">
-                  <span className="tabular-nums">{receivedCount}</span> awaiting processing
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  Received orders not yet in wash
-                </span>
-              </span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            </Link>
-          </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden="true" />
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Order pipeline */}
       <Card className="mt-4 gap-0 py-0">
-        <CardHeader className="px-4 py-3 sm:px-6">
-          <CardTitle className="text-sm">Order pipeline</CardTitle>
+        <CardHeader className="px-4 py-3">
+          <CardTitle className="text-[13px]">Order pipeline</CardTitle>
           <CardDescription>Live count per stage — select a stage to filter orders.</CardDescription>
           <CardAction>
-            <span className="text-xs text-muted-foreground tabular-nums">{totalOrders} total</span>
+            <span className="tnum text-xs text-muted-foreground">{totalOrders} total</span>
           </CardAction>
         </CardHeader>
-        <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        <CardContent className="px-2 pb-2">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border bg-border sm:grid-cols-3 xl:grid-cols-6">
             {flow.map(({ status, count }) => {
-              const Icon = STATUS_ICONS[status]
-              const meta = FLOW_META[status]
               const share = totalOrders > 0 ? Math.min(100, (count / totalOrders) * 100) : 0
-              const isReady = status === 'READY'
               return (
                 <Link
                   key={status}
                   href={`/orders?status=${status}`}
                   aria-label={`${status}: ${count} orders`}
-                  className={cn(
-                    'rounded-lg border bg-card p-3 outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none',
-                    isReady && count > 0 && 'border-green-500/30 bg-green-500/[0.04] hover:bg-green-500/[0.08]'
-                  )}
+                  className="tnum bg-card p-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <Icon
-                      className={cn(
-                        'h-4 w-4',
-                        isReady && count > 0 ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
-                      )}
-                      aria-hidden="true"
-                    />
-                    <span className="text-xl font-semibold tracking-tight tabular-nums">{count}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOT_CLASS[status])} aria-hidden="true" />
+                    <span className="truncate text-xs font-medium text-muted-foreground">
+                      {status.charAt(0) + status.slice(1).toLowerCase()}
+                    </span>
+                    <span className="ml-auto text-[15px] font-semibold tracking-tight">{count}</span>
                   </div>
-                  <p className="mt-2 text-xs font-semibold">{status.charAt(0) + status.slice(1).toLowerCase()}</p>
-                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{meta.description}</p>
-                  <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                  <p className="mt-1 truncate text-[11px] text-muted-foreground">{FLOW_DESCRIPTION[status]}</p>
+                  <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted" aria-hidden="true">
                     <div
-                      className={cn('h-full rounded-full', meta.barClass)}
+                      className={cn('h-full rounded-full', status === 'READY' && count > 0 ? 'bg-green-500' : 'bg-foreground/30')}
                       style={{ width: `${share}%` }}
                     />
                   </div>
@@ -317,9 +254,9 @@ export default async function DashboardPage() {
 
       {/* Recent orders */}
       <Card className="mt-4 gap-0 overflow-hidden py-0">
-        <CardHeader className="px-4 py-3 sm:px-6">
+        <CardHeader className="px-4 py-3">
           <div>
-            <CardTitle className="text-sm">Recent orders</CardTitle>
+            <CardTitle className="text-[13px]">Recent orders</CardTitle>
             <CardDescription>Latest activity across the shop</CardDescription>
           </div>
           <CardAction>
@@ -340,47 +277,39 @@ export default async function DashboardPage() {
           </CardContent>
         ) : (
           <CardContent className="p-0">
-            {/* Desktop table */}
-            <div className="hidden md:block">
+            {/* Desktop — Linear-style compact rows */}
+            <div className="hidden border-t md:block">
               <Table aria-label="Recent orders">
                 <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="pl-6 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Order</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Customer</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                    <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Total</TableHead>
-                    <TableHead className="pr-6 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Updated</TableHead>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="h-9 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Order</TableHead>
+                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Customer</TableHead>
+                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
+                    <TableHead className="h-9 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Total</TableHead>
+                    <TableHead className="h-9 pr-4 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Updated</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {recentOrders.map(order => {
                     const overdue = isOverdue(order, now)
                     const summary = itemsSummary(order.items)
-                    const isReadyRow = order.status === 'READY'
                     return (
-                      <TableRow
-                        key={order.id}
-                        className={cn(
-                          'hover:bg-muted/40',
-                          isReadyRow && 'bg-green-500/[0.04] hover:bg-green-500/[0.08]'
-                        )}
-                      >
-                        <TableCell className="pl-6">
+                      <TableRow key={order.id} className="h-12 hover:bg-muted/40">
+                        <TableCell className="pl-4">
                           <Link
                             href={`/orders/${order.id}`}
-                            className="text-sm font-semibold text-primary hover:underline"
+                            className="font-mono text-xs font-medium text-foreground hover:underline"
                           >
                             {order.order_number}
                           </Link>
                           {overdue && order.due_at && (
-                            <span className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                              <CalendarClock className="h-3 w-3" aria-hidden="true" />
+                            <span className="mt-0.5 block text-[11px] font-medium text-amber-600 dark:text-amber-400">
                               Due {formatDate(order.due_at)}
                             </span>
                           )}
                         </TableCell>
                         <TableCell>
-                          <p className="max-w-[14rem] truncate text-sm font-medium">{customerName(order.customer)}</p>
+                          <p className="max-w-[14rem] truncate text-[13px] font-medium">{customerName(order.customer)}</p>
                           {summary && (
                             <p className="mt-0.5 max-w-[14rem] truncate text-xs text-muted-foreground">{summary}</p>
                           )}
@@ -388,18 +317,15 @@ export default async function DashboardPage() {
                         <TableCell>
                           <StatusBadge status={order.status as OrderStatus} size="sm" />
                         </TableCell>
-                        <TableCell className="text-right text-sm font-medium tabular-nums">
+                        <TableCell className="tnum text-right text-[13px] font-medium">
                           {formatMoney(order.total_cents)}
                         </TableCell>
-                        <TableCell className="pr-6 text-right">
+                        <TableCell className="pr-4 text-right">
                           <span
                             className="block text-xs text-muted-foreground"
                             title={formatDateTime(order.updated_at)}
                           >
                             {formatRelativeTime(order.updated_at)}
-                          </span>
-                          <span className="mt-0.5 block text-[11px] text-muted-foreground/80">
-                            {formatDate(order.created_at)}
                           </span>
                         </TableCell>
                       </TableRow>
@@ -410,36 +336,31 @@ export default async function DashboardPage() {
             </div>
 
             {/* Mobile compact list */}
-            <ul className="space-y-2 p-3 md:hidden">
+            <ul className="space-y-2 border-t p-3 md:hidden">
               {recentOrders.map(order => {
                 const overdue = isOverdue(order, now)
                 const summary = itemsSummary(order.items)
-                const isReadyRow = order.status === 'READY'
                 return (
                   <li key={order.id}>
                     <Link
                       href={`/orders/${order.id}`}
                       aria-label={`View order ${order.order_number}`}
-                      className={cn(
-                        'block rounded-lg border bg-card p-3.5 outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none',
-                        isReadyRow && 'border-green-500/30 bg-green-500/[0.04]'
-                      )}
+                      className="block rounded-lg border bg-card p-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-primary">{order.order_number}</span>
+                        <span className="font-mono text-xs font-medium">{order.order_number}</span>
                         <StatusBadge status={order.status as OrderStatus} size="sm" />
                       </div>
-                      <div className="mt-1.5 flex items-center justify-between gap-2 text-sm">
+                      <div className="mt-1.5 flex items-center justify-between gap-2 text-[13px]">
                         <span className="truncate font-medium">{customerName(order.customer)}</span>
-                        <span className="shrink-0 font-semibold tabular-nums">{formatMoney(order.total_cents)}</span>
+                        <span className="tnum shrink-0 font-semibold">{formatMoney(order.total_cents)}</span>
                       </div>
                       <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
                         <span className="truncate">
                           {summary ?? `Updated ${formatRelativeTime(order.updated_at)}`}
                         </span>
                         {overdue && order.due_at ? (
-                          <span className="inline-flex shrink-0 items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
-                            <CalendarClock className="h-3 w-3" aria-hidden="true" />
+                          <span className="shrink-0 font-medium text-amber-600 dark:text-amber-400">
                             Due {formatDate(order.due_at)}
                           </span>
                         ) : (

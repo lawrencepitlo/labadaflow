@@ -24,7 +24,7 @@ export function ArchiveButtons({ customerId, archived }: { customerId: string; a
       <Button variant={archived ? 'outline' : 'destructive'} onClick={run} disabled={isPending}>
         {isPending ? 'Working…' : archived ? 'Restore Customer' : 'Archive Customer'}
       </Button>
-      {error && <p className="text-sm text-destructive mt-2" role="alert">{error}</p>}
+      {error && <p className="text-xs text-destructive mt-2" role="alert">{error}</p>}
     </div>
   )
 }

@@ -4,11 +4,19 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from 'cn'
 
 /**
- * Subtle scroll reveal. Content renders visible by default (works with JS
- * disabled); the hidden-then-reveal enhancement only applies when JS runs
- * and the user has no reduced-motion preference.
+ * Quiet scroll reveal. Renders visible on first paint (no-JS / reduced-motion
+ * safe); the hidden-then-reveal enhancement arms only when JS runs and the
+ * user has no reduced-motion preference.
  */
-export function Reveal({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+export function Reveal({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: ReactNode
+  className?: string
+  delay?: number
+}) {
   const ref = useRef<HTMLDivElement>(null)
   const [state, setState] = useState<'plain' | 'hidden' | 'shown'>('plain')
 
@@ -25,11 +33,9 @@ export function Reveal({ children, className, delay = 0 }: { children: ReactNode
           }
         }
       },
-      { threshold: 0.12 }
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
     )
     observer.observe(el)
-    // Arm the hidden state async so the no-JS / reduced-motion
-    // first paint stays visible; only downgrade from 'plain'.
     const raf = requestAnimationFrame(() => {
       setState(h => (h === 'plain' ? 'hidden' : h))
     })
@@ -44,8 +50,8 @@ export function Reveal({ children, className, delay = 0 }: { children: ReactNode
       ref={ref}
       style={delay ? { transitionDelay: `${delay}ms` } : undefined}
       className={cn(
-        'transition-all duration-700 ease-out motion-reduce:transition-none',
-        state === 'hidden' && 'translate-y-6 opacity-0',
+        'transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+        state === 'hidden' && 'translate-y-4 opacity-0',
         state === 'shown' && 'translate-y-0 opacity-100',
         className
       )}

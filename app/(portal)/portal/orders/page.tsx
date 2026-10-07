@@ -3,12 +3,10 @@ import { getCustomerOrders } from '@/lib/data/orders'
 import { PageHeader } from '@/components/app/page-header'
 import { StatusBadge } from '@/components/app/status-badge'
 import { EmptyState } from '@/components/app/empty-state'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatMoney } from '@/lib/money'
 import { formatDate, formatDateTime } from '@/lib/time'
-import { ChevronLeft, ChevronRight, ClipboardList, BellRing } from 'lucide-react'
-import { cn } from 'cn'
+import { ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react'
 import type { OrderStatus } from '@/lib/order-machine'
 
 function parsePage(raw?: string): number {
@@ -51,7 +49,7 @@ export default async function PortalOrdersPage({
         />
       ) : (
         <>
-          <ul className="space-y-3" aria-label="My orders">
+          <ul className="divide-y divide-border overflow-hidden rounded-lg border bg-card" aria-label="My orders">
             {orders.map(order => {
               const isReady = order.status === 'READY'
               return (
@@ -59,52 +57,42 @@ export default async function PortalOrdersPage({
                   <Link
                     href={`/portal/orders/${order.id}`}
                     aria-label={`Order ${order.order_number}, ${order.status}, ${formatMoney(order.total_cents)}`}
+                    className="tnum flex items-center gap-3 px-4 py-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
                   >
-                    <Card
-                      className={cn(
-                        'transition-colors hover:bg-accent/50 motion-reduce:transition-none',
-                        isReady && 'border-green-500/30 bg-green-500/[0.04]'
-                      )}
-                    >
-                      <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <p className="font-semibold">{order.order_number}</p>
-                            {isReady && (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-300">
-                                <BellRing className="h-3.5 w-3.5" aria-hidden="true" />
-                                Ready for pickup
-                              </span>
-                            )}
-                          </div>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            Received {formatDateTime(order.received_at)}{order.due_at ? ` · Due ${formatDate(order.due_at)}` : ''}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between gap-3 sm:justify-end">
-                          <span className="font-semibold tabular-nums">{formatMoney(order.total_cents)}</span>
-                          <StatusBadge status={order.status as OrderStatus} size="sm" />
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2 font-mono text-xs font-medium">
+                        {order.order_number}
+                        {isReady && (
+                          <span className="inline-flex items-center gap-1 font-sans text-[11px] font-medium text-green-600 dark:text-green-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />
+                            Ready for pickup
+                          </span>
+                        )}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                        Received {formatDateTime(order.received_at)}{order.due_at ? ` · Due ${formatDate(order.due_at)}` : ''}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-[13px] font-semibold">{formatMoney(order.total_cents)}</span>
+                    <StatusBadge status={order.status as OrderStatus} size="sm" />
                   </Link>
                 </li>
               )
             })}
           </ul>
           {totalPages > 1 && (
-            <nav className="flex items-center justify-center gap-3 mt-8" aria-label="Orders pagination">
+            <nav className="mt-4 flex items-center justify-center gap-1" aria-label="Orders pagination">
               {page > 1 && (
-                <Button variant="outline" size="sm" render={<Link href={`/portal/orders?page=${page - 1}`} aria-label={`Go to page ${page - 1}`} />}>
-                  <ChevronLeft className="w-4 h-4 mr-1" aria-hidden="true" />
-                  Previous
+                <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={`/portal/orders?page=${page - 1}`} aria-label={`Go to page ${page - 1}`} />}>
+                  <ChevronLeft aria-hidden="true" />
+                  Prev
                 </Button>
               )}
-              <span className="text-sm text-muted-foreground font-medium" aria-live="polite">Page {page} of {totalPages}</span>
+              <span className="tnum px-2 text-xs text-muted-foreground" aria-live="polite">Page {page} of {totalPages}</span>
               {page < totalPages && (
-                <Button variant="outline" size="sm" render={<Link href={`/portal/orders?page=${page + 1}`} aria-label={`Go to page ${page + 1}`} />}>
+                <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={`/portal/orders?page=${page + 1}`} aria-label={`Go to page ${page + 1}`} />}>
                   Next
-                  <ChevronRight className="w-4 h-4 ml-1" aria-hidden="true" />
+                  <ChevronRight aria-hidden="true" />
                 </Button>
               )}
             </nav>

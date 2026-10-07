@@ -4,7 +4,6 @@ import { PageHeader } from '@/components/app/page-header'
 import { EmptyState } from '@/components/app/empty-state'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -44,7 +43,7 @@ export default async function CustomersPage({
         </Button>
       </PageHeader>
 
-      <CustomersSearch currentSearch={params.search} />
+      <CustomersSearch key={params.search ?? ''} currentSearch={params.search} />
 
       {customers.length === 0 ? (
         <EmptyState
@@ -59,37 +58,35 @@ export default async function CustomersPage({
             <CardContent className="p-0">
               <Table aria-label="Customers">
                 <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="pl-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Name</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Phone</TableHead>
-                    <TableHead className="hidden text-[11px] font-medium uppercase tracking-wider text-muted-foreground lg:table-cell">Email</TableHead>
-                    <TableHead className="text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Orders</TableHead>
-                    <TableHead className="pr-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Created</TableHead>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="h-9 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Name</TableHead>
+                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Phone</TableHead>
+                    <TableHead className="hidden h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase lg:table-cell">Email</TableHead>
+                    <TableHead className="h-9 text-center text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Orders</TableHead>
+                    <TableHead className="h-9 pr-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Created</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {customers.map(c => (
-                    <TableRow key={c.id} className="hover:bg-muted/40">
+                    <TableRow key={c.id} className="h-12 hover:bg-muted/40">
                       <TableCell className="pl-4">
-                        <Link href={`/customers/${c.id}`} className="text-sm font-semibold text-primary hover:underline">
-                          {c.full_name}
-                        </Link>
-                        {c.archived_at && (
-                          <Badge variant="secondary" className="ml-2 text-[11px]">Archived</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground tabular-nums">{c.phone ?? '—'}</TableCell>
-                      <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">{c.email ?? '—'}</TableCell>
-                      <TableCell className="text-center">
-                        <span
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold tabular-nums"
-                          title={`${c.order_count} orders`}
-                          aria-label={`${c.full_name}: ${c.order_count} orders`}
-                        >
-                          {c.order_count}
+                        <span className="flex items-center gap-2">
+                          <Link href={`/customers/${c.id}`} className="truncate text-[13px] font-medium text-foreground hover:underline">
+                            {c.full_name}
+                          </Link>
+                          {c.archived_at && (
+                            <span className="shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                              Archived
+                            </span>
+                          )}
                         </span>
                       </TableCell>
-                      <TableCell className="pr-4 text-sm text-muted-foreground">{formatDate(c.created_at)}</TableCell>
+                      <TableCell className="tnum text-[13px] text-muted-foreground">{c.phone ?? '—'}</TableCell>
+                      <TableCell className="hidden max-w-[12rem] truncate text-[13px] text-muted-foreground lg:table-cell">{c.email ?? '—'}</TableCell>
+                      <TableCell className="tnum text-center text-[13px]" title={`${c.order_count} orders`}>
+                        {c.order_count}
+                      </TableCell>
+                      <TableCell className="tnum pr-4 text-[13px] text-muted-foreground">{formatDate(c.created_at)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -104,23 +101,22 @@ export default async function CustomersPage({
                 <Link
                   href={`/customers/${c.id}`}
                   aria-label={`View customer ${c.full_name}`}
-                  className="block rounded-lg border bg-card p-3.5 outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none"
+                  className="block rounded-lg border bg-card p-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="min-w-0 truncate text-sm font-semibold text-primary">
-                      {c.full_name}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="flex min-w-0 items-center gap-2 truncate text-[13px] font-medium">
+                      <span className="truncate">{c.full_name}</span>
                       {c.archived_at && (
-                        <Badge variant="secondary" className="ml-2 align-middle text-[11px]">Archived</Badge>
+                        <span className="shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-normal text-muted-foreground">
+                          Archived
+                        </span>
                       )}
                     </p>
-                    <span
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold tabular-nums"
-                      aria-label={`${c.order_count} orders`}
-                    >
-                      {c.order_count}
+                    <span className="tnum shrink-0 text-[13px] text-muted-foreground">
+                      {c.order_count} order{c.order_count === 1 ? '' : 's'}
                     </span>
                   </div>
-                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                  <p className="tnum mt-1 truncate text-xs text-muted-foreground">
                     {c.phone ?? 'No phone'}{c.email ? ` · ${c.email}` : ''}
                   </p>
                 </Link>
@@ -129,18 +125,18 @@ export default async function CustomersPage({
           </ul>
 
           {totalPages > 1 && (
-            <nav className="mt-6 flex items-center justify-center gap-3" aria-label="Customers pagination">
+            <nav className="mt-4 flex items-center justify-center gap-1" aria-label="Customers pagination">
               {currentPage > 1 && (
-                <Button variant="outline" size="sm" render={<Link href={`/customers?page=${currentPage - 1}${params.search ? `&search=${encodeURIComponent(params.search)}` : ''}`} aria-label="Previous page" />}>
+                <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={`/customers?page=${currentPage - 1}${params.search ? `&search=${encodeURIComponent(params.search)}` : ''}`} aria-label="Previous page" />}>
                   <ChevronLeft aria-hidden="true" />
-                  Previous
+                  Prev
                 </Button>
               )}
-              <span className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+              <span className="tnum px-2 text-xs text-muted-foreground" aria-live="polite">
                 Page {currentPage} of {totalPages} · {total} customers
               </span>
               {currentPage < totalPages && (
-                <Button variant="outline" size="sm" render={<Link href={`/customers?page=${currentPage + 1}${params.search ? `&search=${encodeURIComponent(params.search)}` : ''}`} aria-label="Next page" />}>
+                <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={`/customers?page=${currentPage + 1}${params.search ? `&search=${encodeURIComponent(params.search)}` : ''}`} aria-label="Next page" />}>
                   Next
                   <ChevronRight aria-hidden="true" />
                 </Button>
@@ -150,12 +146,12 @@ export default async function CustomersPage({
         </>
       )}
 
-      <Card id="new-customer" className="mt-6 scroll-mt-6">
-        <CardHeader className="px-6 py-4">
-          <CardTitle className="text-base">New Customer</CardTitle>
+      <Card id="new-customer" className="mt-4 scroll-mt-4 gap-0 py-0">
+        <CardHeader className="px-4 py-3">
+          <CardTitle className="text-[13px]">New Customer</CardTitle>
           <CardDescription>Walk-ins need a record before their first order</CardDescription>
         </CardHeader>
-        <CardContent className="px-6 pb-6">
+        <CardContent className="px-4 pb-4">
           <NewCustomerForm />
         </CardContent>
       </Card>

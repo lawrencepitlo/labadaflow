@@ -64,20 +64,20 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
 
   return (
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
-      <Card className="lg:col-span-2">
-        <CardHeader className="px-6 py-4">
-          <CardTitle className="text-base">Order details</CardTitle>
+      <Card className="gap-0 py-0 lg:col-span-2">
+        <CardHeader className="px-4 py-3">
+          <CardTitle className="text-[13px]">Order details</CardTitle>
           <CardDescription>Customer → items → pickup estimate</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6 px-6 pb-6">
+        <CardContent className="space-y-5 px-4 pb-4">
           <section aria-labelledby="new-order-customer" className="space-y-2">
-            <h2 id="new-order-customer" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h2 id="new-order-customer" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
               Customer
             </h2>
             {customers.length === 0 ? (
-              <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+              <p className="rounded-md border border-dashed p-3 text-[13px] text-muted-foreground">
                 No customers yet.{' '}
-                <Link href="/customers" className="font-medium text-primary hover:underline">
+                <Link href="/customers" className="font-medium text-foreground hover:underline">
                   Create a customer first
                 </Link>
                 .
@@ -97,7 +97,7 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
                     ))}
                   </SelectContent>
                 </Select>
-                <Link href="/customers" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary">
+                <Link href="/customers" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
                   <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />
                   New customer? Add them in Customers first
                 </Link>
@@ -107,12 +107,12 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
 
           <Separator />
 
-          <section aria-labelledby="new-order-items" className="space-y-3">
-            <h2 id="new-order-items" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <section aria-labelledby="new-order-items" className="space-y-2.5">
+            <h2 id="new-order-items" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
               Services / items
             </h2>
             {services.length === 0 ? (
-              <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+              <p className="rounded-md border border-dashed p-3 text-[13px] text-muted-foreground">
                 No active services. Ask an admin to add services before creating orders.
               </p>
             ) : (
@@ -122,7 +122,7 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
                   const svc = services.find(s => s.id === row.service_id)
                   return (
                     <div key={i} className="space-y-1">
-                      <div className="flex flex-col gap-2 sm:flex-row">
+                      <div className="flex gap-2">
                         <Select
                           value={row.service_id}
                           onValueChange={v => {
@@ -131,7 +131,7 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
                             }
                           }}
                         >
-                          <SelectTrigger className="flex-1" aria-label={`Service ${i + 1}`}>
+                          <SelectTrigger className="min-w-0 flex-1" aria-label={`Service ${i + 1}`}>
                             <SelectValue placeholder="Select service" />
                           </SelectTrigger>
                           <SelectContent>
@@ -142,26 +142,25 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
                             ))}
                           </SelectContent>
                         </Select>
-                        <div className="flex gap-2">
-                          <Input
-                            type="number"
-                            min={0.001}
-                            step="any"
-                            value={row.quantity}
-                            onChange={e => setRows(r => r.map((x, idx) => idx === i ? { ...x, quantity: Number(e.target.value) } : x))}
-                            className="w-full sm:w-28"
-                            aria-label={`Quantity ${i + 1} (${svc ? `${formatMoney(svc.unit_price_cents)} per ${svc.pricing_unit === 'PER_KG' ? 'kg' : 'piece'}` : 'quantity'})`}
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setRows(r => r.filter((_, idx) => idx !== i))}
-                            disabled={rows.length === 1 || isPending}
-                            aria-label={`Remove item ${i + 1}`}
-                          >
-                            <Trash2 className="h-4 w-4" aria-hidden="true" />
-                          </Button>
-                        </div>
+                        <Input
+                          type="number"
+                          min={0.001}
+                          step="any"
+                          value={row.quantity}
+                          onChange={e => setRows(r => r.map((x, idx) => idx === i ? { ...x, quantity: Number(e.target.value) } : x))}
+                          className="tnum w-20 shrink-0"
+                          aria-label={`Quantity ${i + 1} (${svc ? `${formatMoney(svc.unit_price_cents)} per ${svc.pricing_unit === 'PER_KG' ? 'kg' : 'piece'}` : 'quantity'})`}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="shrink-0 text-muted-foreground hover:text-foreground"
+                          onClick={() => setRows(r => r.filter((_, idx) => idx !== i))}
+                          disabled={rows.length === 1 || isPending}
+                          aria-label={`Remove item ${i + 1}`}
+                        >
+                          <Trash2 aria-hidden="true" />
+                        </Button>
                       </div>
                       {err && row.service_id !== '' && (
                         <p className="text-xs text-destructive">{err}</p>
@@ -175,7 +174,7 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
                   onClick={() => setRows(r => [...r, { service_id: '', quantity: 1 }])}
                   disabled={isPending}
                 >
-                  <Plus className="mr-1 h-4 w-4" aria-hidden="true" /> Add item
+                  <Plus aria-hidden="true" /> Add item
                 </Button>
               </>
             )}
@@ -183,8 +182,8 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
 
           <Separator />
 
-          <section aria-labelledby="new-order-pickup" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <h2 id="new-order-pickup" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:col-span-2">
+          <section aria-labelledby="new-order-pickup" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <h2 id="new-order-pickup" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase sm:col-span-2">
               Due date & notes
             </h2>
             <div className="space-y-2">
@@ -205,7 +204,7 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
           </section>
 
           {error && (
-            <p className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+            <p className="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] text-destructive" role="alert">
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{error}</span>
             </p>
@@ -213,13 +212,13 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
         </CardContent>
       </Card>
 
-      <Card className="h-fit lg:sticky lg:top-6">
-        <CardHeader className="px-6 py-4">
-          <CardTitle className="text-base">Summary</CardTitle>
+      <Card className="h-fit gap-0 py-0 lg:sticky lg:top-6">
+        <CardHeader className="px-4 py-3">
+          <CardTitle className="text-[13px]">Summary</CardTitle>
           <CardDescription>{rows.length} item{rows.length === 1 ? '' : 's'} · pay on pickup</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3 px-6 pb-6">
-          <dl className="space-y-2 text-sm">
+        <CardContent className="tnum space-y-3 px-4 pb-4">
+          <dl className="space-y-1.5 text-[13px]">
             {rows.map((row, i) => {
               const svc = services.find(s => s.id === row.service_id)
               if (!svc) return null
@@ -228,7 +227,7 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
                   <dt className="truncate text-muted-foreground">
                     {row.quantity}× {svc.name}
                   </dt>
-                  <dd className="shrink-0 font-medium tabular-nums">
+                  <dd className="shrink-0 font-medium">
                     {formatMoney(Math.round(svc.unit_price_cents * row.quantity))}
                   </dd>
                 </div>
@@ -237,8 +236,8 @@ export function NewOrderForm({ customers, services }: NewOrderFormProps) {
           </dl>
           <Separator />
           <div className="flex items-baseline justify-between gap-2 border-t pt-3">
-            <span className="text-sm font-medium">Total</span>
-            <span className="text-[1.75rem] leading-none font-bold tracking-tight tabular-nums" aria-live="polite">{formatMoney(Math.round(total))}</span>
+            <span className="text-[13px] font-medium">Total</span>
+            <span className="text-xl font-semibold tracking-tight" aria-live="polite">{formatMoney(Math.round(total))}</span>
           </div>
           <p className="text-xs text-muted-foreground">Pay on pickup — payment is recorded when a READY order is completed.</p>
           <Button onClick={submit} disabled={isPending} className="w-full" size="lg" aria-busy={isPending}>

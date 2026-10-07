@@ -25,20 +25,20 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center py-16 px-4 text-center',
+        'flex flex-col items-center justify-center px-4 py-14 text-center',
         className
       )}
     >
-      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-        <Icon className="w-8 h-8 text-muted-foreground" aria-hidden="true" />
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg border bg-muted/40">
+        <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
       </div>
-      <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-sm mb-6">{description}</p>
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <p className="mt-1 max-w-xs text-[13px] text-muted-foreground">{description}</p>
       {actionLabel && actionHref && (
-        <Button render={<Link href={actionHref} />}>{actionLabel}</Button>
+        <Button render={<Link href={actionHref} />} className="mt-4">{actionLabel}</Button>
       )}
       {actionLabel && onAction && !actionHref && (
-        <Button onClick={onAction}>{actionLabel}</Button>
+        <Button onClick={onAction} className="mt-4">{actionLabel}</Button>
       )}
     </div>
   )

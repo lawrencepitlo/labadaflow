@@ -59,7 +59,7 @@ export function TrackForm() {
           </Button>
         </div>
         {error && (
-          <p id="track-error" className="text-sm text-destructive" role="alert">
+          <p id="track-error" className="text-xs text-destructive" role="alert">
             {error}
           </p>
         )}

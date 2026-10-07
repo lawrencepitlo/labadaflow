@@ -30,7 +30,7 @@ export function EditCustomerForm({ customer }: { customer: CustomerDetail }) {
   }
 
   return (
-    <form action={submit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <form action={submit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div className="space-y-2">
         <Label htmlFor="full_name">Full name *</Label>
         <Input id="full_name" name="full_name" required maxLength={100} defaultValue={customer.full_name} />
@@ -51,8 +51,8 @@ export function EditCustomerForm({ customer }: { customer: CustomerDetail }) {
         <Label htmlFor="notes">Notes</Label>
         <Textarea id="notes" name="notes" maxLength={1000} defaultValue={customer.notes ?? ''} />
       </div>
-      {error && <p className="text-sm text-destructive sm:col-span-2" role="alert">{error}</p>}
-      {success && <p className="text-sm text-emerald-600 sm:col-span-2">Customer updated.</p>}
+      {error && <p className="text-xs text-destructive sm:col-span-2" role="alert">{error}</p>}
+      {success && <p className="text-xs text-muted-foreground sm:col-span-2" role="status">Customer updated.</p>}
       <div className="sm:col-span-2">
         <Button type="submit" disabled={isPending}>
           {isPending ? 'Saving…' : 'Save Changes'}

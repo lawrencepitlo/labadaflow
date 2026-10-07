@@ -15,8 +15,9 @@ import {
 } from '@/components/ui/table'
 import { formatMoney } from '@/lib/money'
 import { formatDate, formatDateTime } from '@/lib/time'
-import { Plus, ClipboardList, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
+import { Plus, ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react'
 import { OrdersFilter } from './orders-filter'
+import { cn } from 'cn'
 
 function buildPageHref(
   page: number,
@@ -28,6 +29,14 @@ function buildPageHref(
   if (params.search) qs.set('search', params.search)
   const s = qs.toString()
   return s ? `/orders?${s}` : '/orders'
+}
+
+function isOverdue(order: { due_at: string | null; status: string }, now: number): boolean {
+  return (
+    order.due_at != null &&
+    !['COMPLETED', 'CANCELLED'].includes(order.status) &&
+    new Date(order.due_at).getTime() < now
+  )
 }
 
 export default async function OrdersPage({
@@ -50,6 +59,8 @@ export default async function OrdersPage({
   const { orders, total, page: currentPage, pageSize } = result
   const totalPages = Math.ceil(total / pageSize)
   const hasFilters = Boolean(params.search || (params.status && params.status !== 'ALL'))
+  // eslint-disable-next-line react-hooks/purity -- server component: evaluated once per request, not a client re-render
+  const now = Date.now()
 
   return (
     <>
@@ -88,56 +99,75 @@ export default async function OrdersPage({
         />
       ) : (
         <>
-          {/* Desktop table */}
+          {/* Desktop — compact operations rows */}
           <Card className="hidden gap-0 overflow-hidden py-0 md:block">
             <CardContent className="p-0">
               <Table aria-label="Orders">
                 <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="pl-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Order</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Customer</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                    <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Total</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Received / Due</TableHead>
-                    <TableHead className="pr-4 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      <span className="sr-only">Actions</span>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="h-9 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Order</TableHead>
+                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Customer</TableHead>
+                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
+                    <TableHead className="h-9 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Total</TableHead>
+                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Received / Due</TableHead>
+                    <TableHead className="h-9 pr-3">
+                      <span className="sr-only">Open</span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map(order => (
-                    <TableRow key={order.id} className="hover:bg-muted/40">
-                      <TableCell className="pl-4">
-                        <Link href={`/orders/${order.id}`} className="text-sm font-semibold text-primary hover:underline">
-                          {order.order_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <p className="text-sm font-medium">{order.customer.full_name}</p>
-                        {order.customer.phone && (
-                          <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{order.customer.phone}</p>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={order.status} size="sm" />
-                      </TableCell>
-                      <TableCell className="text-right text-sm font-medium tabular-nums">{formatMoney(order.total_cents)}</TableCell>
-                      <TableCell>
-                        <span className="block text-sm" title={formatDateTime(order.received_at)}>
-                          {formatDate(order.received_at)}
-                        </span>
-                        <span className="mt-0.5 block text-xs text-muted-foreground">
-                          {order.due_at ? `Due ${formatDate(order.due_at)}` : 'No due date'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="pr-4 text-right">
-                        <Button variant="ghost" size="sm" render={<Link href={`/orders/${order.id}`} aria-label={`View order ${order.order_number}`} />}>
-                          View
-                          <ArrowRight aria-hidden="true" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {orders.map(order => {
+                    const overdue = isOverdue(order, now)
+                    return (
+                      <TableRow key={order.id} className="h-12 hover:bg-muted/40">
+                        <TableCell className="pl-4">
+                          <Link
+                            href={`/orders/${order.id}`}
+                            className="font-mono text-xs font-medium text-foreground hover:underline"
+                          >
+                            {order.order_number}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <p className="max-w-[12rem] truncate text-[13px] font-medium">{order.customer.full_name}</p>
+                          {order.customer.phone && (
+                            <p className="tnum mt-0.5 text-xs text-muted-foreground">{order.customer.phone}</p>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={order.status} size="sm" />
+                        </TableCell>
+                        <TableCell className="tnum text-right text-[13px] font-medium">{formatMoney(order.total_cents)}</TableCell>
+                        <TableCell>
+                          <span className="tnum block text-[13px]" title={formatDateTime(order.received_at)}>
+                            {formatDate(order.received_at)}
+                          </span>
+                          {order.due_at ? (
+                            <span
+                              className={cn(
+                                'tnum mt-0.5 block text-xs',
+                                overdue ? 'font-medium text-amber-600 dark:text-amber-400' : 'text-muted-foreground'
+                              )}
+                            >
+                              {overdue ? `Due ${formatDate(order.due_at)} — overdue` : `Due ${formatDate(order.due_at)}`}
+                            </span>
+                          ) : (
+                            <span className="mt-0.5 block text-xs text-muted-foreground/70">No due date</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="pr-3 text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="text-muted-foreground/70 hover:text-foreground"
+                            render={<Link href={`/orders/${order.id}`} aria-label={`Open order ${order.order_number}`} />}
+                          >
+                            <ChevronRight aria-hidden="true" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
@@ -145,44 +175,53 @@ export default async function OrdersPage({
 
           {/* Mobile compact list */}
           <ul className="space-y-2 md:hidden">
-            {orders.map(order => (
-              <li key={order.id}>
-                <Link
-                  href={`/orders/${order.id}`}
-                  className="block rounded-lg border bg-card p-3.5 transition-colors hover:bg-muted/40 motion-reduce:transition-none"
-                  aria-label={`View order ${order.order_number}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-primary">{order.order_number}</span>
-                    <StatusBadge status={order.status} size="sm" />
-                  </div>
-                  <div className="mt-1.5 flex items-center justify-between gap-2 text-sm">
-                    <span className="truncate font-medium">{order.customer.full_name}</span>
-                    <span className="shrink-0 font-semibold tabular-nums">{formatMoney(order.total_cents)}</span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                    <span className="truncate">Received {formatDate(order.received_at)}</span>
-                    <span className="shrink-0">{order.due_at ? `Due ${formatDate(order.due_at)}` : 'No due date'}</span>
-                  </div>
-                </Link>
-              </li>
-            ))}
+            {orders.map(order => {
+              const overdue = isOverdue(order, now)
+              return (
+                <li key={order.id}>
+                  <Link
+                    href={`/orders/${order.id}`}
+                    className="block rounded-lg border bg-card p-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none"
+                    aria-label={`Open order ${order.order_number}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-xs font-medium">{order.order_number}</span>
+                      <StatusBadge status={order.status} size="sm" />
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[13px]">
+                      <span className="truncate font-medium">{order.customer.full_name}</span>
+                      <span className="tnum shrink-0 font-semibold">{formatMoney(order.total_cents)}</span>
+                    </div>
+                    <div className="tnum mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                      <span className="truncate">Received {formatDate(order.received_at)}</span>
+                      {order.due_at ? (
+                        <span className={cn('shrink-0', overdue && 'font-medium text-amber-600 dark:text-amber-400')}>
+                          Due {formatDate(order.due_at)}
+                        </span>
+                      ) : (
+                        <span className="shrink-0 text-muted-foreground/70">No due date</span>
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <nav className="mt-6 flex items-center justify-center gap-3" aria-label="Orders pagination">
+            <nav className="mt-4 flex items-center justify-center gap-1" aria-label="Orders pagination">
               {currentPage > 1 && (
-                <Button variant="outline" size="sm" render={<Link href={buildPageHref(currentPage - 1, params)} aria-label="Previous page" />}>
+                <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={buildPageHref(currentPage - 1, params)} aria-label="Previous page" />}>
                   <ChevronLeft aria-hidden="true" />
-                  Previous
+                  Prev
                 </Button>
               )}
-              <span className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+              <span className="tnum px-2 text-xs text-muted-foreground" aria-live="polite">
                 Page {currentPage} of {totalPages} · {total} orders
               </span>
               {currentPage < totalPages && (
-                <Button variant="outline" size="sm" render={<Link href={buildPageHref(currentPage + 1, params)} aria-label="Next page" />}>
+                <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={buildPageHref(currentPage + 1, params)} aria-label="Next page" />}>
                   Next
                   <ChevronRight aria-hidden="true" />
                 </Button>

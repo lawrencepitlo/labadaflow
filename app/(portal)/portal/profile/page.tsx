@@ -19,11 +19,11 @@ export default async function PortalProfilePage() {
   return (
     <>
       <PageHeader title="Profile" description="Your contact information for pickups and order updates" />
-      <Card className="max-w-2xl">
-        <CardHeader className="px-6 py-4">
-          <CardTitle className="text-base">Edit Profile</CardTitle>
+      <Card className="max-w-2xl gap-0 py-0">
+        <CardHeader className="px-4 py-3">
+          <CardTitle className="text-[13px]">Edit Profile</CardTitle>
         </CardHeader>
-        <CardContent className="px-6 pb-6">
+        <CardContent className="px-4 pb-4">
           <ProfileForm profile={profile} />
         </CardContent>
       </Card>
