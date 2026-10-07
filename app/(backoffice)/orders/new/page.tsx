@@ -11,7 +11,7 @@ export default async function NewOrderPage() {
 
   return (
     <>
-      <PageHeader title="New Order" description="Create a new laundry order" />
+      <PageHeader title="New Order" description="Walk-in intake — customer, items, and pickup estimate." />
       <NewOrderForm customers={customers} services={services} />
     </>
   )

@@ -12,10 +12,14 @@ export default async function TeamPage() {
   }
 
   const members = await getTeamMembers()
+  const activeCount = members.filter(m => m.is_active).length
 
   return (
     <>
-      <PageHeader title="Team" description="Manage roles and active status" />
+      <PageHeader
+        title="Team"
+        description={`${activeCount} active · ${members.length} total — roles and status apply immediately`}
+      />
       <TeamManager members={members} />
     </>
   )

@@ -1,8 +1,11 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { getOrderById } from '@/lib/data/orders'
 import { formatMoney } from '@/lib/money'
 import { formatDateTime } from '@/lib/time'
 import { getShopName } from '@/lib/settings'
+import { STATUS_CONFIG } from '@/lib/order-machine'
+import { ArrowLeft } from 'lucide-react'
 import { PrintButton } from './print-button'
 
 export default async function OrderSlipPage({
@@ -16,53 +19,68 @@ export default async function OrderSlipPage({
   if (!order) notFound()
 
   return (
-    <div className="max-w-2xl mx-auto bg-white text-black p-8 print:p-0">
-      <div className="text-center border-b pb-4 mb-6">
-        <h1 className="text-2xl font-bold">{getShopName()}</h1>
-        <p className="text-sm">Order Slip</p>
+    <div className="mx-auto max-w-xl">
+      <div className="mb-4 print:hidden">
+        <Link href={`/orders/${order.id}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Back to order {order.order_number}
+        </Link>
       </div>
+      <div className="rounded-lg border bg-white p-6 text-black sm:p-8 print:rounded-none print:border-0 dark:bg-white dark:text-black">
+        <div className="mb-6 border-b border-neutral-200 pb-4 text-center">
+          <h1 className="text-2xl font-bold tracking-tight">{getShopName()}</h1>
+          <p className="mt-1 text-sm text-neutral-500">Laundry Order Slip · {order.order_number}</p>
+        </div>
 
-      <dl className="grid grid-cols-2 gap-y-1 text-sm mb-6">
-        <dt className="font-semibold">Order #</dt><dd>{order.order_number}</dd>
-        <dt className="font-semibold">Tracking Code</dt><dd className="font-mono text-xs">{order.tracking_code}</dd>
-        <dt className="font-semibold">Customer</dt><dd>{order.customer.full_name}</dd>
-        <dt className="font-semibold">Phone</dt><dd>{order.customer.phone ?? '—'}</dd>
-        <dt className="font-semibold">Received</dt><dd>{formatDateTime(order.received_at)}</dd>
-        {order.due_at && (<><dt className="font-semibold">Due</dt><dd>{formatDateTime(order.due_at)}</dd></>)}
-        <dt className="font-semibold">Status</dt><dd>{order.status}</dd>
-      </dl>
+        <dl className="mb-6 grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+          <dt className="font-semibold text-neutral-500">Order #</dt><dd className="font-semibold">{order.order_number}</dd>
+          <dt className="font-semibold text-neutral-500">Tracking code</dt><dd className="font-mono text-xs">{order.tracking_code}</dd>
+          <dt className="font-semibold text-neutral-500">Customer</dt><dd>{order.customer.full_name}</dd>
+          <dt className="font-semibold text-neutral-500">Phone</dt><dd>{order.customer.phone ?? '—'}</dd>
+          <dt className="font-semibold text-neutral-500">Received</dt><dd>{formatDateTime(order.received_at)}</dd>
+          {order.due_at && (<><dt className="font-semibold text-neutral-500">Due</dt><dd>{formatDateTime(order.due_at)}</dd></>)}
+          <dt className="font-semibold text-neutral-500">Status</dt><dd className="font-medium">{STATUS_CONFIG[order.status]?.label ?? order.status}</dd>
+        </dl>
 
-      <table className="w-full text-sm border-t border-b">
-        <thead>
-          <tr className="text-left">
-            <th className="py-2">Service</th>
-            <th>Qty</th>
-            <th>Unit</th>
-            <th className="text-right">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {order.items.map(item => (
-            <tr key={item.id} className="border-t">
-              <td className="py-2">{item.service_name}</td>
-              <td>{item.quantity}</td>
-              <td>{formatMoney(item.unit_price_cents)}</td>
-              <td className="text-right">{formatMoney(item.line_total_cents)}</td>
+        <table className="w-full border-y border-neutral-200 text-sm tabular-nums">
+          <thead>
+            <tr className="text-left text-neutral-500">
+              <th className="py-2 font-medium">Service</th>
+              <th className="font-medium">Qty</th>
+              <th className="font-medium">Unit price</th>
+              <th className="py-2 text-right font-medium">Total</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {order.items.map(item => (
+              <tr key={item.id} className="border-t border-neutral-100">
+                <td className="py-2 font-medium">{item.service_name}</td>
+                <td>{item.quantity}</td>
+                <td>{formatMoney(item.unit_price_cents)}</td>
+                <td className="text-right font-medium">{formatMoney(item.line_total_cents)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-      <div className="flex justify-end mt-4 text-xl font-bold">
-        Total: {formatMoney(order.total_cents)}
-      </div>
+        <div className="mt-4 flex items-baseline justify-between gap-2 border-t border-dashed border-neutral-200 pt-4">
+          <span className="text-sm text-neutral-500">Total due on pickup</span>
+          <span className="text-2xl font-bold tracking-tight tabular-nums">{formatMoney(order.total_cents)}</span>
+        </div>
 
-      <p className="mt-8 text-center text-xs text-gray-500">
-        Track this order at /track/{order.tracking_code}
-      </p>
+        {order.notes && (
+          <p className="mt-4 rounded bg-neutral-100 p-3 text-xs text-neutral-600">
+            <span className="font-semibold">Notes: </span>{order.notes}
+          </p>
+        )}
 
-      <div className="print:hidden mt-8 text-center">
-        <PrintButton />
+        <p className="mt-8 text-center text-xs text-neutral-500">
+          Track this order at /track/{order.tracking_code}
+        </p>
+
+        <div className="mt-8 text-center print:hidden">
+          <PrintButton />
+        </div>
       </div>
     </div>
   )

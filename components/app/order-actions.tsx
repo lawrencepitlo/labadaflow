@@ -7,7 +7,7 @@ import {
   cancelOrder,
   completeOrder,
 } from '@/lib/actions/orders'
-import { getNextStatus, getPreviousStatus, type OrderStatus } from '@/lib/order-machine'
+import { getNextStatus, getPreviousStatus, STATUS_CONFIG, type OrderStatus } from '@/lib/order-machine'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
@@ -27,6 +27,13 @@ import { ChevronRight, ChevronLeft, CheckCircle, XCircle } from 'lucide-react'
 interface OrderActionsProps {
   orderId: string
   status: OrderStatus
+}
+
+const ADVANCE_LABELS: Partial<Record<OrderStatus, string>> = {
+  RECEIVED: 'Start Washing',
+  WASHING: 'Start Drying',
+  DRYING: 'Start Folding',
+  FOLDING: 'Mark Ready',
 }
 
 export function OrderActions({ orderId, status }: OrderActionsProps) {
@@ -56,12 +63,12 @@ export function OrderActions({ orderId, status }: OrderActionsProps) {
 
   if (isTerminal) {
     return (
-      <div className="text-center py-8">
-        <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-3 flex items-center justify-center">
+      <div className="py-6 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           {status === 'COMPLETED' ? (
-            <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle className="h-6 w-6 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
           ) : (
-            <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+            <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" aria-hidden="true" />
           )}
         </div>
         <p className="text-sm text-muted-foreground">
@@ -71,45 +78,66 @@ export function OrderActions({ orderId, status }: OrderActionsProps) {
     )
   }
 
+  const advanceLabel = ADVANCE_LABELS[status] ?? (next ? `Advance to ${STATUS_CONFIG[next]?.label ?? next}` : null)
+  const previousLabel = previous ? STATUS_CONFIG[previous]?.label ?? previous : null
+
   return (
     <div className="space-y-5">
       {/* Forward actions */}
       <div className="space-y-3">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Advance</p>
-        <div className="flex flex-wrap gap-2">
-          {next && (
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {status === 'READY' ? 'Complete' : 'Next step'}
+        </p>
+        <div className="flex flex-col gap-2">
+          {next && advanceLabel && (
             <Button
               disabled={isPending}
               onClick={() => run(() => advanceOrderStatus({ order_id: orderId, to_status: next }))}
               size="lg"
-              className="gap-2"
+              className="w-full"
             >
-              <ChevronRight className="w-4 h-4" />
-              Advance to {next}
+              <ChevronRight aria-hidden="true" />
+              {advanceLabel}
             </Button>
           )}
           {status === 'READY' && (
-            <Button
-              disabled={isPending}
-              onClick={() => run(() => completeOrder({ order_id: orderId }))}
-              size="lg"
-              className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-            >
-              <CheckCircle className="w-4 h-4" />
-              Complete & Mark Paid
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger render={<Button disabled={isPending} size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700" />}>
+                <CheckCircle aria-hidden="true" />
+                Complete & Mark Paid
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Complete order & record payment?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Payment is recorded on completion. Completed orders cannot be changed.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Back</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => run(() => completeOrder({ order_id: orderId }))}
+                  >
+                    Confirm Completion
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
+        {status === 'READY' && (
+          <p className="text-xs text-muted-foreground">Collect payment, then complete the order.</p>
+        )}
       </div>
 
       {/* Backward action */}
-      {previous && (
+      {previous && previousLabel && (
         <>
           <Separator />
           <div className="space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Move back</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Move back</p>
             <Textarea
-              placeholder={`Note required to move back to ${previous}`}
+              placeholder={`Note required to move back to ${previousLabel}`}
               value={note}
               onChange={e => setNote(e.target.value)}
               aria-label="Backward transition note"
@@ -119,10 +147,10 @@ export function OrderActions({ orderId, status }: OrderActionsProps) {
               variant="outline"
               disabled={isPending || !note.trim()}
               onClick={() => run(() => advanceOrderStatus({ order_id: orderId, to_status: previous, note }))}
-              className="gap-2"
+              className="w-full"
             >
-              <ChevronLeft className="w-4 h-4" />
-              Move back to {previous}
+              <ChevronLeft aria-hidden="true" />
+              Move Back to {previousLabel}
             </Button>
           </div>
         </>
@@ -131,7 +159,7 @@ export function OrderActions({ orderId, status }: OrderActionsProps) {
       {/* Cancel action */}
       <Separator />
       <div className="space-y-3">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cancel</p>
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cancel</p>
         <Textarea
           placeholder="Cancellation reason"
           value={cancelReason}
@@ -140,8 +168,8 @@ export function OrderActions({ orderId, status }: OrderActionsProps) {
           rows={2}
         />
         <AlertDialog>
-          <AlertDialogTrigger render={<Button variant="destructive" disabled={isPending || !cancelReason.trim()} className="gap-2" />}>
-            <XCircle className="w-4 h-4" />
+          <AlertDialogTrigger render={<Button variant="destructive" disabled={isPending || !cancelReason.trim()} className="w-full" />}>
+            <XCircle aria-hidden="true" />
             Cancel Order
           </AlertDialogTrigger>
           <AlertDialogContent>

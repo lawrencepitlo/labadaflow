@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/app/empty-state'
+import { Package } from 'lucide-react'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -78,59 +80,108 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {services.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No services yet.</p>
+        <EmptyState
+          icon={Package}
+          title="No services yet"
+          description={canEdit ? 'Create your first service — orders are priced from this catalog.' : 'No services available yet.'}
+        />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30">
-                  <TableHead className="font-semibold pl-6">Name</TableHead>
-                  <TableHead className="font-semibold">Unit Price</TableHead>
-                  <TableHead className="font-semibold">Unit</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  {canEdit && <TableHead className="font-semibold pr-6">Actions</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {services.map(s => (
-                  <TableRow key={s.id} className="hover:bg-accent/30 transition-colors">
-                    <TableCell className="pl-6">
-                      <div className="font-medium">{s.name}</div>
-                      {s.description && <div className="text-xs text-muted-foreground mt-0.5">{s.description}</div>}
-                    </TableCell>
-                    <TableCell className="font-semibold">{formatMoney(s.unit_price_cents)}</TableCell>
-                    <TableCell className="text-muted-foreground">{s.pricing_unit === 'PER_KG' ? 'Per kg' : 'Per piece'}</TableCell>
-                    <TableCell>
-                      <Badge variant={s.is_active ? 'default' : 'secondary'}>
-                        {s.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
+        <>
+          {/* Desktop table */}
+          <Card className="hidden gap-0 overflow-hidden py-0 md:block">
+            <CardHeader className="px-4 py-3 sm:px-6">
+              <CardTitle className="text-sm">Catalog</CardTitle>
+              <CardDescription>Inactive services stay hidden from new orders</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table aria-label="Services">
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="pl-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Name</TableHead>
+                    <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Unit price</TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Unit</TableHead>
+                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
                     {canEdit && (
-                      <TableCell className="pr-6">
-                        <Button variant="outline" size="sm" onClick={() => toggle(s.id, !s.is_active)} disabled={isPending}>
-                          {s.is_active ? 'Deactivate' : 'Activate'}
-                        </Button>
-                      </TableCell>
+                      <TableHead className="pr-4 text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                        <span className="sr-only">Actions</span>
+                      </TableHead>
                     )}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {services.map(s => (
+                    <TableRow key={s.id} className={`hover:bg-muted/40 ${s.is_active ? '' : 'opacity-60'}`}>
+                      <TableCell className="pl-4">
+                        <div className="text-sm font-semibold">{s.name}</div>
+                        {s.description && <div className="mt-0.5 max-w-sm truncate text-xs text-muted-foreground">{s.description}</div>}
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-semibold tabular-nums">{formatMoney(s.unit_price_cents)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{s.pricing_unit === 'PER_KG' ? 'Per kg' : 'Per piece'}</TableCell>
+                      <TableCell>
+                        <Badge variant={s.is_active ? 'default' : 'secondary'} aria-label={s.is_active ? `${s.name} active` : `${s.name} inactive`}>
+                          {s.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      {canEdit && (
+                        <TableCell className="pr-4 text-right">
+                          <Button variant="outline" size="sm" onClick={() => toggle(s.id, !s.is_active)} disabled={isPending}>
+                            {s.is_active ? 'Deactivate' : 'Activate'}
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Mobile compact list */}
+          <ul className="space-y-2 md:hidden" aria-label="Services">
+            {services.map(s => (
+              <li
+                key={s.id}
+                className={`rounded-lg border bg-card p-3.5 ${s.is_active ? '' : 'opacity-70'}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="min-w-0 truncate text-sm font-semibold">{s.name}</p>
+                  <Badge variant={s.is_active ? 'default' : 'secondary'} aria-label={s.is_active ? `${s.name} active` : `${s.name} inactive`}>
+                    {s.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+                {s.description && (
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.description}</p>
+                )}
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-sm">
+                    <span className="font-semibold tabular-nums">{formatMoney(s.unit_price_cents)}</span>
+                    <span className="ml-1.5 text-xs text-muted-foreground">
+                      {s.pricing_unit === 'PER_KG' ? 'Per kg' : 'Per piece'}
+                    </span>
+                  </p>
+                  {canEdit && (
+                    <Button variant="outline" size="sm" onClick={() => toggle(s.id, !s.is_active)} disabled={isPending}>
+                      {s.is_active ? 'Deactivate' : 'Activate'}
+                    </Button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
       {canEdit && (
         <>
-          <Card>
-            <CardHeader className="px-6 py-4">
-              <CardTitle className="text-lg">New Service</CardTitle>
+          <Card className="gap-0 py-0">
+            <CardHeader className="px-4 py-3 sm:px-6">
+              <CardTitle className="text-sm">New Service</CardTitle>
+              <CardDescription>Appears in new-order pricing immediately</CardDescription>
             </CardHeader>
-            <CardContent className="px-6 pb-6">
-              <form id="service-create-form" action={submitCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+              <form id="service-create-form" action={submitCreate} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name *</Label>
                   <Input id="name" name="name" required maxLength={100} />
@@ -169,13 +220,15 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="px-6 py-4">
-              <CardTitle className="text-lg">Edit Services</CardTitle>
+          <Card className="gap-0 py-0">
+            <CardHeader className="px-4 py-3 sm:px-6">
+              <CardTitle className="text-sm">Edit Services</CardTitle>
+              <CardDescription>Price changes apply to future orders only</CardDescription>
             </CardHeader>
-            <CardContent className="px-6 pb-6 space-y-6">
-              {services.map(s => (
-                <form key={s.id} action={fd => submitUpdate(fd, s)} className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b pb-6 last:border-0 last:pb-0">
+            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+              <div className="divide-y divide-border">
+                {services.map(s => (
+                  <form key={s.id} action={fd => submitUpdate(fd, s)} className="grid grid-cols-1 gap-4 py-5 first:pt-0 last:pb-0 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Name</Label>
                     <Input name="name" required maxLength={100} defaultValue={s.name} aria-label={`Name for ${s.name}`} />
@@ -220,6 +273,7 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
                   </div>
                 </form>
               ))}
+              </div>
             </CardContent>
           </Card>
         </>

@@ -273,17 +273,29 @@ export async function getOrdersByCustomerForStaff(customerId: string) {
 }
 
 /**
- * Get order by tracking code (public tracking — no PII).
+ * Get order by tracking code (public tracking — no PII, no staff info).
+ * Returns customer-safe progress history (status + timestamp only).
  */
 export async function getOrderByTrackingCode(trackingCode: string) {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data: order } = await supabase
     .from('orders')
-    .select('id, order_number, status, received_at, due_at')
-    .eq('tracking_code', trackingCode)
+    .select('id, order_number, status, received_at, due_at, updated_at')
+    .eq('tracking_code', trackingCode.trim())
     .single()
 
-  return data
+  if (!order) return null
+
+  const { data: events } = await supabase
+    .from('order_status_events')
+    .select('to_status, created_at')
+    .eq('order_id', order.id)
+    .order('created_at', { ascending: true })
+
+  return {
+    ...order,
+    events: (events ?? []) as { to_status: OrderStatus; created_at: string }[],
+  }
 }
 
 /**
@@ -308,15 +320,16 @@ export async function getDashboardStats() {
     counts[o.status] = (counts[o.status] || 0) + 1
   })
 
-  // Get recent orders
+  // Get recent orders with service summary + due info for operational overview
   const { data: recentOrders } = await supabase
     .from('orders')
     .select(`
-      id, order_number, status, total_cents, received_at, created_at,
-      customer:customers!customer_id(id, full_name)
+      id, order_number, status, total_cents, received_at, due_at, updated_at, created_at,
+      customer:customers!customer_id(id, full_name),
+      items:order_items(service_name, quantity)
     `)
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(8)
 
   // Get today's revenue (completed orders)
   const today = new Date()

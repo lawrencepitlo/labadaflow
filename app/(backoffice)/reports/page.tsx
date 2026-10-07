@@ -1,12 +1,14 @@
 import { getReports } from '@/lib/data/reports'
 import { PageHeader } from '@/components/app/page-header'
 import { EmptyState } from '@/components/app/empty-state'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatusBadge } from '@/components/app/status-badge'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { formatMoney } from '@/lib/money'
-import { CalendarDays, DollarSign, ShoppingCart, TrendingUp, BarChart3 } from 'lucide-react'
+import { CalendarDays, DollarSign, ShoppingCart, TrendingUp, Wallet } from 'lucide-react'
+import { ORDER_STATUS_FLOW, type OrderStatus } from '@/lib/order-machine'
 
 export default async function ReportsPage() {
   const report = await getReports()
@@ -16,59 +18,66 @@ export default async function ReportsPage() {
   }
 
   const cards = [
-    { title: 'Orders today', value: report.ordersToday.toString(), icon: ShoppingCart, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/40' },
-    { title: 'Orders this week', value: report.ordersThisWeek.toString(), icon: CalendarDays, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-950/40' },
-    { title: 'Revenue today', value: formatMoney(report.revenueToday), icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
-    { title: 'Revenue this week', value: formatMoney(report.revenueThisWeek), icon: TrendingUp, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/40' },
-    { title: 'Total revenue', value: formatMoney(report.revenueTotal), icon: BarChart3, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/40' },
+    { title: 'Orders today', value: report.ordersToday.toString(), hint: 'created today', icon: ShoppingCart },
+    { title: 'Orders this week', value: report.ordersThisWeek.toString(), hint: 'last 7 days', icon: CalendarDays },
+    { title: 'Revenue today', value: formatMoney(report.revenueToday), hint: 'completed today', icon: DollarSign },
+    { title: 'Revenue this week', value: formatMoney(report.revenueThisWeek), hint: 'last 7 days', icon: TrendingUp },
+    { title: 'Total revenue', value: formatMoney(report.revenueTotal), hint: 'all completed orders', icon: Wallet },
+  ]
+
+  const orderedStatuses = [
+    ...ORDER_STATUS_FLOW.filter(s => report.statusBreakdown[s] != null),
+    ...Object.keys(report.statusBreakdown).filter(s => !(ORDER_STATUS_FLOW as string[]).includes(s)),
   ]
 
   return (
     <>
-      <PageHeader title="Reports" description="Operational summary and insights" />
+      <PageHeader title="Reports" description="Today, this week, and lifetime shop performance" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+      <section aria-label="Report metrics" className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
         {cards.map(c => (
-          <Card key={c.title} className="border-2 hover:shadow-md transition-shadow">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{c.title}</p>
-                  <p className="text-2xl font-bold mt-2 tracking-tight">{c.value}</p>
-                </div>
-                <div className={`p-2.5 rounded-lg ${c.bg}`}>
-                  <c.icon className={`w-4 h-4 ${c.color}`} aria-hidden="true" />
-                </div>
+          <Card key={c.title} className="gap-0 py-0">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                  <c.icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                </span>
+                <p className="truncate text-xs font-medium text-muted-foreground">{c.title}</p>
               </div>
+              <p className="mt-3 truncate text-2xl font-semibold tracking-tight tabular-nums sm:text-[1.75rem]">
+                {c.value}
+              </p>
+              <p className="mt-1 truncate text-xs text-muted-foreground">{c.hint}</p>
             </CardContent>
           </Card>
         ))}
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-2">
-          <CardHeader className="px-6 py-4">
-            <CardTitle className="text-lg">Revenue by Service</CardTitle>
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card className="gap-0 py-0">
+          <CardHeader className="px-4 py-3 sm:px-6">
+            <CardTitle className="text-sm">Revenue by Service</CardTitle>
+            <CardDescription>Ranked by lifetime revenue</CardDescription>
           </CardHeader>
-          <CardContent className="px-6 pb-6">
+          <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
             {report.ordersByService.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No service data yet.</p>
+              <p className="py-6 text-center text-sm text-muted-foreground">No service data yet — it appears after the first completed items.</p>
             ) : (
-              <div className="rounded-lg border overflow-hidden">
-                <Table>
+              <div className="overflow-hidden rounded-lg border">
+                <Table aria-label="Revenue by service">
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="font-semibold">Service</TableHead>
-                      <TableHead className="font-semibold text-center">Items sold</TableHead>
-                      <TableHead className="font-semibold text-right">Revenue</TableHead>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Service</TableHead>
+                      <TableHead className="text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Items sold</TableHead>
+                      <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Revenue</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {report.ordersByService.map(s => (
-                      <TableRow key={s.service_name}>
-                        <TableCell className="font-medium">{s.service_name}</TableCell>
-                        <TableCell className="text-center text-muted-foreground">{s.count}</TableCell>
-                        <TableCell className="text-right font-semibold">{formatMoney(s.revenue_cents)}</TableCell>
+                      <TableRow key={s.service_name} className="hover:bg-muted/40">
+                        <TableCell className="text-sm font-medium">{s.service_name}</TableCell>
+                        <TableCell className="text-center text-sm text-muted-foreground tabular-nums">{s.count}</TableCell>
+                        <TableCell className="text-right text-sm font-semibold tabular-nums">{formatMoney(s.revenue_cents)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -78,29 +87,36 @@ export default async function ReportsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-2">
-          <CardHeader className="px-6 py-4">
-            <CardTitle className="text-lg">Orders by Status</CardTitle>
+        <Card className="gap-0 py-0">
+          <CardHeader className="px-4 py-3 sm:px-6">
+            <CardTitle className="text-sm">Orders by Status</CardTitle>
+            <CardDescription>Where every order sits in the workflow</CardDescription>
           </CardHeader>
-          <CardContent className="px-6 pb-6">
-            {Object.keys(report.statusBreakdown).length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No orders yet.</p>
+          <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+            {orderedStatuses.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No orders yet.</p>
             ) : (
-              <div className="rounded-lg border overflow-hidden">
-                <Table>
+              <div className="overflow-hidden rounded-lg border">
+                <Table aria-label="Orders by status">
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold text-right">Count</TableHead>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Count</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {Object.entries(report.statusBreakdown).map(([status, count]) => (
-                      <TableRow key={status}>
-                        <TableCell className="font-medium">{status}</TableCell>
+                    {orderedStatuses.map(status => (
+                      <TableRow key={status} className="hover:bg-muted/40">
+                        <TableCell>
+                          {['RECEIVED','WASHING','DRYING','FOLDING','READY','COMPLETED','CANCELLED'].includes(status) ? (
+                            <StatusBadge status={status as OrderStatus} size="sm" />
+                          ) : (
+                            <span className="text-sm font-medium">{status}</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
-                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm font-semibold">
-                            {count}
+                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold tabular-nums">
+                            {report.statusBreakdown[status]}
                           </span>
                         </TableCell>
                       </TableRow>

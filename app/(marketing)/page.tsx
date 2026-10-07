@@ -1,329 +1,500 @@
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import {
   Droplets,
+  ArrowRight,
+  Search,
   ClipboardList,
   UsersRound,
-  ShieldCheck,
-  History,
   Tags,
-  Package,
-  WashingMachine,
-  Wind,
-  FoldVertical,
-  ShoppingBag,
-  CheckCircle2,
-  ArrowRight,
-  ArrowDown,
-  Sparkles,
-  Clock,
-  Search,
   UserCheck,
   BarChart3,
-  ChevronRight,
+  ShieldCheck,
+  Store,
+  Smartphone,
+  Globe,
+  CheckCircle2,
+  CalendarDays,
+  Clock,
+  BellRing,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
+import { StatusBadge } from '@/components/app/status-badge'
+import { OrderFlowStepper } from '@/components/app/order-flow-stepper'
+import { SiteNav } from '@/components/marketing/site-nav'
+import { HeroVisual } from '@/components/marketing/hero-visual'
+import { FlowStory } from '@/components/marketing/flow-story'
+import { Reveal } from '@/components/marketing/reveal'
 
-const STAGES = [
-  { label: 'Received', icon: Package, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-950/50', ring: 'ring-blue-200 dark:ring-blue-800' },
-  { label: 'Washing', icon: WashingMachine, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-100 dark:bg-cyan-950/50', ring: 'ring-cyan-200 dark:ring-cyan-800' },
-  { label: 'Drying', icon: Wind, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-950/50', ring: 'ring-amber-200 dark:ring-amber-800' },
-  { label: 'Folding', icon: FoldVertical, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-950/50', ring: 'ring-purple-200 dark:ring-purple-800' },
-  { label: 'Ready', icon: ShoppingBag, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-950/50', ring: 'ring-green-200 dark:ring-green-800' },
-  { label: 'Completed', icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-950/50', ring: 'ring-emerald-200 dark:ring-emerald-800' },
-]
+const TRACK_STEPS = ['Received', 'Washing', 'Drying', 'Folding', 'Ready'] as const
 
 const FEATURES = [
-  { title: 'Real-time tracking', description: 'Customers follow their laundry with a simple unguessable tracking code. No accounts needed.', icon: Search, accent: 'from-blue-500/10 to-transparent' },
-  { title: 'Defined workflow', description: 'Every order moves through a clear six-stage pipeline. No ambiguity, no lost loads.', icon: ClipboardList, accent: 'from-cyan-500/10 to-transparent' },
-  { title: 'Customer portal', description: 'Customers see their own orders, history, and profile — nothing else. Private by design.', icon: UserCheck, accent: 'from-purple-500/10 to-transparent' },
-  { title: 'Audit trail', description: 'Every status change records who, when, and why. Append-only history for full accountability.', icon: ShieldCheck, accent: 'from-emerald-500/10 to-transparent' },
-  { title: 'Service catalog', description: 'Admin-managed services with per-kilo and per-piece pricing. Flexible for any laundry business.', icon: Tags, accent: 'from-amber-500/10 to-transparent' },
-  { title: 'Operational clarity', description: 'Dashboards, reports, and filters give you a live view of your entire operation.', icon: BarChart3, accent: 'from-rose-500/10 to-transparent' },
+  {
+    icon: ClipboardList,
+    title: 'Order workflow',
+    body: 'Every order travels one defined path: received, washing, drying, folding, ready, completed. Forward moves are one step at a time, backward moves require a note, and cancellations require a reason.',
+    fragment: 'Six stages · one step at a time',
+  },
+  {
+    icon: UsersRound,
+    title: 'Customer management',
+    body: 'Keep a real customer list with contact details and notes. Open a customer to see their orders and history — no duplicate paper ledgers.',
+    fragment: 'Profiles · order history · notes',
+  },
+  {
+    icon: Tags,
+    title: 'Service catalog',
+    body: 'Admin-managed services priced per kilo or per piece. The same catalog drives every new order total, so pricing stays consistent at the counter.',
+    fragment: 'Per kilo · per piece · always consistent',
+  },
+  {
+    icon: Globe,
+    title: 'Public tracking',
+    body: 'Each order gets a tracking code. Anyone with the code can open the tracking page and see the current stage — no account needed.',
+    fragment: 'Tracking code · no account needed',
+  },
+  {
+    icon: UserCheck,
+    title: 'Customer portal',
+    body: 'Registered customers sign in to see their own orders, order detail, and profile. They see their laundry and nothing else.',
+    fragment: 'My orders · order detail · profile',
+  },
+  {
+    icon: BarChart3,
+    title: 'Reports',
+    body: 'Today, this week, and lifetime views: orders, revenue, revenue by service, and a breakdown of where every order sits in the flow.',
+    fragment: 'Orders · revenue · by service',
+  },
 ]
 
-const STEPS = [
-  { n: '01', title: 'Staff receives', text: 'Log the order with services, quantity, and a unique tracking code. The clock starts.' },
-  { n: '02', title: 'System tracks', text: 'Every transition is timestamped and attributed. Customers and staff always know where things stand.' },
-  { n: '03', title: 'Customer picks up', text: 'Complete the order and record payment in one step. The flow is done.' },
+const HISTORY_ROWS = [
+  { from: '—', to: 'Received', note: 'Logged at the counter with services and weight.' },
+  { from: 'Received', to: 'Washing', note: 'Load entered the wash cycle.' },
+  { from: 'Washing', to: 'Drying', note: 'Transferred to dryers.' },
 ]
 
 export default function MarketingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center transition-transform group-hover:scale-105">
-              <Droplets className="w-5 h-5 text-primary-foreground" aria-hidden="true" />
+    <div className="flex min-h-screen flex-col bg-background">
+      <SiteNav />
+
+      <main>
+        {/* 1. HERO */}
+        <section className="relative overflow-hidden" aria-labelledby="hero-heading">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_50%_at_50%_0%,var(--color-muted)_0%,transparent_70%)]"
+            aria-hidden="true"
+          />
+          <div className="relative mx-auto max-w-7xl px-6 pb-20 pt-14 sm:pt-20 lg:grid lg:grid-cols-2 lg:items-center lg:gap-16 lg:pb-28">
+            <div className="max-w-xl">
+              <Badge variant="secondary" className="mb-5 px-3.5 py-1.5 font-medium">
+                <Droplets className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                Laundry management for real shops
+              </Badge>
+              <h1 id="hero-heading" className="text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+                Every load has a flow.
+              </h1>
+              <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+                LabadaFlow helps laundry shops receive orders, move them through a clear
+                six-stage workflow, and let customers check progress with a tracking code.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Button size="lg" render={<Link href="/login" />} className="h-12 px-7 text-base">
+                  Start managing your laundry
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button size="lg" variant="outline" render={<Link href="/track" />} className="h-12 px-7 text-base">
+                  <Search className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Track an order
+                </Button>
+              </div>
+              <p className="mt-5 text-sm text-muted-foreground">
+                Order workflow · Customer portal · Public tracking
+              </p>
             </div>
-            <span className="font-bold text-xl tracking-tight">LabadaFlow</span>
-          </Link>
-          <nav className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" render={<Link href="/track" />} className="hidden sm:inline-flex">
-              Track your laundry
-            </Button>
-            <Button size="sm" render={<Link href="/login" />}>
-              Sign In
-              <ArrowRight className="w-4 h-4 ml-1.5" />
-            </Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-transparent" aria-hidden="true" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/[0.02] rounded-full blur-3xl" aria-hidden="true" />
-
-        <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-16 sm:pt-28 sm:pb-24">
-          <div className="text-center max-w-3xl mx-auto">
-            <Badge variant="secondary" className="mb-6 text-sm px-4 py-1.5 font-medium">
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-              Laundry management, simplified
-            </Badge>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1]">
-              Every load has a{' '}
-              <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-                flow.
-              </span>
-            </h1>
-            <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              LabadaFlow tracks every order from intake to release — a clear, auditable
-              workflow for staff and a transparent experience for customers.
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" render={<Link href="/login" />} className="text-base px-8 h-12 shadow-lg shadow-primary/10">
-                Start managing orders
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-              <Button size="lg" variant="outline" render={<Link href="#flow" />} className="text-base px-8 h-12">
-                See how it works
-                <ArrowDown className="w-4 h-4 ml-2" />
-              </Button>
+            <div className="mt-14 lg:mt-0 lg:pb-6">
+              <HeroVisual />
             </div>
           </div>
+        </section>
 
-          {/* Product Preview Dashboard */}
-          <div className="mt-16 sm:mt-20 relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10 pointer-events-none" aria-hidden="true" />
-            <Card className="border-2 shadow-2xl shadow-primary/5 overflow-hidden">
-              <CardContent className="p-0">
-                {/* Fake browser bar */}
-                <div className="flex items-center gap-2 px-4 py-3 border-b bg-muted/30">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-400/80" />
-                    <div className="w-3 h-3 rounded-full bg-amber-400/80" />
-                    <div className="w-3 h-3 rounded-full bg-green-400/80" />
+        {/* 2. FLOW STORY */}
+        <section id="flow" className="scroll-mt-20 py-20 sm:py-28" aria-labelledby="flow-heading">
+          <div className="mx-auto max-w-7xl px-6">
+            <Reveal className="mb-12 max-w-2xl sm:mb-16">
+              <Badge variant="outline" className="mb-4">The flow</Badge>
+              <h2 id="flow-heading" className="text-3xl font-bold tracking-tight sm:text-4xl">
+                From counter to pickup, one visible path
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Received → washing → drying → folding → ready → completed. Staff always
+                know what to do next, and customers always know where their laundry stands.
+              </p>
+            </Reveal>
+            <FlowStory />
+          </div>
+        </section>
+
+        {/* 3. PRODUCT SHOWCASE */}
+        <section id="product" className="scroll-mt-20 border-y bg-muted/30 py-20 sm:py-28" aria-labelledby="product-heading">
+          <div className="mx-auto max-w-7xl px-6">
+            <Reveal className="mb-12 max-w-2xl sm:mb-16">
+              <Badge variant="outline" className="mb-4">The product</Badge>
+              <h2 id="product-heading" className="text-3xl font-bold tracking-tight sm:text-4xl">
+                A working system, not a mockup
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                These are the real screens and patterns from the app — the dashboard
+                staff open in the morning, the stepper every order carries, and the
+                tracking page customers actually see.
+              </p>
+            </Reveal>
+
+            <div className="space-y-6 lg:space-y-8">
+              {/* Dashboard overview */}
+              <Reveal>
+                <article className="grid overflow-hidden rounded-2xl border bg-card lg:grid-cols-2">
+                  <div className="p-6 sm:p-10">
+                    <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">01 · Dashboard</p>
+                    <h3 className="mt-2 text-2xl font-bold tracking-tight">Open the shop, see the shop</h3>
+                    <p className="mt-3 leading-relaxed text-muted-foreground">
+                      Active orders, orders ready for pickup, today&apos;s revenue, and
+                      customers — plus a live pipeline count per stage and the latest
+                      orders with their statuses.
+                    </p>
+                    <ul className="mt-5 space-y-2 text-sm">
+                      {['Needs-attention strip for pickups and new arrivals', 'Order pipeline with per-stage counts', 'Recent orders with live status badges'].map(t => (
+                        <li key={t} className="flex items-start gap-2">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                          <span>{t}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="flex-1 flex justify-center">
-                    <div className="bg-background rounded-md px-4 py-1 text-xs text-muted-foreground border">
-                      app.labadaflow.com/dashboard
+                  <div className="border-t bg-background/60 p-6 sm:p-10 lg:border-l lg:border-t-0" aria-label="Example dashboard layout">
+                    <div className="grid grid-cols-2 gap-3">
+                      {['Active orders', 'Ready for pickup', "Today's revenue", 'Customers'].map(m => (
+                        <div key={m} className="rounded-xl border bg-card p-4">
+                          <p className="truncate text-xs font-medium text-muted-foreground">{m}</p>
+                          <div className="mt-3 h-6 w-16 rounded bg-muted" aria-hidden="true" />
+                          <div className="mt-2 h-3 w-24 rounded bg-muted/70" aria-hidden="true" />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {['LF-1042', 'LF-1041'].map(id => (
+                        <div key={id} className="flex items-center justify-between rounded-lg border bg-card px-4 py-3">
+                          <span className="font-mono text-sm font-semibold">{id}</span>
+                          <span className="h-5 w-20 rounded-full bg-muted" aria-hidden="true" />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-xs text-muted-foreground">Dashboard layout — live data in the app.</p>
+                  </div>
+                </article>
+              </Reveal>
+
+              {/* Order workflow */}
+              <Reveal>
+                <article className="grid overflow-hidden rounded-2xl border bg-card lg:grid-cols-2">
+                  <div className="order-1 p-6 sm:p-10 lg:order-2">
+                    <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">02 · Order workflow</p>
+                    <h3 className="mt-2 text-2xl font-bold tracking-tight">One stepper on every order</h3>
+                    <p className="mt-3 leading-relaxed text-muted-foreground">
+                      Staff advance orders one stage at a time. Going backward needs a
+                      note, cancelling needs a reason — so the record always explains itself.
+                    </p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <StatusBadge status="DRYING" />
+                      <Badge variant="outline">Forward: one step</Badge>
+                      <Badge variant="outline">Backward: needs a note</Badge>
                     </div>
                   </div>
-                </div>
-                {/* Fake dashboard content */}
-                <div className="p-6 sm:p-8 bg-gradient-to-br from-background to-muted/20">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                    {[
-                      { label: 'Total Orders', value: '1,284', change: '+12%', color: 'text-blue-600' },
-                      { label: 'Active Now', value: '47', change: '6 in progress', color: 'text-amber-600' },
-                      { label: "Today's Revenue", value: '₱8,450', change: '+8%', color: 'text-emerald-600' },
-                      { label: 'Customers', value: '342', change: '+5 new', color: 'text-purple-600' },
-                    ].map((stat) => (
-                      <div key={stat.label} className="bg-card rounded-xl border p-4">
-                        <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
-                        <p className={`text-2xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
-                      </div>
-                    ))}
+                  <div className="order-2 border-t bg-background/60 p-6 sm:p-10 lg:order-1 lg:border-l-0 lg:border-r lg:border-t-0">
+                    <p className="mb-4 font-mono text-xs text-muted-foreground">Example order · LF-1042 · now drying</p>
+                    <OrderFlowStepper currentStatus="DRYING" />
+                    <p className="mt-4 text-xs text-muted-foreground">The same stepper staff and customers follow.</p>
                   </div>
-                  {/* Fake order rows */}
-                  <div className="space-y-2">
-                    {[
-                      { id: '#LF-2847', customer: 'Maria Santos', status: 'Washing', statusColor: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300', total: '₱350' },
-                      { id: '#LF-2846', customer: 'Juan Dela Cruz', status: 'Ready', statusColor: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300', total: '₱500' },
-                      { id: '#LF-2845', customer: 'Ana Reyes', status: 'Folding', statusColor: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300', total: '₱275' },
-                    ].map((order) => (
-                      <div key={order.id} className="flex items-center justify-between bg-card rounded-lg border px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-sm font-medium">{order.id}</span>
-                          <span className="text-sm text-muted-foreground hidden sm:inline">{order.customer}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium">{order.total}</span>
-                          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${order.statusColor}`}>
-                            {order.status}
+                </article>
+              </Reveal>
+
+              {/* Order detail / history */}
+              <Reveal>
+                <article className="grid overflow-hidden rounded-2xl border bg-card lg:grid-cols-2">
+                  <div className="p-6 sm:p-10">
+                    <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">03 · Order detail</p>
+                    <h3 className="mt-2 text-2xl font-bold tracking-tight">Every move leaves a record</h3>
+                    <p className="mt-3 leading-relaxed text-muted-foreground">
+                      Order detail keeps services, totals, and a status history: what
+                      changed, when, who did it, and why. No more “who moved this load?”.
+                    </p>
+                    <p className="mt-5 flex items-start gap-2 text-sm">
+                      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                      <span>History is append-only — past entries stay put as new ones are added.</span>
+                    </p>
+                  </div>
+                  <div className="border-t bg-background/60 p-6 sm:p-10 lg:border-l lg:border-t-0">
+                    <p className="mb-4 font-mono text-xs text-muted-foreground">Example status history</p>
+                    <ol className="space-y-3">
+                      {HISTORY_ROWS.map((h, i) => (
+                        <li key={i} className="flex gap-3 rounded-xl border bg-card p-4">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold">
+                            {i + 1}
                           </span>
-                        </div>
+                          <span>
+                            <span className="block text-sm font-semibold">
+                              {h.from} → {h.to}
+                            </span>
+                            <span className="mt-0.5 block text-sm text-muted-foreground">{h.note}</span>
+                            <span className="mt-1 block text-xs text-muted-foreground">Recorded by staff · timestamped</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                </article>
+              </Reveal>
+
+              {/* Customer tracking */}
+              <Reveal>
+                <article className="grid overflow-hidden rounded-2xl border bg-card lg:grid-cols-2">
+                  <div className="order-1 p-6 sm:p-10 lg:order-2">
+                    <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">04 · Customer tracking</p>
+                    <h3 className="mt-2 text-2xl font-bold tracking-tight">Customers check, staff stops answering “is it ready?”</h3>
+                    <p className="mt-3 leading-relaxed text-muted-foreground">
+                      The public tracking page shows the current stage in plain words,
+                      plus received and estimated-ready dates. Ready orders get a clear
+                      pickup prompt.
+                    </p>
+                    <Button variant="outline" className="mt-5" render={<Link href="/track" />}>
+                      <Search className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Open the tracking page
+                    </Button>
+                  </div>
+                  <div className="order-2 border-t bg-background/60 p-6 sm:p-10 lg:order-1 lg:border-r lg:border-t-0">
+                    <div className="mx-auto max-w-sm rounded-2xl border-2 bg-card p-6 text-center shadow-lg shadow-primary/5">
+                      <p className="text-sm text-muted-foreground">Order LF-1042</p>
+                      <p className="mt-1 text-2xl font-bold tracking-tight">Folding</p>
+                      <div className="mt-3 flex justify-center">
+                        <StatusBadge status="FOLDING" size="lg" />
                       </div>
-                    ))}
+                      <ol className="mt-5 space-y-2.5 text-left" aria-label="Example customer progress">
+                        {TRACK_STEPS.map((s, i) => (
+                          <li key={s} className="flex items-center gap-3">
+                            <span
+                              className={
+                                i < 3
+                                  ? 'flex h-7 w-7 items-center justify-center rounded-full border-2 border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                  : i === 3
+                                    ? 'flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-xs font-bold text-primary'
+                                    : 'flex h-7 w-7 items-center justify-center rounded-full border-2 border-border text-xs font-semibold text-muted-foreground/50'
+                              }
+                            >
+                              {i < 3 ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : i + 1}
+                            </span>
+                            <span className={i === 3 ? 'text-sm font-semibold' : 'text-sm text-muted-foreground'}>{s}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                </article>
+              </Reveal>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. FEATURE STORY */}
+        <section className="py-20 sm:py-28" aria-labelledby="features-heading">
+          <div className="mx-auto max-w-7xl px-6">
+            <Reveal className="mb-12 max-w-2xl sm:mb-16">
+              <Badge variant="outline" className="mb-4">Capabilities</Badge>
+              <h2 id="features-heading" className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Six things it does well
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Nothing more, nothing less. Each one maps to a real part of the app.
+              </p>
+            </Reveal>
+            <div className="grid gap-x-12 gap-y-10 md:grid-cols-2">
+              {FEATURES.map((f, i) => (
+                <Reveal key={f.title} delay={Math.min(i * 40, 160)}>
+                  <article className="border-t-2 border-foreground/80 pt-6">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                        <f.icon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <h3 className="text-lg font-bold tracking-tight">
+                        <span className="mr-2 font-mono text-sm font-medium text-muted-foreground">0{i + 1}</span>
+                        {f.title}
+                      </h3>
+                    </div>
+                    <p className="mt-3 leading-relaxed text-muted-foreground">{f.body}</p>
+                    <p className="mt-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">{f.fragment}</p>
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 5. CUSTOMER EXPERIENCE */}
+        <section className="border-y bg-muted/30 py-20 sm:py-28" aria-labelledby="experience-heading">
+          <div className="mx-auto max-w-7xl px-6">
+            <Reveal className="mb-12 max-w-2xl sm:mb-16">
+              <Badge variant="outline" className="mb-4">Two sides, one flow</Badge>
+              <h2 id="experience-heading" className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Staff manage it. Customers see it.
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                LabadaFlow connects the operational side with the customer experience —
+                the same order, viewed two ways.
+              </p>
+            </Reveal>
+            <div className="grid gap-5 md:grid-cols-3">
+              <Reveal>
+                <Card className="h-full">
+                  <CardContent className="p-6 sm:p-7">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                      <Store className="h-6 w-6" aria-hidden="true" />
+                    </span>
+                    <h3 className="mt-4 text-lg font-bold">Shop staff</h3>
+                    <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">manages the laundry</p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      Receives orders, moves them through the six stages, looks up
+                      customers, and closes the pickup — all from the backoffice.
+                    </p>
+                  </CardContent>
+                </Card>
+              </Reveal>
+              <Reveal delay={80}>
+                <Card className="h-full">
+                  <CardContent className="p-6 sm:p-7">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+                      <Smartphone className="h-6 w-6" aria-hidden="true" />
+                    </span>
+                    <h3 className="mt-4 text-lg font-bold">Customer</h3>
+                    <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">checks the laundry</p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      Signs in to the portal to see personal orders, order detail with
+                      progress, and profile — private to their account.
+                    </p>
+                  </CardContent>
+                </Card>
+              </Reveal>
+              <Reveal delay={160}>
+                <Card className="h-full border-primary/25">
+                  <CardContent className="p-6 sm:p-7">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/15">
+                      <Globe className="h-6 w-6 text-green-600 dark:text-green-400" aria-hidden="true" />
+                    </span>
+                    <h3 className="mt-4 text-lg font-bold">Public tracking</h3>
+                    <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">sees the current status</p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      No account? No problem. Enter the tracking code from the slip and
+                      see exactly where the load is right now.
+                    </p>
+                    <Button variant="outline" size="sm" className="mt-4" render={<Link href="/track" />}>
+                      <Search className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Try the tracking page
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Reveal>
+            </div>
+          </div>
+        </section>
+
+        {/* 6. HOW IT WORKS */}
+        <section id="how-it-works" className="scroll-mt-20 py-20 sm:py-28" aria-labelledby="how-heading">
+          <div className="mx-auto max-w-7xl px-6">
+            <Reveal className="mb-12 max-w-2xl sm:mb-16">
+              <Badge variant="outline" className="mb-4">How it works</Badge>
+              <h2 id="how-heading" className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Four steps, one flow
+              </h2>
+            </Reveal>
+            <ol className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+              {[
+                { n: '01', icon: ClipboardList, title: 'Receive the order', text: 'Log services, weight, and due date. The customer gets a tracking code.' },
+                { n: '02', icon: Droplets, title: 'Move it through the flow', text: 'Advance received → washing → drying → folding → ready, with history.' },
+                { n: '03', icon: BellRing, title: 'Customer checks progress', text: 'Portal or tracking code — they see the current stage and pickup signal.' },
+                { n: '04', icon: CalendarDays, title: 'Complete the pickup', text: 'Hand over the load, close the order. The record stays for reports.' },
+              ].map((s, i) => (
+                <li key={s.n} className="relative">
+                  <Reveal delay={Math.min(i * 60, 180)}>
+                    <p className="font-mono text-5xl font-extrabold tracking-tight text-foreground/10 dark:text-foreground/15" aria-hidden="true">
+                      {s.n}
+                    </p>
+                    <s.icon className="mt-2 h-6 w-6 text-primary" aria-hidden="true" />
+                    <h3 className="mt-2 text-lg font-bold">{s.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.text}</p>
+                  </Reveal>
+                </li>
+              ))}
+            </ol>
+            <Reveal className="mt-10 flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Dates shown on tracking come from the received and due dates staff set at intake.</span>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* 7. FINAL CTA */}
+        <section className="px-6 pb-20 sm:pb-28" aria-labelledby="cta-heading">
+          <div className="mx-auto max-w-7xl">
+            <Reveal>
+              <div className="relative overflow-hidden rounded-3xl bg-primary px-6 py-16 text-center text-primary-foreground sm:px-12 sm:py-20">
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-[0.12]"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
+                    backgroundSize: '28px 28px',
+                  }}
+                  aria-hidden="true"
+                />
+                <div className="relative mx-auto max-w-2xl">
+                  <h2 id="cta-heading" className="text-3xl font-extrabold tracking-tight sm:text-5xl">
+                    Keep every load moving.
+                  </h2>
+                  <p className="mx-auto mt-4 max-w-xl text-lg opacity-80">
+                    Manage the flow. Know what&apos;s ready. Keep customers informed.
+                  </p>
+                  <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                    <Button size="lg" variant="secondary" render={<Link href="/login" />} className="h-12 px-7 text-base">
+                      Start managing your laundry
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      render={<Link href="/track" />}
+                      className="h-12 border-primary-foreground/30 bg-transparent px-7 text-base text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                    >
+                      <Search className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Track an order
+                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Order Flow Story */}
-      <section id="flow" className="py-20 sm:py-28">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">Workflow</Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              One defined flow, six stages
-            </h2>
-            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Every order follows the same path. No confusion, no missed steps.
-            </p>
-          </div>
-
-          {/* Desktop flow */}
-          <div className="hidden md:flex items-start justify-between relative">
-            {/* Connection line */}
-            <div className="absolute top-8 left-[8%] right-[8%] h-0.5 bg-border" aria-hidden="true" />
-            {STAGES.map((stage, i) => (
-              <div key={stage.label} className="flex flex-col items-center text-center relative z-10" style={{ width: '16.666%' }}>
-                <div className={`w-16 h-16 rounded-2xl ${stage.bg} ring-1 ${stage.ring} flex items-center justify-center transition-transform hover:scale-110`}>
-                  <stage.icon className={`w-7 h-7 ${stage.color}`} aria-hidden="true" />
-                </div>
-                <p className="mt-4 font-semibold text-sm">{stage.label}</p>
-                <p className="text-xs text-muted-foreground mt-1">Stage {i + 1}</p>
               </div>
-            ))}
+            </Reveal>
           </div>
+        </section>
+      </main>
 
-          {/* Mobile flow */}
-          <div className="md:hidden grid grid-cols-2 gap-4">
-            {STAGES.map((stage, i) => (
-              <div key={stage.label} className="flex items-center gap-3 bg-card rounded-xl border p-4">
-                <div className={`w-12 h-12 rounded-xl ${stage.bg} ring-1 ${stage.ring} flex items-center justify-center shrink-0`}>
-                  <stage.icon className={`w-6 h-6 ${stage.color}`} aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">{stage.label}</p>
-                  <p className="text-xs text-muted-foreground">Stage {i + 1}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-20 sm:py-28 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">Features</Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Built for clarity
-            </h2>
-            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Everything you need to run a laundry business. Nothing you don&apos;t.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {FEATURES.map((f) => (
-              <Card key={f.title} className="group hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20">
-                <CardContent className="p-6">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.accent} flex items-center justify-center mb-4 ring-1 ring-border`}>
-                    <f.icon className="w-6 h-6 text-foreground" aria-hidden="true" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="py-20 sm:py-28">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">Process</Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              How it works
-            </h2>
-            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Three steps from intake to pickup. Simple for staff, transparent for customers.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {STEPS.map((s, i) => (
-              <div key={s.n} className="relative text-center group">
-                {i < STEPS.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-px bg-border" aria-hidden="true">
-                    <ChevronRight className="absolute -right-2 -top-2 w-4 h-4 text-muted-foreground/40" />
-                  </div>
-                )}
-                <div className="w-16 h-16 rounded-2xl bg-primary text-primary-foreground font-bold text-xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-primary/10 transition-transform group-hover:scale-105">
-                  {s.n}
-                </div>
-                <h3 className="font-semibold text-lg mb-2">{s.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">{s.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats band */}
-      <section className="py-16 bg-primary text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {[
-              { value: '6', label: 'Workflow stages' },
-              { value: '100%', label: 'Audit coverage' },
-              { value: '0', label: 'Lost orders' },
-              { value: '24/7', label: 'Customer tracking' },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <p className="text-3xl sm:text-4xl font-extrabold">{stat.value}</p>
-                <p className="text-sm text-primary-foreground/70 mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20 sm:py-28">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            Ready to flow?
-          </h2>
-          <p className="text-muted-foreground text-lg mb-10 max-w-xl mx-auto">
-            Start managing your laundry orders with clarity. Sign in to your dashboard
-            or track an existing order.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" render={<Link href="/login" />} className="text-base px-8 h-12 shadow-lg shadow-primary/10">
-              Sign in to dashboard
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-            <Button size="lg" variant="outline" render={<Link href="/track" />} className="text-base px-8 h-12">
-              <Search className="w-4 h-4 mr-2" />
-              Track your laundry
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
       <footer className="border-t py-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
           <div className="flex items-center gap-2">
-            <Droplets className="w-5 h-5 text-primary" aria-hidden="true" />
+            <Droplets className="h-5 w-5 text-primary" aria-hidden="true" />
             <span className="font-semibold">LabadaFlow</span>
           </div>
+          <nav className="flex items-center gap-4 text-sm text-muted-foreground" aria-label="Footer">
+            <Link href="#product" className="hover:text-foreground">Product</Link>
+            <Link href="#how-it-works" className="hover:text-foreground">How it works</Link>
+            <Link href="/track" className="hover:text-foreground">Track order</Link>
+            <Link href="/login" className="hover:text-foreground">Sign in</Link>
+          </nav>
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} LabadaFlow — Every load has a flow.
           </p>

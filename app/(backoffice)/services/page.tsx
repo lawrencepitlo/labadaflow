@@ -13,7 +13,14 @@ export default async function ServicesPage() {
 
   return (
     <>
-      <PageHeader title="Services" description={actor.role === 'ADMIN' ? 'Manage your service catalog' : 'Available services'} />
+      <PageHeader
+        title="Services"
+        description={
+          actor.role === 'ADMIN'
+            ? `${services.filter(s => s.is_active).length} active · ${services.length} total — pricing drives every order total`
+            : `${services.filter(s => s.is_active).length} available services`
+        }
+      />
       <ServicesManager services={services} canEdit={actor.role === 'ADMIN'} />
     </>
   )

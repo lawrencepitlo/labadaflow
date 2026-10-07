@@ -18,12 +18,12 @@ export default async function PortalProfilePage() {
 
   return (
     <>
-      <PageHeader title="Profile" description="Your contact information" />
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Edit Profile</CardTitle>
+      <PageHeader title="Profile" description="Your contact information for pickups and order updates" />
+      <Card className="max-w-2xl">
+        <CardHeader className="px-6 py-4">
+          <CardTitle className="text-base">Edit Profile</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6 pb-6">
           <ProfileForm profile={profile} />
         </CardContent>
       </Card>

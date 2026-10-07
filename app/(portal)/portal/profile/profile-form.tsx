@@ -49,20 +49,20 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="phone">Phone</Label>
-        <Input id="phone" name="phone" maxLength={20} defaultValue={profile.phone ?? ''} />
+        <Input id="phone" name="phone" maxLength={20} defaultValue={profile.phone ?? ''} autoComplete="tel" inputMode="tel" />
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" defaultValue={profile.email ?? ''} />
+        <Input id="email" name="email" type="email" defaultValue={profile.email ?? ''} autoComplete="email" />
       </div>
       <div className="space-y-2">
         <Label htmlFor="address">Address</Label>
-        <Input id="address" name="address" maxLength={255} defaultValue={profile.address ?? ''} />
+        <Input id="address" name="address" maxLength={255} defaultValue={profile.address ?? ''} autoComplete="street-address" />
       </div>
       {error && <p className="text-sm text-destructive sm:col-span-2" role="alert">{error}</p>}
-      {success && <p className="text-sm text-emerald-600 sm:col-span-2">Profile updated.</p>}
+      {success && <p className="text-sm text-emerald-600 sm:col-span-2" role="status">Profile updated.</p>}
       <div className="sm:col-span-2">
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending} aria-live="polite">
           {isPending ? 'Saving…' : 'Save Profile'}
         </Button>
       </div>
