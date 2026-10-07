@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LabadaFlow — Every load has a flow.
 
-## Getting Started
+LabadaFlow is a laundry-shop management system. Staff receive orders, move them through a defined six-stage workflow, and customers follow progress with a tracking code or a personal portal.
 
-First, run the development server:
+## How it works
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+**The lifecycle.** Every order travels one path:
+
+```
+RECEIVED → WASHING → DRYING → FOLDING → READY → COMPLETED
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Forward moves go one step at a time. Moving backward requires a note, cancelling requires a reason, and completed/cancelled orders are terminal. Every transition is recorded with who did it, when, and why — an append-only status history.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Three ways in.**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Who | Where | What |
+| --- | --- | --- |
+| Shop staff / admin | Backoffice (`/dashboard`, `/orders`, `/customers`, `/services`, `/reports`, `/team`, `/settings`) | Receive orders, advance them through the flow, manage customers and services, view reports |
+| Registered customer | Portal (`/portal`) | See own orders, order detail with progress, and profile — nothing else |
+| Anyone with the slip | Public tracking (`/track`) | Enter the tracking code, see the current stage — no account needed |
 
-## Learn More
+**The demo flow.** Receive an order (starts `RECEIVED`) → advance it stage by stage to `READY` → the customer sees "Ready" on the tracking page → staff hit Complete & Mark Paid → the order closes as `COMPLETED` and shows up in reports.
 
-To learn more about Next.js, take a look at the following resources:
+## Architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Next.js 16 App Router** with route groups: `(marketing)`, `(auth)`, `(backoffice)`, `(portal)`, `(public)`.
+- **Auth:** Clerk sessions bridged to an app-level `users` table with `ADMIN` / `STAFF` / `CUSTOMER` roles. Edge middleware requires login on all non-public routes; every server action and data reader re-checks role server-side.
+- **Data:** Supabase Postgres. Orders snapshot service prices at creation; totals stored in centavos. Atomic transitions run through `advance_order_status`, `cancel_order`, and `complete_order` RPCs that verify expected current status (race-safe).
+- **State machine:** `lib/order-machine.ts` is the single source of truth for valid transitions, consumed by both UI and server actions.
+- **UI:** shadcn/ui + Tailwind, Inter, Lucide icons. Shared `StatusBadge` and `OrderFlowStepper` components keep status presentation consistent across backoffice, portal, tracking, and marketing.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project structure
 
-## Deploy on Vercel
+```
+app/(marketing)/      landing page
+app/(backoffice)/     dashboard, orders, customers, services, reports, team, settings
+app/(portal)/         customer orders, order detail, profile
+app/(public)/track/   tracking-code entry + public status page
+components/app/       shared product UI (status badge, flow stepper, …)
+components/marketing/ landing-only visuals
+components/ui/        shadcn/ui primitives
+lib/order-machine.ts  workflow state machine
+lib/actions/          server actions (orders, customers, services, team, profile)
+lib/data/             role-checked data readers
+lib/validation/      zod input schemas
+supabase/migrations/  schema + RPCs
+supabase/seed.ts      demo dataset
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Getting started
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Prerequisites: Node 18+, pnpm, a Supabase project, a Clerk application.
+
+```bash
+pnpm install
+```
+
+Create `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=…
+NEXT_PUBLIC_SUPABASE_ANON_KEY=…
+SUPABASE_SERVICE_ROLE_KEY=…      # server + seed only, never expose
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=…
+CLERK_SECRET_KEY=…
+
+# optional
+NEXT_PUBLIC_SHOP_NAME=LabadaFlow
+DEFAULT_DUE_WINDOW_DAYS=3
+```
+
+Apply the schema (`supabase/migrations/001_initial_schema.sql`) in your Supabase project, then optionally seed demo data (services, customers, orders across every status, full histories):
+
+```bash
+pnpm seed
+```
+
+Run it:
+
+```bash
+pnpm dev      # http://localhost:3000
+pnpm build    # production check (tsc + lint clean)
+```
+
+Sign in via Clerk, then visit `/dashboard` (staff/admin) or `/portal` (customer). First-time sign-ins sync into the `users` table automatically.
+
+## Scope note
+
+LabadaFlow intentionally does not include payments gateways, SMS/email notifications, delivery, AI, realtime sockets, inventory, multi-branch, QR scanning, or loyalty. Completion records pickup + payment timestamps in the order record — that is the full extent of "paid."
