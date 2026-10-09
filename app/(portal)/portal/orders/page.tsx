@@ -15,6 +15,8 @@ function parsePage(raw?: string): number {
   return Math.min(n, 1000)
 }
 
+const PAST_STATUSES = new Set(['COMPLETED', 'CANCELLED'])
+
 export default async function PortalOrdersPage({
   searchParams,
 }: {
@@ -35,6 +37,42 @@ export default async function PortalOrdersPage({
   const { orders, total, page, pageSize } = result
   const totalPages = Math.ceil(total / pageSize)
 
+  // Presentation-only grouping (newest-first preserved within each group).
+  const activeOrders = orders.filter(o => !PAST_STATUSES.has(o.status))
+  const pastOrders = orders.filter(o => PAST_STATUSES.has(o.status))
+
+  function OrderRow({ order }: { order: (typeof orders)[number] }) {
+    const isReady = order.status === 'READY'
+    return (
+      <li key={order.id}>
+        <Link
+          href={`/portal/orders/${order.id}`}
+          aria-label={`Order ${order.order_number}, ${order.status}, ${formatMoney(order.total_cents)}`}
+          className="tnum flex min-h-[60px] items-center gap-3 px-4 py-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-xs font-medium">
+              <span className="truncate">{order.order_number}</span>
+              {isReady && (
+                <span className="inline-flex shrink-0 items-center gap-1 font-sans text-[11px] font-medium text-green-600 dark:text-green-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />
+                  Ready for pickup
+                </span>
+              )}
+            </span>
+            <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+              Received {formatDateTime(order.received_at)}{order.due_at ? ` · Due ${formatDate(order.due_at)}` : ''}
+            </span>
+          </span>
+          <span className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <span className="text-[13px] font-semibold">{formatMoney(order.total_cents)}</span>
+            <StatusBadge status={order.status as OrderStatus} size="sm" />
+          </span>
+        </Link>
+      </li>
+    )
+  }
+
   return (
     <>
       <PageHeader
@@ -49,37 +87,30 @@ export default async function PortalOrdersPage({
         />
       ) : (
         <>
-          <ul className="divide-y divide-border overflow-hidden rounded-lg border bg-card" aria-label="My orders">
-            {orders.map(order => {
-              const isReady = order.status === 'READY'
-              return (
-                <li key={order.id}>
-                  <Link
-                    href={`/portal/orders/${order.id}`}
-                    aria-label={`Order ${order.order_number}, ${order.status}, ${formatMoney(order.total_cents)}`}
-                    className="tnum flex items-center gap-3 px-4 py-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2 font-mono text-xs font-medium">
-                        {order.order_number}
-                        {isReady && (
-                          <span className="inline-flex items-center gap-1 font-sans text-[11px] font-medium text-green-600 dark:text-green-400">
-                            <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />
-                            Ready for pickup
-                          </span>
-                        )}
-                      </span>
-                      <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                        Received {formatDateTime(order.received_at)}{order.due_at ? ` · Due ${formatDate(order.due_at)}` : ''}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-[13px] font-semibold">{formatMoney(order.total_cents)}</span>
-                    <StatusBadge status={order.status as OrderStatus} size="sm" />
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
+          {activeOrders.length > 0 && (
+            <section aria-label="Active orders">
+              <h2 className="mb-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                Active · {activeOrders.length}
+              </h2>
+              <ul className="divide-y divide-border overflow-hidden rounded-lg border bg-card" aria-label="Active orders">
+                {activeOrders.map(order => (
+                  <OrderRow key={order.id} order={order} />
+                ))}
+              </ul>
+            </section>
+          )}
+          {pastOrders.length > 0 && (
+            <section aria-label="Past orders" className={activeOrders.length > 0 ? 'mt-5' : undefined}>
+              <h2 className="mb-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                Completed & cancelled · {pastOrders.length}
+              </h2>
+              <ul className="divide-y divide-border overflow-hidden rounded-lg border bg-card" aria-label="Past orders">
+                {pastOrders.map(order => (
+                  <OrderRow key={order.id} order={order} />
+                ))}
+              </ul>
+            </section>
+          )}
           {totalPages > 1 && (
             <nav className="mt-4 flex items-center justify-center gap-1" aria-label="Orders pagination">
               {page > 1 && (

@@ -51,6 +51,20 @@ export async function createOrder(input: {
     return { error: `Service "${inactiveService.name}" is no longer active` }
   }
 
+  // Verify assignee exists and is an active team member (ADMIN/STAFF only —
+  // never a customer record or a dangling UUID).
+  if (parsed.data.assigned_to) {
+    const { data: assignee } = await supabase
+      .from('users')
+      .select('id, role, is_active')
+      .eq('id', parsed.data.assigned_to)
+      .single()
+
+    if (!assignee || !assignee.is_active || !['ADMIN', 'STAFF'].includes(assignee.role)) {
+      return { error: 'Assigned staff member not found' }
+    }
+  }
+
   // Build order items with snapshotted prices
   const orderItems = parsed.data.items.map(item => {
     const service = services.find(s => s.id === item.service_id)!
@@ -224,6 +238,18 @@ export async function completeOrder(input: { order_id: string }) {
 
   const supabase = await createClient()
 
+  // Completion is only valid from READY. The complete_order RPC also enforces
+  // this (status = 'READY' guard); this pre-check gives a clean error and keeps
+  // the rule visible at the server boundary.
+  const { data: order } = await supabase
+    .from('orders')
+    .select('id, status')
+    .eq('id', parsed.data.order_id)
+    .single()
+
+  if (!order) return { error: 'Order not found' }
+  if (order.status !== 'READY') return { error: 'Only READY orders can be completed' }
+
   // Use RPC for atomic completion (sets COMPLETED + paid_at + completed_at + status event)
   const { error } = await supabase.rpc('complete_order', {
     p_order_id: parsed.data.order_id,
@@ -305,10 +331,12 @@ export async function updateOrderItems(input: {
   if (itemsError) return { error: itemsError.message }
 
   // Update total
-  await supabase
+  const { error: totalError } = await supabase
     .from('orders')
     .update({ total_cents: totalCents, updated_at: new Date().toISOString() })
     .eq('id', parsed.data.order_id)
+
+  if (totalError) return { error: totalError.message }
 
   revalidatePath(`/orders/${parsed.data.order_id}`)
   revalidatePath('/orders')

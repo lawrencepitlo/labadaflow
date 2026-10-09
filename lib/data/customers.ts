@@ -62,10 +62,13 @@ export async function getCustomers(options: {
     query = query.is('archived_at', null)
   }
 
-  // Search
+  // Search. Strip PostgREST `or`-filter syntax characters (`,`/`(`/`)`) so a
+  // search term can never corrupt the filter expression into a query error.
   if (options.search?.trim()) {
-    const term = options.search.trim()
-    query = query.or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,email.ilike.%${term}%`)
+    const term = options.search.trim().replace(/[,()]/g, '')
+    if (term) {
+      query = query.or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,email.ilike.%${term}%`)
+    }
   }
 
   query = query

@@ -134,9 +134,9 @@ export function BackofficeShell({ actor, children }: BackofficeShellProps) {
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-background text-foreground">
+    <div className="flex h-dvh overflow-hidden bg-background text-foreground print:block print:h-auto print:overflow-visible">
       {/* Desktop sidebar */}
-      <aside className="hidden w-[240px] shrink-0 flex-col border-r bg-sidebar lg:flex">
+      <aside className="hidden w-[240px] shrink-0 flex-col border-r bg-sidebar lg:flex print:hidden">
         <div className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
             <Droplets className="h-3.5 w-3.5" aria-hidden="true" />
@@ -184,7 +184,7 @@ export function BackofficeShell({ actor, children }: BackofficeShellProps) {
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Mobile header */}
-        <header className="flex h-12 shrink-0 items-center gap-1 border-b bg-background/80 px-2 backdrop-blur lg:hidden">
+        <header className="flex h-12 shrink-0 items-center gap-1 border-b bg-background/80 px-2 backdrop-blur lg:hidden print:hidden">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -208,7 +208,7 @@ export function BackofficeShell({ actor, children }: BackofficeShellProps) {
         </header>
 
         {/* Desktop context bar */}
-        <header className="hidden h-11 shrink-0 items-center gap-2 border-b bg-background/80 px-6 backdrop-blur lg:flex">
+        <header className="hidden h-11 shrink-0 items-center gap-2 border-b bg-background/80 px-6 backdrop-blur lg:flex print:hidden">
           <nav className="flex min-w-0 items-center gap-1.5 text-[13px]" aria-label="Breadcrumb">
             <span className="shrink-0 text-muted-foreground">LabadaFlow</span>
             <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" aria-hidden="true" />
@@ -229,7 +229,7 @@ export function BackofficeShell({ actor, children }: BackofficeShellProps) {
 
         {/* Mobile drawer */}
         {mobileOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 z-50 lg:hidden print:hidden" role="dialog" aria-modal="true" aria-label="Main navigation">
             <div
               className="absolute inset-0 bg-black/40"
               onClick={() => setMobileOpen(false)}
@@ -271,8 +271,8 @@ export function BackofficeShell({ actor, children }: BackofficeShellProps) {
         )}
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1040px] px-4 py-5 sm:px-6 sm:py-6">
+        <main className="flex-1 overflow-y-auto print:overflow-visible">
+          <div className="mx-auto w-full max-w-[1040px] px-4 py-5 sm:px-6 sm:py-6 print:max-w-none print:px-0 print:py-0">
             {children}
           </div>
         </main>

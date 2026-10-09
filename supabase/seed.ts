@@ -41,6 +41,13 @@ const FORWARD_FLOW = ['RECEIVED', 'WASHING', 'DRYING', 'FOLDING', 'READY', 'COMP
 async function main() {
   loadEnv()
 
+  // Production guard: demo fixtures must never be seeded into a production
+  // database by accident. Pass --allow-prod only when that is intentional.
+  if (process.env.NODE_ENV === 'production' && !process.argv.includes('--allow-prod')) {
+    console.error('Refusing to seed in NODE_ENV=production without --allow-prod.')
+    process.exit(1)
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !serviceKey) {

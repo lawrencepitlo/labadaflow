@@ -93,6 +93,7 @@ export function OrderActions({ orderId, status }: OrderActionsProps) {
               value={note}
               onChange={e => setNote(e.target.value)}
               aria-label="Backward transition note"
+              maxLength={500}
               rows={2}
             />
             <Button
@@ -117,6 +118,7 @@ export function OrderActions({ orderId, status }: OrderActionsProps) {
           value={cancelReason}
           onChange={e => setCancelReason(e.target.value)}
           aria-label="Cancellation reason"
+          maxLength={500}
           rows={2}
         />
         <AlertDialog>

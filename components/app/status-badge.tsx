@@ -45,7 +45,6 @@ export function StatusBadge({
         sizeClasses[size],
         className
       )}
-      role="status"
       aria-label={`Status: ${config.label}`}
     >
       {showIcon && (

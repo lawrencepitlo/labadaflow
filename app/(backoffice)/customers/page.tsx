@@ -8,9 +8,17 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { formatDate } from '@/lib/time'
-import { Plus, Users, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Users, SearchX, ChevronLeft, ChevronRight } from 'lucide-react'
 import { NewCustomerForm } from './new-customer-form'
 import { CustomersSearch } from './customers-search'
+
+function buildPageHref(page: number, search?: string) {
+  const qs = new URLSearchParams()
+  if (page > 1) qs.set('page', String(page))
+  if (search) qs.set('search', search)
+  const s = qs.toString()
+  return s ? `/customers?${s}` : '/customers'
+}
 
 export default async function CustomersPage({
   searchParams,
@@ -30,12 +38,17 @@ export default async function CustomersPage({
 
   const { customers, total, page: currentPage, pageSize } = result
   const totalPages = Math.ceil(total / pageSize)
+  const hasSearch = Boolean(params.search)
 
   return (
     <>
       <PageHeader
         title="Customers"
-        description={params.search ? `${total} matching customer${total === 1 ? '' : 's'}` : `${total} active customer${total === 1 ? '' : 's'}`}
+        description={
+          hasSearch
+            ? `${total} matching customer${total === 1 ? '' : 's'}`
+            : 'Manage customer records and their laundry history.'
+        }
       >
         <Button render={<Link href="#new-customer" />}>
           <Plus aria-hidden="true" />
@@ -46,62 +59,79 @@ export default async function CustomersPage({
       <CustomersSearch key={params.search ?? ''} currentSearch={params.search} />
 
       {customers.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title={params.search ? 'No matching customers' : 'No customers yet'}
-          description={params.search ? 'Try a different search.' : 'Add your first customer — every order needs one.'}
-        />
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <EmptyState
+            icon={hasSearch ? SearchX : Users}
+            title={hasSearch ? 'No matching customers' : 'No customers yet'}
+            description={hasSearch ? 'No customers match this search. Try a different search.' : 'Add your first customer — every order needs one.'}
+          />
+        </div>
       ) : (
-        <>
-          {/* Desktop table */}
-          <Card className="hidden gap-0 overflow-hidden py-0 md:block">
-            <CardContent className="p-0">
-              <Table aria-label="Customers">
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="h-9 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Name</TableHead>
-                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Phone</TableHead>
-                    <TableHead className="hidden h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase lg:table-cell">Email</TableHead>
-                    <TableHead className="h-9 text-center text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Orders</TableHead>
-                    <TableHead className="h-9 pr-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Created</TableHead>
+        <div className="overflow-hidden rounded-lg border bg-card">
+          {/* Desktop — Linear-style directory rows */}
+          <div className="hidden md:block">
+            <Table aria-label="Customers">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="h-8 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Customer</TableHead>
+                  <TableHead className="h-8 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Contact</TableHead>
+                  <TableHead className="h-8 text-center text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Orders</TableHead>
+                  <TableHead className="h-8 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Added</TableHead>
+                  <TableHead className="h-8 w-10 pr-3">
+                    <span className="sr-only">Open</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {customers.map(c => (
+                  <TableRow key={c.id} className="group h-12 transition-colors duration-100 hover:bg-muted/40 focus-within:bg-muted/40">
+                    <TableCell className="pl-4">
+                      <span className="flex items-center gap-2">
+                        <Link
+                          href={`/customers/${c.id}`}
+                          className="max-w-[14rem] truncate rounded text-[13px] font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
+                        >
+                          {c.full_name}
+                        </Link>
+                        {c.archived_at && (
+                          <span className="shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                            Archived
+                          </span>
+                        )}
+                      </span>
+                      {c.email && (
+                        <span className="mt-0.5 block max-w-[14rem] truncate text-xs text-muted-foreground">{c.email}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="tnum text-[13px] text-muted-foreground">{c.phone ?? '—'}</TableCell>
+                    <TableCell className="tnum text-center text-[13px]" title={`${c.order_count} order${c.order_count === 1 ? '' : 's'}`}>
+                      {c.order_count}
+                    </TableCell>
+                    <TableCell className="tnum text-[13px] text-muted-foreground">{formatDate(c.created_at)}</TableCell>
+                    <TableCell className="pr-3 text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-muted-foreground/50 transition-colors duration-100 group-hover:text-foreground"
+                        render={<Link href={`/customers/${c.id}`} aria-label={`Open customer ${c.full_name}`} />}
+                      >
+                        <ChevronRight aria-hidden="true" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {customers.map(c => (
-                    <TableRow key={c.id} className="h-12 hover:bg-muted/40">
-                      <TableCell className="pl-4">
-                        <span className="flex items-center gap-2">
-                          <Link href={`/customers/${c.id}`} className="truncate text-[13px] font-medium text-foreground hover:underline">
-                            {c.full_name}
-                          </Link>
-                          {c.archived_at && (
-                            <span className="shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] text-muted-foreground">
-                              Archived
-                            </span>
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell className="tnum text-[13px] text-muted-foreground">{c.phone ?? '—'}</TableCell>
-                      <TableCell className="hidden max-w-[12rem] truncate text-[13px] text-muted-foreground lg:table-cell">{c.email ?? '—'}</TableCell>
-                      <TableCell className="tnum text-center text-[13px]" title={`${c.order_count} orders`}>
-                        {c.order_count}
-                      </TableCell>
-                      <TableCell className="tnum pr-4 text-[13px] text-muted-foreground">{formatDate(c.created_at)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
-          {/* Mobile compact list */}
-          <ul className="space-y-2 md:hidden">
+          {/* Mobile — same list, stacked rows */}
+          <ul className="divide-y divide-border md:hidden" aria-label="Customers">
             {customers.map(c => (
               <li key={c.id}>
                 <Link
                   href={`/customers/${c.id}`}
                   aria-label={`View customer ${c.full_name}`}
-                  className="block rounded-lg border bg-card p-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none"
+                  className="block px-4 py-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="flex min-w-0 items-center gap-2 truncate text-[13px] font-medium">
@@ -112,7 +142,7 @@ export default async function CustomersPage({
                         </span>
                       )}
                     </p>
-                    <span className="tnum shrink-0 text-[13px] text-muted-foreground">
+                    <span className="tnum shrink-0 text-xs text-muted-foreground" title={`${c.order_count} order${c.order_count === 1 ? '' : 's'}`}>
                       {c.order_count} order{c.order_count === 1 ? '' : 's'}
                     </span>
                   </div>
@@ -124,26 +154,33 @@ export default async function CustomersPage({
             ))}
           </ul>
 
-          {totalPages > 1 && (
-            <nav className="mt-4 flex items-center justify-center gap-1" aria-label="Customers pagination">
-              {currentPage > 1 && (
-                <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={`/customers?page=${currentPage - 1}${params.search ? `&search=${encodeURIComponent(params.search)}` : ''}`} aria-label="Previous page" />}>
-                  <ChevronLeft aria-hidden="true" />
-                  Prev
-                </Button>
+          {/* List footer — count + pagination */}
+          <div className="flex items-center justify-between gap-2 border-t bg-muted/20 px-3 py-2">
+            <p className="tnum px-1 text-xs text-muted-foreground" aria-live="polite">
+              {totalPages > 1 ? (
+                <>Page {currentPage} of {totalPages} · {total} customers</>
+              ) : (
+                <>{total} customer{total === 1 ? '' : 's'}</>
               )}
-              <span className="tnum px-2 text-xs text-muted-foreground" aria-live="polite">
-                Page {currentPage} of {totalPages} · {total} customers
-              </span>
-              {currentPage < totalPages && (
-                <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={`/customers?page=${currentPage + 1}${params.search ? `&search=${encodeURIComponent(params.search)}` : ''}`} aria-label="Next page" />}>
-                  Next
-                  <ChevronRight aria-hidden="true" />
-                </Button>
-              )}
-            </nav>
-          )}
-        </>
+            </p>
+            {totalPages > 1 && (
+              <nav className="flex items-center gap-1" aria-label="Customers pagination">
+                {currentPage > 1 && (
+                  <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={buildPageHref(currentPage - 1, params.search)} aria-label="Previous page" />}>
+                    <ChevronLeft aria-hidden="true" />
+                    Prev
+                  </Button>
+                )}
+                {currentPage < totalPages && (
+                  <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={buildPageHref(currentPage + 1, params.search)} aria-label="Next page" />}>
+                    Next
+                    <ChevronRight aria-hidden="true" />
+                  </Button>
+                )}
+              </nav>
+            )}
+          </div>
+        </div>
       )}
 
       <Card id="new-customer" className="mt-4 scroll-mt-4 gap-0 py-0">

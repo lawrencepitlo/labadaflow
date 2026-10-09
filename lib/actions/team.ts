@@ -5,9 +5,15 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getActorByClerkId } from '@/lib/auth'
 
+const VALID_ROLES = ['ADMIN', 'STAFF', 'CUSTOMER'] as const
+
 export async function updateUserRole(targetUserId: string, newRole: 'ADMIN' | 'STAFF' | 'CUSTOMER') {
   const { userId } = await auth()
   if (!userId) return { error: 'Unauthenticated' }
+
+  // Runtime role check — the TS type is erased at runtime, so a tampered
+  // direct call could otherwise write a garbage role string to the row.
+  if (!VALID_ROLES.includes(newRole)) return { error: 'Invalid role' }
 
   const actor = await getActorByClerkId(userId)
   if (!actor || actor.role !== 'ADMIN') return { error: 'Forbidden — Admin only' }
@@ -58,6 +64,8 @@ export async function updateUserRole(targetUserId: string, newRole: 'ADMIN' | 'S
 export async function toggleUserActive(targetUserId: string, isActive: boolean) {
   const { userId } = await auth()
   if (!userId) return { error: 'Unauthenticated' }
+
+  if (typeof isActive !== 'boolean') return { error: 'Invalid input' }
 
   const actor = await getActorByClerkId(userId)
   if (!actor || actor.role !== 'ADMIN') return { error: 'Forbidden — Admin only' }
@@ -112,7 +120,10 @@ export async function syncUser() {
   try {
     const clerk = await clerkClient()
     const clerkUser = await clerk.users.getUser(userId)
-    const role = (clerkUser.publicMetadata?.role as string) || 'CUSTOMER'
+    const rawRole = clerkUser.publicMetadata?.role as string | undefined
+    // Allow-list: Clerk metadata is operator-controlled, but never let an
+    // unexpected value reach the users.role column.
+    const role = rawRole && (VALID_ROLES as readonly string[]).includes(rawRole) ? rawRole : 'CUSTOMER'
     const fullName = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.emailAddresses?.[0]?.emailAddress || 'Unknown'
     const email = clerkUser.emailAddresses?.[0]?.emailAddress || ''
 
@@ -144,12 +155,17 @@ export async function syncUser() {
   } catch {
     return { error: 'Failed to sync user' }
   } finally {
-    // Link customer record by email on first login (non-blocking)
+    // Link customer record by email on first login (non-blocking).
+    // Only verified Clerk emails may claim a record — otherwise anyone could
+    // register an unverified address matching a customer's email and inherit
+    // their order history.
     try {
       const clerk = await clerkClient()
       const clerkUser = await clerk.users.getUser(userId)
-      const email = clerkUser.emailAddresses?.[0]?.emailAddress?.toLowerCase()
-      if (email) {
+      const primary = clerkUser.emailAddresses?.[0]
+      const email = primary?.emailAddress?.toLowerCase()
+      const verified = primary?.verification?.status === 'verified'
+      if (email && verified) {
         const supabase2 = await createClient()
         const { data: matches } = await supabase2
           .from('customers')

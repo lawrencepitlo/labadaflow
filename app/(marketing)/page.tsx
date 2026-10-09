@@ -82,7 +82,7 @@ export default function MarketingPage() {
             <Reveal delay={220}>
               <div className="mt-9 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
                 <Link
-                  href="/login"
+                  href="/sign-in"
                   className="inline-flex h-10 items-center gap-2 rounded-md bg-white px-5 text-[14px] font-medium text-black transition-colors hover:bg-zinc-200"
                 >
                   Get started
@@ -208,7 +208,7 @@ export default function MarketingPage() {
               </p>
               <div className="mt-8">
                 <Link
-                  href="/login"
+                  href="/sign-in"
                   className="inline-flex h-10 items-center gap-2 rounded-md bg-white px-5 text-[14px] font-medium text-black transition-colors hover:bg-zinc-200"
                 >
                   Get started
@@ -296,7 +296,7 @@ export default function MarketingPage() {
                   </p>
                   <div className="mt-9 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
                     <Link
-                      href="/login"
+                      href="/sign-in"
                       className="inline-flex h-10 items-center gap-2 rounded-md bg-white px-5 text-[14px] font-medium text-black transition-colors hover:bg-zinc-200"
                     >
                       Get started
@@ -336,7 +336,7 @@ export default function MarketingPage() {
             <Link href="/track" className="transition-colors hover:text-white">
               Tracking
             </Link>
-            <Link href="/login" className="transition-colors hover:text-white">
+            <Link href="/sign-in" className="transition-colors hover:text-white">
               Sign in
             </Link>
           </nav>

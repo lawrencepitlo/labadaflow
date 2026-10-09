@@ -54,7 +54,7 @@ export function OrderItemsEditor({ orderId, items, services }: OrderItemsEditorP
       {rows.map((row, i) => (
         <div key={i} className="flex items-center gap-2">
           <Select value={row.service_id} onValueChange={v => { if (v !== null) updateRow(i, { service_id: v }) }}>
-            <SelectTrigger className="min-w-0 flex-1" aria-label={`Service for item ${i + 1}`}>
+            <SelectTrigger className="min-w-0 flex-1" aria-label={`Service for item ${i + 1}`} disabled={isPending}>
               <SelectValue placeholder="Select service" />
             </SelectTrigger>
             <SelectContent>
@@ -73,15 +73,17 @@ export function OrderItemsEditor({ orderId, items, services }: OrderItemsEditorP
             onChange={e => updateRow(i, { quantity: Number(e.target.value) })}
             className="tnum w-20 shrink-0"
             aria-label={`Quantity for item ${i + 1}`}
+            disabled={isPending}
           />
           <Button
             variant="ghost"
             size="icon-sm"
             className="shrink-0 text-muted-foreground hover:text-foreground"
             onClick={() => setRows(rows => rows.filter((_, idx) => idx !== i))}
+            disabled={isPending}
             aria-label={`Remove item ${i + 1}`}
           >
-            <Trash2 />
+            <Trash2 aria-hidden="true" />
           </Button>
         </div>
       ))}
@@ -90,6 +92,7 @@ export function OrderItemsEditor({ orderId, items, services }: OrderItemsEditorP
           variant="outline"
           size="sm"
           onClick={() => setRows(rows => [...rows, { service_id: '', quantity: 1 }])}
+          disabled={isPending}
         >
           <Plus /> Add item
         </Button>

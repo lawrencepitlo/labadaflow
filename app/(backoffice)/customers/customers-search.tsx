@@ -53,7 +53,7 @@ export function CustomersSearch({ currentSearch }: { currentSearch?: string }) {
   void searchParams
 
   return (
-    <div className="mb-4 flex items-center gap-2" role="search" aria-label="Search customers">
+    <div className="mb-3 flex items-center gap-2" role="search" aria-label="Search customers">
       <div className="relative min-w-0 max-w-md flex-1">
         <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" aria-hidden="true" />
         <Input

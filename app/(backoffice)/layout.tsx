@@ -10,7 +10,7 @@ export default async function BackofficeLayout({
   children: React.ReactNode
 }) {
   const { userId } = await auth()
-  if (!userId) redirect('/login')
+  if (!userId) redirect('/sign-in')
 
   // Sync user to Supabase if not exists
   await syncUser()

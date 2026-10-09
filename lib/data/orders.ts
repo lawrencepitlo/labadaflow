@@ -114,10 +114,15 @@ export async function getOrders(options: {
     query = query.eq('status', options.status)
   }
 
-  // Search by order number or customer name
+  // Search by order number or customer name.
+  // Strip PostgREST `or`-filter syntax characters (`,`/`(`/`)`) so a search
+  // term can never corrupt the filter expression into a query error (which
+  // would surface as an "Access Denied" empty state for an authorized user).
   if (options.search?.trim()) {
-    const term = options.search.trim()
-    query = query.or(`order_number.ilike.%${term}%,tracking_code.ilike.%${term}%,customers.full_name.ilike.%${term}%`)
+    const term = options.search.trim().replace(/[,()]/g, '')
+    if (term) {
+      query = query.or(`order_number.ilike.%${term}%,tracking_code.ilike.%${term}%,customers.full_name.ilike.%${term}%`)
+    }
   }
 
   query = query
@@ -183,20 +188,6 @@ export async function getOrderById(orderId: string): Promise<OrderDetailDTO | nu
   }
 
   return data as unknown as OrderDetailDTO
-}
-
-/**
- * Get order for mutation — minimal data needed for server action validation.
- */
-export async function getOrderForMutation(orderId: string) {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('orders')
-    .select('id, status, customer_id, total_cents')
-    .eq('id', orderId)
-    .single()
-
-  return data
 }
 
 /**

@@ -11,15 +11,15 @@ export default async function PortalLayout({
   children: React.ReactNode
 }) {
   const { userId } = await auth()
-  if (!userId) redirect('/login')
+  if (!userId) redirect('/sign-in')
 
   await syncUser()
 
   const actor = await getActorByClerkId(userId)
-  if (!actor) redirect('/login')
+  if (!actor) redirect('/sign-in')
 
   if (actor.role !== 'CUSTOMER') {
-    redirect(actor.role === 'ADMIN' || actor.role === 'STAFF' ? '/dashboard' : '/login')
+    redirect(actor.role === 'ADMIN' || actor.role === 'STAFF' ? '/dashboard' : '/sign-in')
   }
 
   const customer = await getCustomerByClerkId(userId)

@@ -26,13 +26,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
-      <html
-        lang="en"
-        className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
-        suppressHydrationWarning
-      >
-        <body className="min-h-full flex flex-col">
+    <html
+      lang="en"
+      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
+      suppressHydrationWarning
+    >
+      <body className="min-h-full flex flex-col">
+        <ClerkProvider
+          signInFallbackRedirectUrl="/dashboard"
+          signUpFallbackRedirectUrl="/dashboard"
+        >
           <script
             dangerouslySetInnerHTML={{
               __html: `(function(){try{var t=localStorage.getItem('labadaflow-theme');if(t==='dark'){document.documentElement.classList.add('dark')}else if(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark')}}catch(e){}})();`,
@@ -42,8 +45,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
             <Toaster />
           </TooltipProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

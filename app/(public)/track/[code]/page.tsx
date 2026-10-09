@@ -16,7 +16,13 @@ export default async function TrackCodePage({
   params: Promise<{ code: string }>
 }) {
   const { code } = await params
-  const order = await getOrderByTrackingCode(decodeURIComponent(code))
+  let trackingCode = ''
+  try {
+    trackingCode = decodeURIComponent(code)
+  } catch {
+    trackingCode = ''
+  }
+  const order = trackingCode ? await getOrderByTrackingCode(trackingCode) : null
 
   const isCompleted = order?.status === 'COMPLETED'
   const isCancelled = order?.status === 'CANCELLED'

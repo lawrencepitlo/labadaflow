@@ -8,7 +8,9 @@ export const CreateOrderSchema = z.object({
   notes: z.string().max(1000).optional().nullable(),
   items: z.array(z.object({
     service_id: z.string().uuid(),
-    quantity: z.number().positive('Quantity must be positive'),
+    // Upper bound keeps unit_price_cents × quantity within Number.MAX_SAFE_INTEGER
+    // (max unit price 99,999,999 × 100,000 ≈ 1e13 < 9e15), so totals stay exact.
+    quantity: z.number().positive('Quantity must be positive').max(100000, 'Quantity is too large'),
   })).min(1, 'At least one item is required'),
 })
 
@@ -16,7 +18,7 @@ export const UpdateOrderItemsSchema = z.object({
   order_id: z.string().uuid(),
   items: z.array(z.object({
     service_id: z.string().uuid(),
-    quantity: z.number().positive('Quantity must be positive'),
+    quantity: z.number().positive('Quantity must be positive').max(100000, 'Quantity is too large'),
   })).min(1, 'At least one item is required'),
 })
 

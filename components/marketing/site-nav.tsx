@@ -61,13 +61,13 @@ export function SiteNav() {
 
         <div className="hidden items-center gap-1 md:flex">
           <Link
-            href="/login"
+            href="/sign-in"
             className="rounded-md px-3 py-1.5 text-[13px] text-zinc-400 transition-colors hover:text-white"
           >
             Sign in
           </Link>
           <Link
-            href="/login"
+            href="/sign-in"
             className="ml-1 inline-flex h-8 items-center gap-1.5 rounded-md bg-white px-3.5 text-[13px] font-medium text-black transition-colors hover:bg-zinc-200"
           >
             Get started
@@ -102,14 +102,14 @@ export function SiteNav() {
           </nav>
           <div className="mt-3 flex gap-2">
             <Link
-              href="/login"
+              href="/sign-in"
               onClick={() => setOpen(false)}
               className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-white/10 text-[13px] font-medium text-white"
             >
               Sign in
             </Link>
             <Link
-              href="/login"
+              href="/sign-in"
               onClick={() => setOpen(false)}
               className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md bg-white text-[13px] font-medium text-black"
             >

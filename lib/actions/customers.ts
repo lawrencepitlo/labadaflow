@@ -6,6 +6,12 @@ import { createClient } from '@/lib/supabase/server'
 import { getActorByClerkId } from '@/lib/auth'
 import { CreateCustomerSchema, UpdateCustomerSchema } from '@/lib/validation/customer'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function isUuid(value: unknown): value is string {
+  return typeof value === 'string' && UUID_RE.test(value)
+}
+
 export async function createCustomer(formData: FormData) {
   const { userId } = await auth()
   if (!userId) return { error: 'Unauthenticated' }
@@ -80,6 +86,8 @@ export async function archiveCustomer(customerId: string) {
   const { userId } = await auth()
   if (!userId) return { error: 'Unauthenticated' }
 
+  if (!isUuid(customerId)) return { error: 'Invalid input' }
+
   const actor = await getActorByClerkId(userId)
   if (!actor || actor.role !== 'ADMIN') return { error: 'Forbidden — Admin only' }
 
@@ -99,6 +107,8 @@ export async function archiveCustomer(customerId: string) {
 export async function restoreCustomer(customerId: string) {
   const { userId } = await auth()
   if (!userId) return { error: 'Unauthenticated' }
+
+  if (!isUuid(customerId)) return { error: 'Invalid input' }
 
   const actor = await getActorByClerkId(userId)
   if (!actor || actor.role !== 'ADMIN') return { error: 'Forbidden — Admin only' }

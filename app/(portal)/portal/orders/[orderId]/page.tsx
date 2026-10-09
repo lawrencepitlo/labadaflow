@@ -24,7 +24,14 @@ export default async function PortalOrderDetailPage({
   const order = await getOrderById(orderId)
 
   if (!order) {
-    return <EmptyState title="Order not found" description="This order does not exist or does not belong to you." />
+    return (
+      <EmptyState
+        title="Order not found"
+        description="This order does not exist or does not belong to you."
+        actionLabel="Back to my orders"
+        actionHref="/portal/orders"
+      />
+    )
   }
 
   const isReady = order.status === 'READY'
@@ -71,7 +78,7 @@ export default async function PortalOrderDetailPage({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-3 lg:items-start">
         <div className="space-y-4 lg:col-span-2">
           <Card className="gap-0 py-0">
             <CardHeader className="px-4 py-3">
@@ -94,7 +101,7 @@ export default async function PortalOrderDetailPage({
                 ))}
               </ul>
               {/* Desktop: table */}
-              <div className="hidden overflow-hidden rounded-md border sm:block">
+              <div className="hidden overflow-x-auto rounded-md border sm:block">
                 <Table aria-label="Order items">
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
@@ -163,7 +170,7 @@ export default async function PortalOrderDetailPage({
           </Card>
         </div>
 
-        <Card className="h-fit gap-0 py-0">
+        <Card className="order-first h-fit gap-0 py-0 lg:order-none">
           <CardHeader className="px-4 py-3">
             <CardTitle className="text-[13px]">Details</CardTitle>
           </CardHeader>
@@ -187,8 +194,8 @@ export default async function PortalOrderDetailPage({
               </div>
             </dl>
             <div className="mt-3 flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-2.5 py-1.5">
-              <span className="text-xs text-muted-foreground">Tracking</span>
-              <code className="truncate font-mono text-xs">{order.tracking_code}</code>
+              <span className="shrink-0 text-xs text-muted-foreground">Tracking</span>
+              <code className="min-w-0 truncate font-mono text-xs">{order.tracking_code}</code>
             </div>
             {order.cancel_reason && (
               <p className="mt-3 text-[13px] text-muted-foreground">

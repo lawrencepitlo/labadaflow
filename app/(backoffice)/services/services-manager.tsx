@@ -81,69 +81,77 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
   return (
     <div className="space-y-4">
       {services.length === 0 ? (
-        <EmptyState
-          icon={Package}
-          title="No services yet"
-          description={canEdit ? 'Create your first service — orders are priced from this catalog.' : 'No services available yet.'}
-        />
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <EmptyState
+            icon={Package}
+            title="No services yet"
+            description={canEdit ? 'Create your first service — orders are priced from this catalog.' : 'No services available yet.'}
+          />
+        </div>
       ) : (
-        <>
-          {/* Desktop table */}
-          <Card className="hidden gap-0 overflow-hidden py-0 md:block">
-            <CardHeader className="px-4 py-3">
-              <CardTitle className="text-[13px]">Catalog</CardTitle>
-              <CardDescription>Inactive services stay hidden from new orders</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table aria-label="Services">
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="h-9 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Name</TableHead>
-                    <TableHead className="h-9 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Unit price</TableHead>
-                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Unit</TableHead>
-                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <div className="px-4 py-3">
+            <h2 className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Catalog</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">Inactive services stay hidden from new orders</p>
+          </div>
+          {/* Desktop — Linear-style config rows */}
+          <div className="hidden border-t md:block">
+            <Table aria-label="Services">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="h-8 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Service</TableHead>
+                  <TableHead className="h-8 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Price</TableHead>
+                  <TableHead className="h-8 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
+                  {canEdit && (
+                    <TableHead className="h-8 pr-4 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {services.map(s => (
+                  <TableRow key={s.id} className={`transition-colors duration-100 hover:bg-muted/40 focus-within:bg-muted/40 ${s.is_active ? '' : 'opacity-60'}`}>
+                    <TableCell className="pl-4">
+                      <div className="text-[13px] font-medium">{s.name}</div>
+                      {s.description && <div className="mt-0.5 max-w-sm truncate text-xs text-muted-foreground">{s.description}</div>}
+                    </TableCell>
+                    <TableCell className="tnum text-right text-[13px]">
+                      <span className="font-medium">{formatMoney(s.unit_price_cents)}</span>
+                      <span className="ml-1.5 text-xs text-muted-foreground">/ {s.pricing_unit === 'PER_KG' ? 'kg' : 'piece'}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center gap-1.5 text-xs ${s.is_active ? 'text-foreground' : 'text-muted-foreground'}`} aria-label={s.is_active ? `${s.name} active` : `${s.name} inactive`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${s.is_active ? 'bg-green-500' : 'bg-muted-foreground/40'}`} aria-hidden="true" />
+                        {s.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </TableCell>
                     {canEdit && (
-                      <TableHead className="h-9 pr-4 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                        <span className="sr-only">Actions</span>
-                      </TableHead>
+                      <TableCell className="pr-4 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground"
+                          onClick={() => toggle(s.id, !s.is_active)}
+                          disabled={isPending}
+                          aria-label={`${s.is_active ? 'Deactivate' : 'Activate'} ${s.name}`}
+                        >
+                          {s.is_active ? 'Deactivate' : 'Activate'}
+                        </Button>
+                      </TableCell>
                     )}
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {services.map(s => (
-                    <TableRow key={s.id} className={`h-12 hover:bg-muted/40 ${s.is_active ? '' : 'opacity-60'}`}>
-                      <TableCell className="pl-4">
-                        <div className="text-[13px] font-medium">{s.name}</div>
-                        {s.description && <div className="mt-0.5 max-w-sm truncate text-xs text-muted-foreground">{s.description}</div>}
-                      </TableCell>
-                      <TableCell className="tnum text-right text-[13px] font-semibold">{formatMoney(s.unit_price_cents)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{s.pricing_unit === 'PER_KG' ? 'Per kg' : 'Per piece'}</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center gap-1.5 text-xs ${s.is_active ? 'text-foreground' : 'text-muted-foreground'}`} aria-label={s.is_active ? `${s.name} active` : `${s.name} inactive`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${s.is_active ? 'bg-green-500' : 'bg-muted-foreground/40'}`} aria-hidden="true" />
-                          {s.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                      </TableCell>
-                      {canEdit && (
-                        <TableCell className="pr-4 text-right">
-                          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => toggle(s.id, !s.is_active)} disabled={isPending}>
-                            {s.is_active ? 'Deactivate' : 'Activate'}
-                          </Button>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
-          {/* Mobile compact list */}
-          <ul className="space-y-2 md:hidden" aria-label="Services">
+          {/* Mobile — same list, stacked rows */}
+          <ul className="divide-y divide-border border-t md:hidden" aria-label="Services">
             {services.map(s => (
               <li
                 key={s.id}
-                className={`rounded-lg border bg-card p-3 ${s.is_active ? '' : 'opacity-70'}`}
+                className={`px-4 py-3 ${s.is_active ? '' : 'opacity-70'}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="min-w-0 truncate text-[13px] font-medium">{s.name}</p>
@@ -157,13 +165,20 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
                 )}
                 <div className="mt-1.5 flex items-center justify-between gap-2">
                   <p className="tnum text-[13px]">
-                    <span className="font-semibold">{formatMoney(s.unit_price_cents)}</span>
+                    <span className="font-medium">{formatMoney(s.unit_price_cents)}</span>
                     <span className="ml-1.5 text-xs text-muted-foreground">
-                      {s.pricing_unit === 'PER_KG' ? 'Per kg' : 'Per piece'}
+                      / {s.pricing_unit === 'PER_KG' ? 'kg' : 'piece'}
                     </span>
                   </p>
                   {canEdit && (
-                    <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => toggle(s.id, !s.is_active)} disabled={isPending}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground"
+                      onClick={() => toggle(s.id, !s.is_active)}
+                      disabled={isPending}
+                      aria-label={`${s.is_active ? 'Deactivate' : 'Activate'} ${s.name}`}
+                    >
                       {s.is_active ? 'Deactivate' : 'Activate'}
                     </Button>
                   )}
@@ -171,7 +186,7 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
               </li>
             ))}
           </ul>
-        </>
+        </div>
       )}
 
       {canEdit && (
@@ -231,12 +246,12 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
                 {services.map(s => (
                   <form key={s.id} action={fd => submitUpdate(fd, s)} className="grid grid-cols-1 gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Name</Label>
-                    <Input name="name" required maxLength={100} defaultValue={s.name} aria-label={`Name for ${s.name}`} />
+                    <Label htmlFor={`edit-name-${s.id}`}>Name</Label>
+                    <Input id={`edit-name-${s.id}`} name="name" required maxLength={100} defaultValue={s.name} aria-label={`Name for ${s.name}`} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Input name="description" defaultValue={s.description ?? ''} aria-label={`Description for ${s.name}`} />
+                    <Label htmlFor={`edit-description-${s.id}`}>Description</Label>
+                    <Input id={`edit-description-${s.id}`} name="description" defaultValue={s.description ?? ''} aria-label={`Description for ${s.name}`} />
                   </div>
                   <div className="space-y-2">
                     <Label>Pricing unit</Label>
@@ -254,8 +269,9 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Unit price (₱)</Label>
+                    <Label htmlFor={`edit-price-${s.id}`}>Unit price (₱)</Label>
                     <Input
+                      id={`edit-price-${s.id}`}
                       name="unit_price_pesos"
                       type="number"
                       min={0}
@@ -266,8 +282,8 @@ export function ServicesManager({ services, canEdit }: ServicesManagerProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Sort order</Label>
-                    <Input name="sort_order" type="number" defaultValue={s.sort_order} aria-label={`Sort order for ${s.name}`} />
+                    <Label htmlFor={`edit-sort-${s.id}`}>Sort order</Label>
+                    <Input id={`edit-sort-${s.id}`} name="sort_order" type="number" defaultValue={s.sort_order} aria-label={`Sort order for ${s.name}`} />
                   </div>
                   <div className="flex items-end">
                     <Button type="submit" variant="outline" disabled={isPending}>Save</Button>

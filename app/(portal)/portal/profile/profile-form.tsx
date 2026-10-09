@@ -42,30 +42,33 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   }
 
   return (
-    <form action={submit} className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
-      <div className="space-y-2">
+    <form action={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-busy={isPending}>
+      <div className="space-y-1.5">
         <Label htmlFor="full_name">Full name *</Label>
-        <Input id="full_name" name="full_name" required maxLength={100} defaultValue={profile.full_name} />
+        <Input id="full_name" name="full_name" required maxLength={100} defaultValue={profile.full_name} autoComplete="name" disabled={isPending} />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="phone">Phone</Label>
-        <Input id="phone" name="phone" maxLength={20} defaultValue={profile.phone ?? ''} autoComplete="tel" inputMode="tel" />
+        <Input id="phone" name="phone" maxLength={20} defaultValue={profile.phone ?? ''} autoComplete="tel" inputMode="tel" disabled={isPending} />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" defaultValue={profile.email ?? ''} autoComplete="email" />
+        <Input id="email" name="email" type="email" maxLength={255} defaultValue={profile.email ?? ''} autoComplete="email" disabled={isPending} />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="address">Address</Label>
-        <Input id="address" name="address" maxLength={255} defaultValue={profile.address ?? ''} autoComplete="street-address" />
+        <Input id="address" name="address" maxLength={255} defaultValue={profile.address ?? ''} autoComplete="street-address" disabled={isPending} />
       </div>
       {error && <p className="text-xs text-destructive sm:col-span-2" role="alert">{error}</p>}
       {success && <p className="text-xs text-muted-foreground sm:col-span-2" role="status">Profile updated.</p>}
       <div className="sm:col-span-2">
         <Button type="submit" disabled={isPending} aria-live="polite">
-          {isPending ? 'Saving…' : 'Save Profile'}
+          {isPending ? 'Saving…' : 'Save changes'}
         </Button>
       </div>
+      <p className="text-xs text-muted-foreground sm:col-span-2">
+        The shop uses this to match your orders and reach you about pickups.
+      </p>
     </form>
   )
 }

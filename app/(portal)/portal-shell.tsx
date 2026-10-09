@@ -31,7 +31,7 @@ export function PortalShell({
             </span>
             <span className="text-[13px] font-semibold">LabadaFlow</span>
           </Link>
-          <nav className="ml-3 flex items-center gap-px" aria-label="Customer portal">
+          <nav className="ml-3 flex items-center gap-1" aria-label="Customer portal">
             {NAV.map(item => {
               const active = pathname.startsWith(item.href)
               return (
@@ -40,7 +40,7 @@ export function PortalShell({
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'flex h-7 items-center gap-1.5 rounded-md px-2 text-[13px] outline-none transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none',
+                    'flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] outline-none transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none',
                     active
                       ? 'bg-accent font-medium text-foreground'
                       : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
