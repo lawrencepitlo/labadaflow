@@ -64,64 +64,61 @@ export default async function TrackCodePage({
             />
           ) : (
             <>
-              <div className="mb-5 text-center">
-                <p className="tnum mb-1 font-mono text-xs text-muted-foreground">Order {order.order_number}</p>
-                <h1 className="text-2xl font-semibold tracking-tight">
+              <div className="mb-6 text-center">
+                <span className="inline-block font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/60 px-3 py-1 rounded-full mb-3">
+                  Order {order.order_number}
+                </span>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
                   {STATUS_CONFIG[order.status as OrderStatus]?.label ?? order.status}
                 </h1>
-                <div className="mt-2 flex justify-center">
+                <div className="mt-3 flex justify-center">
                   <StatusBadge status={order.status as OrderStatus} size="md" />
                 </div>
                 {notice && (
-                  <p className="tnum mx-auto mt-3 flex max-w-sm items-center justify-center gap-2 text-[13px] text-muted-foreground" role="status">
-                    <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', notice.dot)} aria-hidden="true" />
+                  <p className="tnum mx-auto mt-4 flex max-w-sm items-center justify-center gap-2 rounded-xl bg-muted/40 border px-3.5 py-2 text-xs text-foreground font-medium" role="status">
+                    <span className={cn('h-2 w-2 shrink-0 rounded-full', notice.dot)} aria-hidden="true" />
                     {notice.text}
                   </p>
                 )}
               </div>
 
               {!isCancelled && (
-                <Card className="mb-3 gap-0 py-0">
-                  <CardHeader className="px-4 py-3">
-                    <CardTitle className="text-[13px]">Where&apos;s my laundry?</CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-4">
-                    <OrderFlowStepper currentStatus={order.status as OrderStatus} />
-                    <p className="mt-3 border-t pt-3 text-xs text-muted-foreground">
-                      {ORDER_STATUS_FLOW.includes(order.status as OrderStatus)
-                        ? 'We update this page as your load moves through the shop.'
-                        : 'This order is no longer in the active workflow.'}
-                    </p>
-                  </CardContent>
-                </Card>
+                <div className="mb-4 overflow-hidden rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+                  <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase mb-4">Live Laundry Progress</h2>
+                  <OrderFlowStepper currentStatus={order.status as OrderStatus} />
+                  <p className="mt-4 border-t pt-3 text-xs text-muted-foreground">
+                    {ORDER_STATUS_FLOW.includes(order.status as OrderStatus)
+                      ? 'Status updates in real-time as your laundry moves through each machine.'
+                      : 'This order is no longer in the active workflow.'}
+                  </p>
+                </div>
               )}
 
-              <Card className="gap-0 py-0">
-                <CardContent className="px-4 py-4">
-                  <dl className="tnum divide-y divide-border text-[13px]">
-                    <div className="flex items-center justify-between gap-2 py-2 first:pt-0">
-                      <dt className="text-xs text-muted-foreground">Received</dt>
-                      <dd className="font-medium">{formatDate(order.received_at)}</dd>
-                    </div>
-                    {order.due_at && (
-                      <div className="flex items-center justify-between gap-2 py-2">
-                        <dt className="text-xs text-muted-foreground">Estimated ready</dt>
-                        <dd className="font-medium">{formatDate(order.due_at)}</dd>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between gap-2 py-2 last:pb-0">
-                      <dt className="text-xs text-muted-foreground">Last update</dt>
-                      <dd className="font-medium">{formatDate(order.updated_at)}</dd>
-                    </div>
-                  </dl>
-                  <div className="mt-3 border-t pt-3">
-                    <Button render={<Link href="/track" />} variant="outline" className="w-full">
-                      <Search aria-hidden="true" />
-                      Track another order
-                    </Button>
+              <div className="overflow-hidden rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+                <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase mb-3">Order Details</h2>
+                <dl className="tnum divide-y divide-border/60 text-xs">
+                  <div className="flex items-center justify-between gap-2 py-2.5 first:pt-0">
+                    <dt className="text-muted-foreground">Intake Date</dt>
+                    <dd className="font-semibold text-foreground">{formatDate(order.received_at)}</dd>
                   </div>
-                </CardContent>
-              </Card>
+                  {order.due_at && (
+                    <div className="flex items-center justify-between gap-2 py-2.5">
+                      <dt className="text-muted-foreground">Target Ready Date</dt>
+                      <dd className="font-semibold text-foreground">{formatDate(order.due_at)}</dd>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-2 py-2.5 last:pb-0">
+                    <dt className="text-muted-foreground">Last Updated</dt>
+                    <dd className="font-semibold text-foreground">{formatDate(order.updated_at)}</dd>
+                  </div>
+                </dl>
+                <div className="mt-5 border-t pt-4">
+                  <Button render={<Link href="/track" />} variant="outline" className="w-full">
+                    <Search className="h-4 w-4 mr-1.5" aria-hidden="true" />
+                    Track another order
+                  </Button>
+                </div>
+              </div>
             </>
           )}
         </div>

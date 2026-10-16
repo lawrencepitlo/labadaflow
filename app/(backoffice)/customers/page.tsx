@@ -72,17 +72,17 @@ export default async function CustomersPage({
           />
         </div>
       ) : (
-        <div className="mt-5 overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
+        <div className="mt-5 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
           {/* Desktop — Linear-style directory rows */}
           <div className="hidden md:block">
             <Table aria-label="Customers">
-              <TableHeader>
+              <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="h-8 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Customer</TableHead>
-                  <TableHead className="h-8 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Contact</TableHead>
-                  <TableHead className="h-8 text-center text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Orders</TableHead>
-                  <TableHead className="h-8 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Added</TableHead>
-                  <TableHead className="h-8 w-10 pr-3">
+                  <TableHead className="h-10 pl-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Customer</TableHead>
+                  <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Contact</TableHead>
+                  <TableHead className="h-10 text-center text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Orders</TableHead>
+                  <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Added</TableHead>
+                  <TableHead className="h-10 w-10 pr-3">
                     <span className="sr-only">Open</span>
                   </TableHead>
                 </TableRow>

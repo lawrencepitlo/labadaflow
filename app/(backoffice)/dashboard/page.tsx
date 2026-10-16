@@ -143,24 +143,24 @@ export default async function DashboardPage() {
         </Button>
       </PageHeader>
 
-      {/* Overview — one quiet strip, no decorative cards */}
-      <section aria-label="Overview">
-        <div className="grid grid-cols-2 overflow-hidden rounded-lg border bg-card lg:grid-cols-4">
+      {/* Overview — modern KPI cards */}
+      <section aria-label="Overview" className="mt-6">
+        <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
           {overview.map(item => (
             <Link
               key={item.label}
               href={item.href}
-              className="tnum block p-4 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none odd:border-r lg:odd:border-r-0 lg:[&:not(:first-child)]:border-l [&:nth-child(n+3)]:border-t lg:[&:nth-child(n+3)]:border-t-0"
+              className="tnum group block rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-border hover:shadow-sm"
               aria-label={`${item.label}: ${item.value}`}
             >
-              <p className="flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                 {item.dot && (
-                  <span className={cn('h-1.5 w-1.5 rounded-full', item.dot)} aria-hidden="true" />
+                  <span className={cn('h-2 w-2 rounded-full ring-2 ring-emerald-500/20', item.dot)} aria-hidden="true" />
                 )}
                 {item.label}
               </p>
-              <p className="mt-1 text-xl font-semibold tracking-tight">{item.value}</p>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.sub}</p>
+              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">{item.value}</p>
+              <p className="mt-1 truncate text-xs text-muted-foreground">{item.sub}</p>
             </Link>
           ))}
         </div>
@@ -172,7 +172,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Needs attention */}
-      <Card className="mt-6 gap-0 overflow-hidden rounded-xl border border-border/80 shadow-xs py-0">
+      <Card className="mt-6 gap-0 overflow-hidden rounded-2xl border border-border/80 shadow-xs py-0">
         <CardHeader className="px-5 py-4">
           <CardTitle className="text-sm font-semibold">Needs attention</CardTitle>
           <CardDescription className="text-xs">Orders waiting on staff action</CardDescription>
@@ -223,16 +223,18 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Order pipeline */}
-      <Card className="mt-6 gap-0 overflow-hidden rounded-xl border border-border/80 shadow-xs py-0">
+      <Card className="mt-6 gap-0 overflow-hidden rounded-2xl border border-border/80 shadow-xs py-0">
         <CardHeader className="px-5 py-4">
-          <CardTitle className="text-sm font-semibold">Order pipeline</CardTitle>
-          <CardDescription className="text-xs">Live count per stage — select a stage to view orders.</CardDescription>
+          <div>
+            <CardTitle className="text-sm font-semibold">Order pipeline</CardTitle>
+            <CardDescription className="text-xs">Live count per stage — select a stage to view orders.</CardDescription>
+          </div>
           <CardAction>
-            <span className="tnum text-xs font-medium text-muted-foreground">{totalOrders} total orders</span>
+            <span className="tnum font-mono text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md">{totalOrders} total orders</span>
           </CardAction>
         </CardHeader>
-        <CardContent className="px-3 pb-3">
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-3 xl:grid-cols-6">
+        <CardContent className="px-5 pb-5 pt-1">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
             {flow.map(({ status, count }) => {
               const share = totalOrders > 0 ? Math.min(100, (count / totalOrders) * 100) : 0
               return (
@@ -240,19 +242,19 @@ export default async function DashboardPage() {
                   key={status}
                   href={`/orders?status=${status}`}
                   aria-label={`${status}: ${count} orders`}
-                  className="tnum bg-card p-3.5 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
+                  className="tnum group rounded-xl border border-border/70 bg-card p-3.5 outline-none transition-all hover:border-primary/40 hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40"
                 >
                   <div className="flex items-center gap-2">
                     <span className={cn('h-2 w-2 shrink-0 rounded-full', STATUS_DOT_CLASS[status])} aria-hidden="true" />
                     <span className="truncate text-xs font-semibold text-foreground">
                       {status.charAt(0) + status.slice(1).toLowerCase()}
                     </span>
-                    <span className="ml-auto text-sm font-bold tracking-tight text-foreground">{count}</span>
+                    <span className="ml-auto font-mono text-sm font-bold tracking-tight text-foreground">{count}</span>
                   </div>
-                  <p className="mt-1 truncate text-xs text-muted-foreground">{FLOW_DESCRIPTION[status]}</p>
+                  <p className="mt-1.5 truncate text-[11px] text-muted-foreground">{FLOW_DESCRIPTION[status]}</p>
                   <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
                     <div
-                      className={cn('h-full rounded-full', status === 'READY' && count > 0 ? 'bg-emerald-500' : 'bg-foreground/40')}
+                      className={cn('h-full rounded-full transition-all', status === 'READY' && count > 0 ? 'bg-emerald-500' : 'bg-primary/60')}
                       style={{ width: `${share}%` }}
                     />
                   </div>
@@ -264,14 +266,14 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Recent orders */}
-      <Card className="mt-6 gap-0 overflow-hidden rounded-xl border border-border/80 shadow-xs py-0 mb-12">
+      <Card className="mt-6 gap-0 overflow-hidden rounded-2xl border border-border/80 shadow-xs py-0 mb-12">
         <CardHeader className="px-5 py-4">
           <div>
             <CardTitle className="text-sm font-semibold">Recent orders</CardTitle>
             <CardDescription className="text-xs">Latest customer activity across the shop</CardDescription>
           </div>
           <CardAction>
-            <Button variant="ghost" size="sm" render={<Link href="/orders" />} className="h-8 text-xs font-medium gap-1">
+            <Button variant="ghost" size="sm" render={<Link href="/orders" />} className="h-8 text-xs font-medium gap-1 hover:bg-muted">
               View all
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Button>
@@ -291,13 +293,13 @@ export default async function DashboardPage() {
             {/* Desktop — Linear-style compact rows */}
             <div className="hidden border-t md:block">
               <Table aria-label="Recent orders">
-                <TableHeader>
+                <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="h-9 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Order</TableHead>
-                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Customer</TableHead>
-                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
-                    <TableHead className="h-9 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Total</TableHead>
-                    <TableHead className="h-9 pr-4 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Updated</TableHead>
+                    <TableHead className="h-10 pl-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Order</TableHead>
+                    <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Customer</TableHead>
+                    <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Status</TableHead>
+                    <TableHead className="h-10 text-right text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Total</TableHead>
+                    <TableHead className="h-10 pr-4 text-right text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Updated</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -48,54 +48,55 @@ export default async function OrderDetailPage({
   return (
     <>
       {/* Breadcrumb — also serves as back navigation */}
-      <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Link href="/orders" className="rounded outline-none transition-colors duration-100 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none">
+      <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
+        <Link href="/orders" className="rounded-md outline-none transition-colors hover:text-foreground">
           Orders
         </Link>
-        <span aria-hidden="true" className="text-muted-foreground/50">/</span>
-        <span className="font-mono text-foreground" aria-current="page">{order.order_number}</span>
+        <span aria-hidden="true" className="text-muted-foreground/40">/</span>
+        <span className="font-mono font-medium text-foreground" aria-current="page">{order.order_number}</span>
       </nav>
 
       {/* Identity header */}
-      <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between border-b pb-5">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-mono text-[17px] font-semibold tracking-tight text-foreground">{order.order_number}</h1>
-            <StatusBadge status={order.status} size="sm" />
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-mono text-2xl font-bold tracking-tight text-foreground">{order.order_number}</h1>
+            <StatusBadge status={order.status} size="md" />
           </div>
-          <p className="mt-1 truncate text-[13px] text-muted-foreground">
+          <p className="mt-1.5 truncate text-sm text-muted-foreground">
+            Customer:{' '}
             <Link
               href={`/customers/${order.customer.id}`}
-              className="font-medium text-foreground/90 rounded outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
+              className="font-semibold text-foreground hover:underline"
             >
               {order.customer.full_name}
             </Link>
-            <span aria-hidden="true"> · </span>
-            {order.source === 'WALK_IN' ? 'Walk-in' : 'Portal'}
+            <span aria-hidden="true" className="mx-1.5 text-muted-foreground/40">·</span>
+            <span className="font-medium">{order.source === 'WALK_IN' ? 'Walk-in Intake' : 'Portal Order'}</span>
           </p>
-          <p className="tnum mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
-            <span>Tracking <code className="font-mono text-foreground/80 select-all">{order.tracking_code}</code></span>
-            <span aria-hidden="true" className="text-muted-foreground/50">·</span>
+          <div className="tnum mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+            <span>Tracking Code: <code className="font-mono font-semibold text-foreground px-1 py-0.5 rounded bg-muted select-all">{order.tracking_code}</code></span>
+            <span aria-hidden="true" className="text-muted-foreground/40">·</span>
             {order.due_at ? (
-              <span className={cn(isOverdue && 'font-medium text-amber-600 dark:text-amber-400')}>
-                {isOverdue ? `Due ${formatDate(order.due_at)} · overdue` : `Due ${formatDate(order.due_at)}`}
+              <span className={cn('font-medium', isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-muted-foreground')}>
+                {isOverdue ? `Due ${formatDate(order.due_at)} (Overdue)` : `Estimated Due: ${formatDate(order.due_at)}`}
               </span>
             ) : (
               <span>No due date</span>
             )}
-          </p>
+          </div>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2.5">
           <OrderPrimaryAction orderId={order.id} status={order.status} totalCents={order.total_cents} />
-          <Button variant="outline" render={<Link href={`/orders/${order.id}/slip`} />}>
-            <Printer aria-hidden="true" />
+          <Button variant="outline" render={<Link href={`/orders/${order.id}/slip`} />} className="gap-1.5 text-xs font-medium">
+            <Printer className="h-3.5 w-3.5" aria-hidden="true" />
             Print Slip
           </Button>
         </div>
       </header>
 
       {isReady && (
-        <div className="mb-4">
+        <div className="mb-6">
           <ReadyCustomerNotifier
             customerName={order.customer.full_name}
             phone={order.customer.phone}
@@ -108,42 +109,38 @@ export default async function OrderDetailPage({
       )}
 
       {isOverdue && order.due_at && (
-        <div className="mb-4 flex flex-col divide-y divide-border overflow-hidden rounded-lg border bg-card" role="status">
-          <p className="tnum flex items-center gap-2.5 px-4 py-2.5 text-[13px]">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true" />
-            <span className="font-semibold">Past due date — {formatDate(order.due_at)}</span>
-            <span className="truncate text-xs text-muted-foreground">Prioritize this order.</span>
-          </p>
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-400" role="status">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500 ring-2 ring-rose-500/30" aria-hidden="true" />
+          <span className="font-semibold">Past Due Date — {formatDate(order.due_at)}</span>
+          <span className="text-xs text-rose-600/80 dark:text-rose-400/80">Please prioritize finishing this order for customer pickup.</span>
         </div>
       )}
 
-      {/* Workspace — one quiet surface on desktop, stacked sections on mobile.
-          DOM order: workflow → items → details/actions → activity, so mobile
-          reads identity → action → workflow → items → customer → activity. */}
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-0 lg:overflow-hidden lg:rounded-lg lg:border lg:bg-card">
+      {/* Workspace Grid */}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* Main column: workflow + items */}
-        <div className="min-w-0 divide-y divide-border overflow-hidden rounded-lg border bg-card lg:col-start-1 lg:row-start-1 lg:rounded-none lg:border-0">
-          <section aria-labelledby="order-workflow" className="px-4 py-3.5">
-            <div className="mb-3 flex items-baseline justify-between gap-2">
-              <h2 id="order-workflow" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Workflow</h2>
-              <p className="truncate text-xs text-muted-foreground">{STATUS_CONFIG[order.status]?.description ?? order.status}</p>
+        <div className="min-w-0 space-y-6">
+          <section aria-labelledby="order-workflow" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+            <div className="mb-4 flex items-baseline justify-between gap-2">
+              <h2 id="order-workflow" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Station Progress</h2>
+              <p className="truncate text-xs font-medium text-foreground">{STATUS_CONFIG[order.status]?.description ?? order.status}</p>
             </div>
             <OrderFlowStepper currentStatus={order.status} />
           </section>
 
-          <section aria-labelledby="order-items" className="px-4 py-3.5">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <h2 id="order-items" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                  Items · {order.items.length}
+          <section aria-labelledby="order-items" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <div>
+                <h2 id="order-items" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  Service Items ({order.items.length})
                 </h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {order.status === 'RECEIVED'
-                    ? 'Editable while order is received'
-                    : 'Locked after processing starts'}
+                    ? 'Editable while order is in Received stage'
+                    : 'Locked after wash cycle begins'}
                 </p>
               </div>
-              <span className="tnum shrink-0 text-sm font-semibold">{formatMoney(order.total_cents)}</span>
+              <span className="tnum text-base font-bold text-foreground">{formatMoney(order.total_cents)}</span>
             </div>
             {order.status === 'RECEIVED' ? (
               <OrderItemsEditor orderId={order.id} items={order.items} services={services} />
@@ -178,86 +175,129 @@ export default async function OrderDetailPage({
               </>
             )}
           </section>
+
+          {/* Activity Section */}
+          <section aria-labelledby="order-activity" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+            <div className="mb-4 flex items-baseline justify-between gap-2">
+              <h2 id="order-activity" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Transition History</h2>
+              <p className="tnum text-xs text-muted-foreground">{order.events.length} event{order.events.length === 1 ? '' : 's'}</p>
+            </div>
+            {order.events.length === 0 ? (
+              <p className="py-4 text-center text-xs text-muted-foreground">No transitions recorded yet.</p>
+            ) : (
+              <ol className="space-y-4">
+                {order.events.map((event, i) => (
+                  <li key={event.id} className="flex gap-3.5">
+                    <div className="flex flex-col items-center" aria-hidden="true">
+                      <span className={cn(
+                        'mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-current/20',
+                        i === order.events.length - 1 ? STATUS_DOT_CLASS[event.to_status] ?? 'bg-foreground' : 'bg-muted-foreground/30'
+                      )} />
+                      {i < order.events.length - 1 && (
+                        <span className="mt-1 w-px flex-1 bg-border/80" />
+                      )}
+                    </div>
+                    <div className="tnum min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="truncate text-sm">
+                          {event.from_status ? (
+                            <span className="text-muted-foreground text-xs">{STATUS_CONFIG[event.from_status]?.label ?? event.from_status} → </span>
+                          ) : null}
+                          <span className="font-semibold text-foreground">{STATUS_CONFIG[event.to_status]?.label ?? event.to_status}</span>
+                        </p>
+                        <time className="shrink-0 text-xs text-muted-foreground">{formatDateTime(event.created_at)}</time>
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground">Recorded by {event.actor_name}</p>
+                      {event.note && (
+                        <p className="mt-1 rounded-md bg-muted/60 px-2.5 py-1 text-xs text-foreground italic">&ldquo;{event.note}&rdquo;</p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
         </div>
 
-        {/* Context column: details + secondary actions */}
-        <aside className="divide-y divide-border overflow-hidden rounded-lg border bg-card lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:rounded-none lg:border-0 lg:border-l">
-          <section aria-labelledby="order-details" className="px-4 py-3.5">
-            <h2 id="order-details" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Details</h2>
-            <dl className="tnum mt-1 divide-y divide-border text-[13px]">
-              <div className="flex items-center justify-between gap-2 py-2">
-                <dt className="text-xs text-muted-foreground">Status</dt>
+        {/* Sidebar Column: details + actions */}
+        <aside className="space-y-6">
+          <section aria-labelledby="order-details" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+            <h2 id="order-details" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase mb-3">Order Details</h2>
+            <dl className="tnum divide-y divide-border/60 text-xs sm:text-[13px]">
+              <div className="flex items-center justify-between gap-2 py-2.5 first:pt-0">
+                <dt className="text-xs text-muted-foreground">Current Status</dt>
                 <dd><StatusBadge status={order.status} size="sm" /></dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
+              <div className="flex items-center justify-between gap-2 py-2.5">
                 <dt className="text-xs text-muted-foreground">Customer</dt>
-                <dd className="truncate font-medium">
-                  <Link href={`/customers/${order.customer.id}`} className="rounded outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40">
+                <dd className="truncate font-semibold">
+                  <Link href={`/customers/${order.customer.id}`} className="hover:underline">
                     {order.customer.full_name}
                   </Link>
                 </dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
+              <div className="flex items-center justify-between gap-2 py-2.5">
                 <dt className="text-xs text-muted-foreground">Phone</dt>
-                <dd>{order.customer.phone ?? '—'}</dd>
+                <dd className="font-mono">{order.customer.phone ?? '—'}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
+              <div className="flex items-center justify-between gap-2 py-2.5">
                 <dt className="text-xs text-muted-foreground">Email</dt>
-                <dd className="truncate">{order.customer.email ?? '—'}</dd>
+                <dd className="truncate text-muted-foreground">{order.customer.email ?? '—'}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
+              <div className="flex items-center justify-between gap-2 py-2.5">
                 <dt className="text-xs text-muted-foreground">Source</dt>
-                <dd>{order.source === 'WALK_IN' ? 'Walk-in' : 'Portal'}</dd>
+                <dd className="font-medium">{order.source === 'WALK_IN' ? 'Walk-in' : 'Portal'}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
-                <dt className="text-xs text-muted-foreground">Assigned to</dt>
-                <dd className="truncate">{order.assigned_staff?.full_name ?? '—'}</dd>
+              <div className="flex items-center justify-between gap-2 py-2.5">
+                <dt className="text-xs text-muted-foreground">Assigned Staff</dt>
+                <dd className="truncate font-medium">{order.assigned_staff?.full_name ?? 'Unassigned'}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
-                <dt className="text-xs text-muted-foreground">Received</dt>
+              <div className="flex items-center justify-between gap-2 py-2.5">
+                <dt className="text-xs text-muted-foreground">Intake Date</dt>
                 <dd>{formatDateTime(order.received_at)}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
-                <dt className="text-xs text-muted-foreground">Due</dt>
-                <dd className={isOverdue ? 'font-medium text-amber-600 dark:text-amber-400' : ''}>
+              <div className="flex items-center justify-between gap-2 py-2.5">
+                <dt className="text-xs text-muted-foreground">Target Due</dt>
+                <dd className={isOverdue ? 'font-bold text-rose-600 dark:text-rose-400' : ''}>
                   {order.due_at ? formatDateTime(order.due_at) : '—'}
                 </dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
-                <dt className="text-xs text-muted-foreground">Payment method</dt>
-                <dd className="font-medium">{order.payment_method ?? '—'}</dd>
+              <div className="flex items-center justify-between gap-2 py-2.5">
+                <dt className="text-xs text-muted-foreground">Payment Method</dt>
+                <dd className="font-semibold text-foreground">{order.payment_method ?? 'Unpaid'}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
-                <dt className="text-xs text-muted-foreground">Paid at</dt>
+              <div className="flex items-center justify-between gap-2 py-2.5">
+                <dt className="text-xs text-muted-foreground">Paid At</dt>
                 <dd>{order.paid_at ? formatDateTime(order.paid_at) : '—'}</dd>
               </div>
               {order.completed_at && (
-                <div className="flex items-center justify-between gap-2 py-2">
-                  <dt className="text-xs text-muted-foreground">Completed</dt>
+                <div className="flex items-center justify-between gap-2 py-2.5 last:pb-0">
+                  <dt className="text-xs text-muted-foreground">Completed At</dt>
                   <dd>{formatDateTime(order.completed_at)}</dd>
                 </div>
               )}
             </dl>
-            <div className="mt-3 flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-2.5 py-1.5">
-              <span className="text-xs text-muted-foreground">Tracking</span>
-              <code className="truncate font-mono text-xs select-all">{order.tracking_code}</code>
+            <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border bg-muted/40 p-3">
+              <span className="text-xs text-muted-foreground">Tracking Code</span>
+              <code className="font-mono text-xs font-bold text-foreground select-all">{order.tracking_code}</code>
             </div>
             {order.notes && (
-              <p className="mt-3 text-[13px] text-muted-foreground">
-                <span className="font-medium text-foreground">Notes: </span>{order.notes}
-              </p>
+              <div className="mt-3.5 rounded-xl border border-muted bg-muted/20 p-3 text-xs">
+                <span className="font-semibold text-foreground block mb-0.5">Special Instructions:</span>
+                <span className="text-muted-foreground">{order.notes}</span>
+              </div>
             )}
             {order.cancel_reason && (
-              <p className="mt-3 text-[13px]">
-                <span className="font-medium text-muted-foreground">Cancelled: </span>
-                <span className="text-foreground">{order.cancel_reason}</span>
-              </p>
+              <div className="mt-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs">
+                <span className="font-semibold text-rose-700 dark:text-rose-400 block mb-0.5">Cancellation Reason:</span>
+                <span className="text-rose-600 dark:text-rose-300">{order.cancel_reason}</span>
+              </div>
             )}
           </section>
 
-          <section aria-labelledby="order-actions" className="px-4 py-3.5">
-            <h2 id="order-actions" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Actions</h2>
-            <p className="mt-0.5 mb-3 text-xs text-muted-foreground">Advance, move back, or cancel</p>
+          <section aria-labelledby="order-actions" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+            <h2 id="order-actions" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase mb-1">Station Actions</h2>
+            <p className="mb-4 text-xs text-muted-foreground">Advance stage, move back, or cancel order</p>
             <OrderActions
               orderId={order.id}
               status={order.status}
@@ -266,48 +306,6 @@ export default async function OrderDetailPage({
             />
           </section>
         </aside>
-
-        {/* Activity */}
-        <section aria-labelledby="order-activity" className="overflow-hidden rounded-lg border bg-card px-4 py-3.5 lg:col-start-1 lg:row-start-2 lg:rounded-none lg:border-0 lg:border-t">
-          <div className="mb-3 flex items-baseline justify-between gap-2">
-            <h2 id="order-activity" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Activity</h2>
-            <p className="tnum text-xs text-muted-foreground">{order.events.length} transition{order.events.length === 1 ? '' : 's'}</p>
-          </div>
-          {order.events.length === 0 ? (
-            <p className="py-3 text-center text-[13px] text-muted-foreground">No transitions recorded yet.</p>
-          ) : (
-            <ol className="space-y-4">
-              {order.events.map((event, i) => (
-                <li key={event.id} className="flex gap-3">
-                  <div className="flex flex-col items-center" aria-hidden="true">
-                    <span className={cn(
-                      'mt-1.5 h-2 w-2 shrink-0 rounded-full',
-                      i === order.events.length - 1 ? STATUS_DOT_CLASS[event.to_status] ?? 'bg-foreground' : 'bg-muted-foreground/25'
-                    )} />
-                    {i < order.events.length - 1 && (
-                      <span className="mt-1 w-px flex-1 bg-border" />
-                    )}
-                  </div>
-                  <div className="tnum min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <p className="truncate text-[13px]">
-                        {event.from_status ? (
-                          <span className="text-muted-foreground">{STATUS_CONFIG[event.from_status]?.label ?? event.from_status} → </span>
-                        ) : null}
-                        <span className="font-semibold">{STATUS_CONFIG[event.to_status]?.label ?? event.to_status}</span>
-                      </p>
-                      <time className="shrink-0 text-xs whitespace-nowrap text-muted-foreground">{formatDateTime(event.created_at)}</time>
-                    </div>
-                    <p className="mt-0.5 text-xs text-muted-foreground">by {event.actor_name}</p>
-                    {event.note && (
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground italic">&ldquo;{event.note}&rdquo;</p>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
       </div>
     </>
   )

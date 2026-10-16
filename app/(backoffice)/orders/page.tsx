@@ -104,18 +104,18 @@ export default async function OrdersPage({
           />
         </div>
       ) : (
-        <div className="mt-5 overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
+        <div className="mt-5 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
           {/* Desktop — Linear-style issue rows */}
           <div className="hidden md:block">
             <Table aria-label="Orders">
-              <TableHeader>
+              <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="h-8 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Order</TableHead>
-                  <TableHead className="h-8 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Customer</TableHead>
-                  <TableHead className="h-8 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
-                  <TableHead className="h-8 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Total</TableHead>
-                  <TableHead className="h-8 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Received / Due</TableHead>
-                  <TableHead className="h-8 w-10 pr-3">
+                  <TableHead className="h-10 pl-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Order</TableHead>
+                  <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Customer</TableHead>
+                  <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Status</TableHead>
+                  <TableHead className="h-10 text-right text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Total</TableHead>
+                  <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Received / Due</TableHead>
+                  <TableHead className="h-10 w-10 pr-3">
                     <span className="sr-only">Open</span>
                   </TableHead>
                 </TableRow>

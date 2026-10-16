@@ -77,96 +77,116 @@ export default async function CustomerDetailPage({
         </div>
       </header>
 
-      {/* Workspace — one quiet surface on desktop, stacked sections on mobile.
-          DOM order: order history → contact → edit, so mobile reads the
-          operational section first and editing last. */}
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-0 lg:overflow-hidden lg:rounded-lg lg:border lg:bg-card">
-        {/* Order history — the operational hero */}
-        <section aria-labelledby="customer-orders" className="min-w-0 overflow-hidden rounded-lg border bg-card px-4 py-3.5 lg:col-start-1 lg:row-start-1 lg:rounded-none lg:border-0">
-          <div className="mb-3 flex items-baseline justify-between gap-2">
-            <h2 id="customer-orders" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Order history</h2>
-            <p className="tnum text-xs text-muted-foreground">{orders.length} · newest first</p>
-          </div>
-          {orders.length === 0 ? (
-            <p className="py-3 text-center text-[13px] text-muted-foreground">No orders yet for this customer.</p>
-          ) : (
-            <div className="overflow-x-auto rounded-md border">
-              <Table aria-label="Customer order history">
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Order</TableHead>
-                    <TableHead className="h-9 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
-                    <TableHead className="h-9 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Total</TableHead>
-                    <TableHead className="h-9 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Received</TableHead>
-                    <TableHead className="h-9 w-10 pr-3">
-                      <span className="sr-only">Open</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.map((o: { id: string; order_number: string; status: string; total_cents: number; received_at: string }) => (
-                    <TableRow key={o.id} className="group transition-colors duration-100 hover:bg-muted/40 focus-within:bg-muted/40">
-                      <TableCell>
-                        <Link
-                          href={`/orders/${o.id}`}
-                          className="rounded font-mono text-xs font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
-                        >
-                          {o.order_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell><StatusBadge status={o.status as OrderStatus} size="sm" /></TableCell>
-                      <TableCell className="tnum text-right text-[13px] font-medium">{formatMoney(o.total_cents)}</TableCell>
-                      <TableCell className="tnum text-right text-[13px] text-muted-foreground">{formatDateTime(o.received_at)}</TableCell>
-                      <TableCell className="pr-3 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-muted-foreground/50 transition-colors duration-100 group-hover:text-foreground"
-                          render={<Link href={`/orders/${o.id}`} aria-label={`Open order ${o.order_number}`} />}
-                        >
-                          <ChevronRight aria-hidden="true" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+      {/* Workspace */}
+      <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Left Column: Order history & Edit Customer */}
+        <div className="space-y-6 min-w-0">
+          {/* Order history — the operational hero */}
+          <section aria-labelledby="customer-orders" className="overflow-hidden rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+            <div className="mb-4 flex items-baseline justify-between gap-2 border-b pb-3">
+              <div>
+                <h2 id="customer-orders" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Order History</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">All laundry orders registered under this profile</p>
+              </div>
+              <p className="tnum font-mono text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md">{orders.length} order{orders.length === 1 ? '' : 's'}</p>
             </div>
-          )}
-        </section>
+            {orders.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-sm font-medium text-foreground">No orders recorded yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">This customer has not placed any laundry orders.</p>
+                {!archived && (
+                  <Button render={<Link href="/orders/new" />} className="mt-4" size="sm">
+                    <Plus className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
+                    Create First Order
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-border/70">
+                <Table aria-label="Customer order history">
+                  <TableHeader className="bg-muted/30">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase pl-4">Order #</TableHead>
+                      <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Status</TableHead>
+                      <TableHead className="h-10 text-right text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Amount</TableHead>
+                      <TableHead className="h-10 text-right text-[11px] font-semibold tracking-wide text-muted-foreground uppercase pr-4">Intake Date</TableHead>
+                      <TableHead className="h-10 w-10 pr-3">
+                        <span className="sr-only">Open</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.map((o: { id: string; order_number: string; status: string; total_cents: number; received_at: string }) => (
+                      <TableRow key={o.id} className="group transition-colors duration-150 hover:bg-muted/40">
+                        <TableCell className="pl-4">
+                          <Link
+                            href={`/orders/${o.id}`}
+                            className="font-mono text-xs font-semibold text-foreground hover:text-primary transition-colors hover:underline"
+                          >
+                            {o.order_number}
+                          </Link>
+                        </TableCell>
+                        <TableCell><StatusBadge status={o.status as OrderStatus} size="sm" /></TableCell>
+                        <TableCell className="tnum text-right text-xs font-semibold">{formatMoney(o.total_cents)}</TableCell>
+                        <TableCell className="tnum text-right text-xs text-muted-foreground pr-4">{formatDateTime(o.received_at)}</TableCell>
+                        <TableCell className="pr-3 text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="text-muted-foreground/50 transition-colors group-hover:text-foreground hover:bg-muted"
+                            render={<Link href={`/orders/${o.id}`} aria-label={`Open order ${o.order_number}`} />}
+                          >
+                            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </section>
 
-        {/* Context column: contact */}
-        <aside className="overflow-hidden rounded-lg border bg-card px-4 py-3.5 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:rounded-none lg:border-0 lg:border-l">
-          <section aria-labelledby="customer-contact">
-            <h2 id="customer-contact" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Contact</h2>
-            <dl className="tnum mt-1 divide-y divide-border text-[13px]">
-              <div className="flex items-center justify-between gap-2 py-2">
-                <dt className="text-xs text-muted-foreground">Phone</dt>
-                <dd className="font-medium">{customer.phone ?? '—'}</dd>
+          {/* Edit — secondary, below the operational content */}
+          <section aria-labelledby="customer-edit" className="overflow-hidden rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+            <div className="mb-4 border-b pb-3">
+              <h2 id="customer-edit" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Edit Customer Details</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">Keep contact information up to date for SMS ready notices</p>
+            </div>
+            <EditCustomerForm customer={customer} />
+          </section>
+        </div>
+
+        {/* Right Sidebar: Contact info */}
+        <aside className="space-y-6">
+          <section aria-labelledby="customer-contact" className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+            <h2 id="customer-contact" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase border-b pb-3 mb-3">Customer Profile</h2>
+            <dl className="tnum divide-y divide-border/60 text-xs">
+              <div className="flex items-center justify-between gap-2 py-2.5">
+                <dt className="text-muted-foreground">Phone Number</dt>
+                <dd className="font-semibold text-foreground">{customer.phone ?? 'None'}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
-                <dt className="text-xs text-muted-foreground">Email</dt>
-                <dd className="max-w-[12rem] truncate font-medium">{customer.email ?? '—'}</dd>
+              <div className="flex items-center justify-between gap-2 py-2.5">
+                <dt className="text-muted-foreground">Email Address</dt>
+                <dd className="max-w-[14rem] truncate font-medium text-foreground">{customer.email ?? 'None'}</dd>
               </div>
-              <div className="flex items-center justify-between gap-2 py-2">
-                <dt className="shrink-0 text-xs text-muted-foreground">Address</dt>
-                <dd className="truncate font-medium">{customer.address ?? '—'}</dd>
+              <div className="flex items-center justify-between gap-2 py-2.5">
+                <dt className="shrink-0 text-muted-foreground">Delivery / Address</dt>
+                <dd className="truncate font-medium text-foreground">{customer.address ?? 'None'}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-2 py-2.5 last:pb-0">
+                <dt className="text-muted-foreground">Lifetime Orders</dt>
+                <dd className="font-bold text-foreground">{orders.length}</dd>
               </div>
             </dl>
             {customer.notes && (
-              <p className="mt-3 text-[13px] text-muted-foreground">
-                <span className="font-medium text-foreground">Notes: </span>{customer.notes}
-              </p>
+              <div className="mt-4 rounded-xl border border-muted bg-muted/20 p-3 text-xs">
+                <span className="font-semibold text-foreground block mb-0.5">Preferences / Notes:</span>
+                <span className="text-muted-foreground">{customer.notes}</span>
+              </div>
             )}
           </section>
         </aside>
-
-        {/* Edit — secondary, below the operational content */}
-        <section aria-labelledby="customer-edit" className="min-w-0 overflow-hidden rounded-lg border bg-card px-4 py-3.5 lg:col-start-1 lg:row-start-2 lg:rounded-none lg:border-0 lg:border-t">
-          <h2 id="customer-edit" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Edit customer</h2>
-          <p className="mt-0.5 mb-3 text-xs text-muted-foreground">Keep contact details current for pickup notices</p>
-          <EditCustomerForm customer={customer} />
-        </section>
       </div>
     </>
   )

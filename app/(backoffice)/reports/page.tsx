@@ -45,64 +45,64 @@ export default async function ReportsPage() {
         Today starts at local midnight · Week covers the last 7 days · Revenue counts completed orders only.
       </p>
 
-      {/* Summary — one quiet strip, no KPI cards */}
-      <section aria-label="Report summary">
-        <div className="tnum grid grid-cols-2 overflow-hidden rounded-lg border bg-card sm:grid-cols-3 xl:grid-cols-5">
+      {/* Summary — clean SaaS KPI grid */}
+      <section aria-label="Report summary" className="mt-6">
+        <div className="tnum grid grid-cols-2 gap-3.5 sm:grid-cols-3 xl:grid-cols-5">
           {metrics.map(c => (
             <div
               key={c.title}
-              className="p-4 odd:border-r sm:odd:border-r-0 sm:[&:not(:first-child)]:border-l sm:[&:nth-child(n+4)]:border-t xl:[&:nth-child(n+4)]:border-t-0 [&:nth-child(n+3)]:border-t sm:[&:nth-child(n+3)]:border-t-0 [&:nth-child(2n)]:border-r-0 sm:[&:nth-child(2n)]:border-r-0"
+              className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs transition-all hover:border-border"
             >
-              <p className="truncate text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{c.title}</p>
-              <p className="mt-1 truncate text-xl font-semibold tracking-tight">{c.value}</p>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">{c.hint}</p>
+              <p className="truncate text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">{c.title}</p>
+              <p className="mt-2 truncate text-2xl font-bold tracking-tight text-foreground">{c.value}</p>
+              <p className="mt-1 truncate text-xs text-muted-foreground">{c.hint}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Visual Analytics & Breakdown */}
-      <ReportsCharts
-        dailyTrend={report.dailyTrend}
-        paymentBreakdown={report.paymentBreakdown}
-        servicesBreakdown={report.ordersByService}
-      />
+      <div className="mt-6">
+        <ReportsCharts
+          dailyTrend={report.dailyTrend}
+          paymentBreakdown={report.paymentBreakdown}
+          servicesBreakdown={report.ordersByService}
+        />
+      </div>
 
-      <div className="mt-4 grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         {/* Primary — where every order sits */}
-        <Card className="gap-0 overflow-hidden py-0">
-          <CardHeader className="px-4 py-3">
+        <div className="overflow-hidden rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+          <div className="mb-4 flex items-baseline justify-between gap-2 border-b pb-3">
             <div>
-              <CardTitle className="text-[13px]">Orders by status</CardTitle>
-              <CardDescription>Where every order sits in the workflow</CardDescription>
+              <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Orders by Stage</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">Distribution across current active and historical stages</p>
             </div>
-            <CardAction>
-              <span className="tnum text-xs text-muted-foreground">{totalOrders.toLocaleString()} total</span>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="p-0">
+            <span className="tnum font-mono text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md">{totalOrders.toLocaleString()} total</span>
+          </div>
+          <div>
             {orderedStatuses.length === 0 ? (
-              <p className="border-t px-4 py-4 text-center text-[13px] text-muted-foreground">No orders yet.</p>
+              <p className="py-6 text-center text-xs text-muted-foreground">No orders recorded yet.</p>
             ) : (
-              <div className="border-t">
+              <div className="overflow-hidden rounded-xl border border-border/70">
                 <Table aria-label="Orders by status">
-                  <TableHeader>
+                  <TableHeader className="bg-muted/30">
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="h-9 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
-                      <TableHead className="h-9 pr-4 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Count</TableHead>
+                      <TableHead className="h-10 pl-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Station / Status</TableHead>
+                      <TableHead className="h-10 pr-4 text-right text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Orders Count</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {orderedStatuses.map(status => (
-                      <TableRow key={status} className="hover:bg-muted/40">
-                        <TableCell className="pl-4">
+                      <TableRow key={status} className="hover:bg-muted/40 transition-colors">
+                        <TableCell className="pl-4 py-3">
                           {['RECEIVED','WASHING','DRYING','FOLDING','READY','COMPLETED','CANCELLED'].includes(status) ? (
                             <StatusBadge status={status as OrderStatus} size="sm" />
                           ) : (
-                            <span className="text-[13px] font-medium">{status}</span>
+                            <span className="text-xs font-semibold">{status}</span>
                           )}
                         </TableCell>
-                        <TableCell className="tnum pr-4 text-right text-[13px] font-medium">
+                        <TableCell className="tnum pr-4 text-right text-xs font-bold text-foreground py-3">
                           {(report.statusBreakdown[status] ?? 0).toLocaleString()}
                         </TableCell>
                       </TableRow>
@@ -111,49 +111,47 @@ export default async function ReportsPage() {
                 </Table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Secondary — revenue ranked by service */}
-        <Card className="gap-0 overflow-hidden py-0">
-          <CardHeader className="px-4 py-3">
+        <div className="overflow-hidden rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+          <div className="mb-4 flex items-baseline justify-between gap-2 border-b pb-3">
             <div>
-              <CardTitle className="text-[13px]">Revenue by service</CardTitle>
-              <CardDescription>Ranked by lifetime revenue</CardDescription>
+              <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Revenue by Service</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">All-time volume and revenue generated per service catalog item</p>
             </div>
-            <CardAction>
-              <span className="tnum text-xs text-muted-foreground">
-                {report.ordersByService.length === 1 ? '1 service' : `${report.ordersByService.length} services`}
-              </span>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="p-0">
+            <span className="tnum font-mono text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md">
+              {report.ordersByService.length === 1 ? '1 service' : `${report.ordersByService.length} services`}
+            </span>
+          </div>
+          <div>
             {report.ordersByService.length === 0 ? (
-              <p className="border-t px-4 py-4 text-center text-[13px] text-muted-foreground">No service data yet — it appears after the first completed items.</p>
+              <p className="py-6 text-center text-xs text-muted-foreground">No service data yet — it appears after the first completed items.</p>
             ) : (
-              <div className="overflow-x-auto border-t">
+              <div className="overflow-x-auto rounded-xl border border-border/70">
                 <Table aria-label="Revenue by service" className="min-w-[22rem]">
-                  <TableHeader>
+                  <TableHeader className="bg-muted/30">
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="h-9 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Service</TableHead>
-                      <TableHead className="h-9 text-center text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Items sold</TableHead>
-                      <TableHead className="h-9 pr-4 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Revenue</TableHead>
+                      <TableHead className="h-10 pl-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Service</TableHead>
+                      <TableHead className="h-10 text-center text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Items Processed</TableHead>
+                      <TableHead className="h-10 pr-4 text-right text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Revenue</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {report.ordersByService.map(s => (
-                      <TableRow key={s.service_name} className="hover:bg-muted/40">
-                        <TableCell className="max-w-[12rem] truncate pl-4 text-[13px] font-medium">{s.service_name}</TableCell>
-                        <TableCell className="tnum text-center text-[13px] text-muted-foreground">{s.count.toLocaleString()}</TableCell>
-                        <TableCell className="tnum pr-4 text-right text-[13px] font-semibold">{formatMoney(s.revenue_cents)}</TableCell>
+                      <TableRow key={s.service_name} className="hover:bg-muted/40 transition-colors">
+                        <TableCell className="max-w-[14rem] truncate pl-4 text-xs font-semibold text-foreground py-3">{s.service_name}</TableCell>
+                        <TableCell className="tnum text-center text-xs text-muted-foreground py-3">{s.count.toLocaleString()}</TableCell>
+                        <TableCell className="tnum pr-4 text-right text-xs font-bold text-foreground py-3">{formatMoney(s.revenue_cents)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </>
   )

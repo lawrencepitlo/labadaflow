@@ -96,25 +96,29 @@ export default async function PortalOrdersPage({
       </div>
 
       {orders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center bg-card">
-          <ClipboardList className="h-8 w-8 text-muted-foreground/60 mb-2" />
-          <h3 className="text-sm font-semibold text-foreground">No orders found</h3>
-          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+        <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 p-12 text-center bg-card shadow-xs">
+          <div className="rounded-full bg-primary/10 p-3 text-primary mb-3">
+            <ClipboardList className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-semibold text-foreground">No orders found</h3>
+          <p className="mt-1.5 max-w-sm text-xs text-muted-foreground leading-relaxed">
             When you drop off laundry at the shop, your orders will appear here. Or claim an existing
             order using your receipt slip.
           </p>
-          <div className="mt-4">
-            <ClaimOrderDialog triggerText="Claim an Order" variant="default" />
+          <div className="mt-5">
+            <ClaimOrderDialog triggerText="Claim an Order with Tracking Code" variant="default" />
           </div>
         </div>
       ) : (
         <>
           {activeOrders.length > 0 && (
-            <section aria-label="Active orders">
-              <h2 className="mb-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                Active · {activeOrders.length}
-              </h2>
-              <ul className="divide-y divide-border overflow-hidden rounded-lg border bg-card" aria-label="Active orders">
+            <section aria-label="Active orders" className="mt-6">
+              <div className="mb-2.5 flex items-baseline justify-between">
+                <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  Active Orders ({activeOrders.length})
+                </h2>
+              </div>
+              <ul className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs" aria-label="Active orders">
                 {activeOrders.map(order => (
                   <OrderRow key={order.id} order={order} />
                 ))}
@@ -122,11 +126,13 @@ export default async function PortalOrdersPage({
             </section>
           )}
           {pastOrders.length > 0 && (
-            <section aria-label="Past orders" className={activeOrders.length > 0 ? 'mt-5' : undefined}>
-              <h2 className="mb-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                Completed & cancelled · {pastOrders.length}
-              </h2>
-              <ul className="divide-y divide-border overflow-hidden rounded-lg border bg-card" aria-label="Past orders">
+            <section aria-label="Past orders" className="mt-6">
+              <div className="mb-2.5 flex items-baseline justify-between">
+                <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  Past Orders ({pastOrders.length})
+                </h2>
+              </div>
+              <ul className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs" aria-label="Past orders">
                 {pastOrders.map(order => (
                   <OrderRow key={order.id} order={order} />
                 ))}

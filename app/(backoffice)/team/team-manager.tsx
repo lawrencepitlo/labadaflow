@@ -11,7 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { EmptyState } from '@/components/app/empty-state'
-import { Users } from 'lucide-react'
+import { Users, Shield, UserCheck } from 'lucide-react'
 import type { TeamMember } from '@/lib/data/team'
 
 export function RoleSelect({ member }: { member: TeamMember }) {
@@ -32,13 +32,13 @@ export function RoleSelect({ member }: { member: TeamMember }) {
           })
         }}
       >
-        <SelectTrigger className="w-[128px]" disabled={isPending} aria-label={`Role for ${member.full_name}`}>
+        <SelectTrigger className="w-[128px] h-8 text-xs font-medium" disabled={isPending} aria-label={`Role for ${member.full_name}`}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="ADMIN">Admin</SelectItem>
-          <SelectItem value="STAFF">Staff</SelectItem>
-          <SelectItem value="CUSTOMER">Customer</SelectItem>
+          <SelectItem value="ADMIN" className="text-xs">Admin</SelectItem>
+          <SelectItem value="STAFF" className="text-xs">Staff</SelectItem>
+          <SelectItem value="CUSTOMER" className="text-xs">Customer</SelectItem>
         </SelectContent>
       </Select>
       {error && <p className="mt-1 text-xs text-destructive" role="alert">{error}</p>}
@@ -56,7 +56,7 @@ export function ActiveToggle({ member }: { member: TeamMember }) {
       <Button
         variant="ghost"
         size="sm"
-        className="text-muted-foreground"
+        className={`text-xs ${member.is_active ? 'text-muted-foreground hover:text-destructive' : 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700'}`}
         disabled={isPending}
         aria-label={`${member.is_active ? 'Deactivate' : 'Activate'} ${member.full_name}`}
         onClick={() => {
@@ -78,11 +78,11 @@ export function ActiveToggle({ member }: { member: TeamMember }) {
 export function TeamManager({ members }: { members: TeamMember[] }) {
   if (members.length === 0) {
     return (
-      <div className="overflow-hidden rounded-lg border bg-card">
+      <div className="mt-6 overflow-hidden rounded-2xl border border-border/80 bg-card p-8">
         <EmptyState
           icon={Users}
           title="No team members yet"
-          description="Team members will appear here once they sign in."
+          description="Team members will appear here once they sign in to the application."
         />
       </div>
     )
@@ -91,67 +91,85 @@ export function TeamManager({ members }: { members: TeamMember[] }) {
   const activeCount = members.filter(m => m.is_active).length
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-card">
-      <div className="px-4 py-3">
-        <h2 className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Members</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{activeCount} active · {members.length} total — role changes apply immediately</p>
+    <div className="mt-6 overflow-hidden rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs">
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 border-b pb-4">
+        <div>
+          <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Shop Personnel</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">Manage administrative access, front-counter staff, and active privileges</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono font-medium text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md">
+            {activeCount} of {members.length} active
+          </span>
+        </div>
       </div>
-      {/* Desktop — Linear-style member rows */}
-      <div className="hidden border-t md:block">
+
+      {/* Desktop — Clean SaaS table */}
+      <div className="hidden overflow-x-auto rounded-xl border border-border/70 md:block">
         <Table aria-label="Team members">
-          <TableHeader>
+          <TableHeader className="bg-muted/30">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="h-8 pl-4 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Member</TableHead>
-              <TableHead className="h-8 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Role</TableHead>
-              <TableHead className="h-8 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Status</TableHead>
-              <TableHead className="h-8 pr-4 text-right text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                <span className="sr-only">Actions</span>
+              <TableHead className="h-10 pl-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Member Name & Email</TableHead>
+              <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">System Role</TableHead>
+              <TableHead className="h-10 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Status</TableHead>
+              <TableHead className="h-10 pr-4 text-right text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                Actions
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {members.map(m => (
-              <TableRow key={m.id} className={`transition-colors duration-100 hover:bg-muted/40 focus-within:bg-muted/40 ${m.is_active ? '' : 'opacity-60'}`}>
-                <TableCell className="pl-4">
-                  <div className="text-[13px] font-medium">{m.full_name}</div>
-                  <div className="mt-0.5 max-w-[16rem] truncate text-xs text-muted-foreground">{m.email}</div>
+              <TableRow key={m.id} className={`transition-colors duration-150 hover:bg-muted/40 ${m.is_active ? '' : 'opacity-60 bg-muted/10'}`}>
+                <TableCell className="pl-4 py-3.5">
+                  <div className="font-semibold text-foreground text-sm">{m.full_name}</div>
+                  <div className="mt-0.5 font-mono text-xs text-muted-foreground">{m.email}</div>
                 </TableCell>
-                <TableCell><RoleSelect member={m} /></TableCell>
-                <TableCell>
-                  <span className={`inline-flex items-center gap-1.5 text-xs ${m.is_active ? 'text-foreground' : 'text-muted-foreground'}`} aria-label={m.is_active ? `${m.full_name} active` : `${m.full_name} inactive`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${m.is_active ? 'bg-green-500' : 'bg-muted-foreground/40'}`} aria-hidden="true" />
+                <TableCell className="py-3.5">
+                  <RoleSelect member={m} />
+                </TableCell>
+                <TableCell className="py-3.5">
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    m.is_active 
+                      ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20' 
+                      : 'bg-muted text-muted-foreground border border-border'
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${m.is_active ? 'bg-emerald-500' : 'bg-muted-foreground/50'}`} aria-hidden="true" />
                     {m.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </TableCell>
-                <TableCell className="pr-4 text-right"><ActiveToggle member={m} /></TableCell>
+                <TableCell className="pr-4 text-right py-3.5">
+                  <ActiveToggle member={m} />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
-      {/* Mobile — same list, stacked rows */}
-      <ul className="divide-y divide-border border-t md:hidden" aria-label="Team members">
+      {/* Mobile — stacked list */}
+      <div className="divide-y divide-border/60 rounded-xl border border-border/70 md:hidden mt-2">
         {members.map(m => (
-          <li
-            key={m.id}
-            className={`px-4 py-3 ${m.is_active ? '' : 'opacity-70'}`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <p className="min-w-0 truncate text-[13px] font-medium">{m.full_name}</p>
-              <span className={`inline-flex shrink-0 items-center gap-1.5 text-xs ${m.is_active ? 'text-foreground' : 'text-muted-foreground'}`} aria-label={m.is_active ? `${m.full_name} active` : `${m.full_name} inactive`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${m.is_active ? 'bg-green-500' : 'bg-muted-foreground/40'}`} aria-hidden="true" />
+          <div key={m.id} className={`p-4 ${m.is_active ? '' : 'opacity-60 bg-muted/10'}`}>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-semibold text-foreground text-sm">{m.full_name}</p>
+                <p className="mt-0.5 font-mono text-xs text-muted-foreground truncate max-w-[200px]">{m.email}</p>
+              </div>
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0 ${
+                m.is_active 
+                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20' 
+                  : 'bg-muted text-muted-foreground border border-border'
+              }`}>
                 {m.is_active ? 'Active' : 'Inactive'}
               </span>
             </div>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">{m.email}</p>
-            <div className="mt-2.5 flex items-center justify-between gap-2">
+            <div className="mt-3.5 flex items-center justify-between border-t pt-3">
               <RoleSelect member={m} />
               <ActiveToggle member={m} />
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   )
 }
