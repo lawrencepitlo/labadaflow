@@ -196,6 +196,23 @@ export async function syncUser() {
             .from('customers')
             .update({ clerk_user_id: userId, updated_at: new Date().toISOString() })
             .eq('id', matches[0].id)
+        } else {
+          const { data: existingCust } = await supabase2
+            .from('customers')
+            .select('id')
+            .eq('clerk_user_id', userId)
+            .maybeSingle()
+
+          if (!existingCust) {
+            const fullName = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || email || 'Customer'
+            await supabase2
+              .from('customers')
+              .insert({
+                clerk_user_id: userId,
+                full_name: fullName,
+                email: email,
+              })
+          }
         }
       }
     } catch {

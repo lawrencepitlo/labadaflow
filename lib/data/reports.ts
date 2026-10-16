@@ -14,6 +14,19 @@ export interface ReportData {
   revenueTotal: number
   ordersByService: { service_name: string; count: number; revenue_cents: number }[]
   statusBreakdown: Record<string, number>
+  dailyTrend: {
+    date: string
+    day_name: string
+    label: string
+    revenue_cents: number
+    completed_orders: number
+    created_orders: number
+  }[]
+  paymentBreakdown: {
+    method: string
+    count: number
+    total_cents: number
+  }[]
 }
 
 export async function getReports(): Promise<ReportData | null> {
@@ -37,6 +50,19 @@ export async function getReports(): Promise<ReportData | null> {
     revenue_total: number
     orders_by_service: { service_name: string; count: number; revenue_cents: number }[]
     status_breakdown: Record<string, number>
+    daily_trend: {
+      date: string
+      day_name: string
+      label: string
+      revenue_cents: number
+      completed_orders: number
+      created_orders: number
+    }[]
+    payment_breakdown: {
+      method: string
+      count: number
+      total_cents: number
+    }[]
   }
 
   return {
@@ -47,5 +73,7 @@ export async function getReports(): Promise<ReportData | null> {
     revenueTotal: row.revenue_total ?? 0,
     ordersByService: row.orders_by_service ?? [],
     statusBreakdown: row.status_breakdown ?? {},
+    dailyTrend: row.daily_trend ?? [],
+    paymentBreakdown: row.payment_breakdown ?? [],
   }
 }

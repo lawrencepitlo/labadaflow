@@ -26,6 +26,7 @@ import {
 import { ORDER_STATUS_FLOW } from '@/lib/order-machine'
 import type { OrderStatus } from '@/lib/order-machine'
 import { cn } from 'cn'
+import { DashboardRevenueChart } from '@/components/app/dashboard-charts'
 
 const FLOW_DESCRIPTION: Record<OrderStatus, string> = {
   RECEIVED: 'Awaiting processing',
@@ -159,6 +160,9 @@ export default async function DashboardPage() {
           ))}
         </div>
       </section>
+
+      {/* Visual Revenue & Volume Trend */}
+      <DashboardRevenueChart dailyTrend={stats.dailyTrend} />
 
       {/* Needs attention */}
       <Card className="mt-4 gap-0 overflow-hidden py-0">

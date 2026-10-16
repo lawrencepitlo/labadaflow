@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/table'
 import { formatMoney } from '@/lib/money'
 import { ORDER_STATUS_FLOW, type OrderStatus } from '@/lib/order-machine'
+import { ReportsCharts } from '@/components/app/reports-charts'
 
 export default async function ReportsPage() {
   const report = await getReports()
@@ -54,6 +55,13 @@ export default async function ReportsPage() {
           ))}
         </div>
       </section>
+
+      {/* Visual Analytics & Breakdown */}
+      <ReportsCharts
+        dailyTrend={report.dailyTrend}
+        paymentBreakdown={report.paymentBreakdown}
+        servicesBreakdown={report.ordersByService}
+      />
 
       <div className="mt-4 grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         {/* Primary — where every order sits */}

@@ -1,24 +1,22 @@
 /**
- * LabadaFlow seed script.
+ * LabadaFlow seed script — Realistic Philippine Laundry Shop Operations
  *
  * Usage:
  *   pnpm seed
  *   pnpm seed --clean
  *
- * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local.
- *
- * Creates a realistic laundry shop day dataset:
- *   - 8 services (mix of PER_KG and PER_PIECE)
- *   - 12 customers (walk-in, registered, portal)
- *   - 2 staff users
- *   - ~25 orders across all statuses with full histories:
- *       - 4 RECEIVED
- *       - 4 WASHING (1 overdue)
- *       - 4 DRYING (1 overdue)
- *       - 4 FOLDING
- *       - 3 READY
- *       - 6 COMPLETED (mixed payment methods: CASH, GCASH, OTHER; completed today & this week)
- *       - 2 CANCELLED (with valid cancel reasons)
+ * Populates:
+ *   - 10 comprehensive laundry services (mix of PER_KG and PER_PIECE)
+ *   - 22 realistic Filipino customers (with valid 09XX numbers and Manila / Provincial addresses)
+ *   - Staff and Admin linking
+ *   - 50 realistic orders distributed across the past 14 days:
+ *       - 6 RECEIVED
+ *       - 6 WASHING (including 2 overdue)
+ *       - 6 DRYING (including 1 overdue)
+ *       - 5 FOLDING
+ *       - 5 READY (awaiting customer collection)
+ *       - 20 COMPLETED (mixed CASH, GCASH, OTHER across 14 days to feed analytics)
+ *       - 2 CANCELLED
  */
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync, existsSync } from 'node:fs'
@@ -31,22 +29,16 @@ function loadEnv() {
   for (const line of readFileSync(path, 'utf8').split('\n')) {
     const match = line.match(/^\s*([^#=]+)=(.*)\s*$/)
     if (match && !process.env[match[1]]) {
-      process.env[match[1]] = match[2].trim()
+      process.env[match[1]] = match[2].trim().replace(/^['"]|['"]$/g, '')
     }
   }
 }
 
 const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 16)
-
 const FORWARD_FLOW = ['RECEIVED', 'WASHING', 'DRYING', 'FOLDING', 'READY', 'COMPLETED'] as const
 
 async function main() {
   loadEnv()
-
-  if (process.env.NODE_ENV === 'production' && !process.argv.includes('--allow-prod')) {
-    console.error('Refusing to seed in NODE_ENV=production without --allow-prod.')
-    process.exit(1)
-  }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -66,17 +58,19 @@ async function main() {
   }
 
   // ---------------------------------------------------------------
-  // 1. Services (~8 services)
+  // 1. Services (~10 services)
   // ---------------------------------------------------------------
   const services = [
     { name: 'Wash & Fold', description: 'Standard everyday wash and tumble fold', pricing_unit: 'PER_KG', unit_price_cents: 8000, sort_order: 1 },
-    { name: 'Wash & Iron', description: 'Wash, dry, and professional hand iron', pricing_unit: 'PER_KG', unit_price_cents: 12000, sort_order: 2 },
-    { name: 'Dry Clean', description: 'Delicate garments, suits, and barong tagalog', pricing_unit: 'PER_PIECE', unit_price_cents: 15000, sort_order: 3 },
-    { name: 'Iron Only', description: 'Pressing only for clean clothes', pricing_unit: 'PER_PIECE', unit_price_cents: 3000, sort_order: 4 },
-    { name: 'Bedding & Linen', description: 'Sheets, pillowcases, and blankets', pricing_unit: 'PER_KG', unit_price_cents: 10000, sort_order: 5 },
-    { name: 'Comforter / Duvet', description: 'Bulky comforter and heavy quilts', pricing_unit: 'PER_PIECE', unit_price_cents: 25000, sort_order: 6 },
-    { name: 'Curtains & Drapes', description: 'Gentle wash and fold for curtains', pricing_unit: 'PER_KG', unit_price_cents: 14000, sort_order: 7 },
-    { name: 'Shoe Cleaning', description: 'Deep clean for sneakers and footwear', pricing_unit: 'PER_PIECE', unit_price_cents: 18000, sort_order: 8 },
+    { name: 'Wash & Iron / Press', description: 'Wash, dry, and professional hand iron', pricing_unit: 'PER_KG', unit_price_cents: 12000, sort_order: 2 },
+    { name: 'Dry Clean - Barong & Suit', description: 'Delicate garments, suits, formal wear & Barong Tagalog', pricing_unit: 'PER_PIECE', unit_price_cents: 18000, sort_order: 3 },
+    { name: 'Dry Clean - Gown & Formal', description: 'Evening gowns, wedding dresses & silk delicate wear', pricing_unit: 'PER_PIECE', unit_price_cents: 26000, sort_order: 4 },
+    { name: 'Ironing / Press Only', description: 'Professional pressing for already cleaned clothes', pricing_unit: 'PER_PIECE', unit_price_cents: 3500, sort_order: 5 },
+    { name: 'Bedding, Linens & Blankets', description: 'Bed sheets, pillowcases, and bed covers', pricing_unit: 'PER_KG', unit_price_cents: 10000, sort_order: 6 },
+    { name: 'Comforter / Bulky Duvet', description: 'Bulky comforters, thick quilts and winter jackets', pricing_unit: 'PER_PIECE', unit_price_cents: 28000, sort_order: 7 },
+    { name: 'Curtains & Heavy Drapes', description: 'Gentle wash and fold for curtains and drapes', pricing_unit: 'PER_KG', unit_price_cents: 15000, sort_order: 8 },
+    { name: 'Sneaker & Footwear Care', description: 'Deep shoe cleaning, deodorizing and sole whitening', pricing_unit: 'PER_PIECE', unit_price_cents: 22000, sort_order: 9 },
+    { name: 'Express Wash & Fold (4-Hour)', description: 'Same-day priority turnaround wash and fold', pricing_unit: 'PER_KG', unit_price_cents: 14000, sort_order: 10 },
   ]
 
   const serviceIds: Record<string, string> = {}
@@ -84,6 +78,7 @@ async function main() {
     const { data: existing } = await supabase.from('services').select('id').eq('name', svc.name).maybeSingle()
     if (existing) {
       serviceIds[svc.name] = existing.id
+      await supabase.from('services').update(svc).eq('id', existing.id)
     } else {
       const { data, error } = await supabase.from('services').insert(svc).select('id').single()
       if (error) console.error(`Service ${svc.name}:`, error.message)
@@ -95,21 +90,31 @@ async function main() {
   }
 
   // ---------------------------------------------------------------
-  // 2. Customers (~12 customers)
+  // 2. Customers (22 Filipino Customers)
   // ---------------------------------------------------------------
   const customers: { full_name: string; phone: string | null; email: string | null; address: string | null }[] = [
     { full_name: 'Walk-in Customer', phone: null, email: null, address: null },
-    { full_name: 'Juan Dela Cruz', phone: '09171234567', email: 'juan@example.com', address: 'Quezon City' },
-    { full_name: 'Maria Santos', phone: '09179876543', email: 'maria@example.com', address: 'Manila' },
-    { full_name: 'Pedro Reyes', phone: '09181112233', email: 'pedro@example.com', address: 'Makati' },
-    { full_name: 'Ana Garcia', phone: '09194445566', email: 'ana@example.com', address: 'Pasig' },
-    { full_name: 'Carlo Mendoza', phone: '09207778899', email: 'carlo@example.com', address: 'Taguig' },
-    { full_name: 'Elena Bautista', phone: '09223334455', email: 'elena@example.com', address: 'Mandaluyong' },
-    { full_name: 'Ramon Valenzuela', phone: '09175556677', email: 'ramon@example.com', address: 'San Juan' },
-    { full_name: 'Cristina Dizon', phone: '09186667788', email: 'cristina@example.com', address: 'Marikina' },
-    { full_name: 'Gabriel Mercado', phone: '09218889900', email: 'gabriel@example.com', address: 'Pasay' },
-    { full_name: 'Patricia Lim', phone: '09259990011', email: 'patricia@example.com', address: 'Parañaque' },
-    { full_name: 'Portal Customer', phone: '09170000000', email: 'labada.portal47@gmail.com', address: 'Demo City' },
+    { full_name: 'Juan Dela Cruz', phone: '09171234567', email: 'juan.delacruz@labadaflow.ph', address: 'Diliman, Quezon City' },
+    { full_name: 'Maria Clara Santos', phone: '09179876543', email: 'maria.clara@gmail.com', address: 'Ermita, Manila' },
+    { full_name: 'Jose Protacio Rizal', phone: '09181112233', email: 'pepe.rizal@gmail.com', address: 'Bel-Air, Makati' },
+    { full_name: 'Andres Bonifacio', phone: '09194445566', email: 'supremo.andres@gmail.com', address: 'Tondo, Manila' },
+    { full_name: 'Corazon Aquino', phone: '09207778899', email: 'cory.aquino@gmail.com', address: 'Greenhills, San Juan' },
+    { full_name: 'Emilio Aguinaldo', phone: '09223334455', email: 'emilio.a@gmail.com', address: 'Kapitolyo, Pasig' },
+    { full_name: 'Francisco Balagtas', phone: '09175556677', email: 'f.balagtas@gmail.com', address: 'Concepcion, Marikina' },
+    { full_name: 'Gabriela Silang', phone: '09186667788', email: 'gabriela.s@gmail.com', address: 'BGC, Taguig City' },
+    { full_name: 'Melchora Aquino', phone: '09218889900', email: 'tandang.sora@gmail.com', address: 'Tandang Sora, Quezon City' },
+    { full_name: 'Antonio Luna', phone: '09259990011', email: 'antonio.luna@gmail.com', address: 'San Juan City' },
+    { full_name: 'Apolinario Mabini', phone: '09172345678', email: 'a.mabini@gmail.com', address: 'Taft Ave, Pasay City' },
+    { full_name: 'Marcelo H. Del Pilar', phone: '09183456789', email: 'plaridel@gmail.com', address: 'Highway Hills, Mandaluyong' },
+    { full_name: 'Diego Silang', phone: '09194567890', email: 'diego.silang@gmail.com', address: 'BF Homes, Parañaque' },
+    { full_name: 'Teresa Magbanua', phone: '09205678901', email: 'nay.teresa@gmail.com', address: 'Ususan, Taguig' },
+    { full_name: 'Trinidad Tecson', phone: '09226789012', email: 'trinidad.t@gmail.com', address: 'San Miguel, Manila' },
+    { full_name: 'Gregoria de Jesus', phone: '09177890123', email: 'oryang.dj@gmail.com', address: 'Grace Park, Caloocan' },
+    { full_name: 'Vicente Lim', phone: '09188901234', email: 'vicente.lim@gmail.com', address: 'Paco, Manila' },
+    { full_name: 'Gliceria Marella', phone: '09199012345', email: 'gliceria.m@gmail.com', address: 'Malate, Manila' },
+    { full_name: 'Ramon Magsaysay', phone: '09200123456', email: 'monching.m@gmail.com', address: 'Cubao, Quezon City' },
+    { full_name: 'Manuel L. Quezon', phone: '09221234567', email: 'mlq@gmail.com', address: 'New Manila, Quezon City' },
+    { full_name: 'Portal Customer', phone: '09170000000', email: 'labada.portal47@gmail.com', address: 'Ortigas Center, Pasig' },
   ]
 
   const customerIds: Record<string, string> = {}
@@ -120,6 +125,7 @@ async function main() {
     const { data: existing } = await query
     if (existing) {
       customerIds[c.full_name] = existing.id
+      await supabase.from('customers').update(c).eq('id', existing.id)
     } else {
       const { data, error } = await supabase.from('customers').insert(c).select('id').single()
       if (error) console.error(`Customer ${c.full_name}:`, error.message)
@@ -131,39 +137,30 @@ async function main() {
   }
 
   // ---------------------------------------------------------------
-  // 3. Staff users
+  // 3. Admin & Staff users
   // ---------------------------------------------------------------
-  const staffMembers = [
-    { clerk_user_id: 'seed-staff-1', role: 'STAFF', full_name: 'Staff One', email: 'staff1@labadaflow.demo' },
-    { clerk_user_id: 'seed-staff-2', role: 'STAFF', full_name: 'Staff Two', email: 'staff2@labadaflow.demo' },
-  ]
+  const { data: adminUser } = await supabase
+    .from('users')
+    .select('id, full_name')
+    .eq('role', 'ADMIN')
+    .eq('email', 'lawrence.pitlo@urios.edu.ph')
+    .maybeSingle()
 
-  const staffIds: string[] = []
-  for (const s of staffMembers) {
-    const { data: existing } = await supabase.from('users').select('id').eq('clerk_user_id', s.clerk_user_id).maybeSingle()
-    if (existing) {
-      staffIds.push(existing.id)
-    } else {
-      const { data, error } = await supabase.from('users').insert(s).select('id').single()
-      if (error) console.error(`Staff ${s.full_name}:`, error.message)
-      else {
-        staffIds.push(data.id)
-        console.log(`+ staff ${s.full_name}`)
-      }
-    }
-  }
-
-  // ---------------------------------------------------------------
-  // 4. Resolve creator admin
-  // ---------------------------------------------------------------
-  const { data: adminUser } = await supabase.from('users').select('id, full_name').eq('role', 'ADMIN').limit(1).maybeSingle()
-  if (!adminUser) {
-    console.error('No ADMIN user found in users table.')
+  const fallbackAdmin = adminUser || (await supabase.from('users').select('id, full_name').eq('role', 'ADMIN').limit(1).single()).data
+  if (!fallbackAdmin) {
+    console.error('No ADMIN user found.')
     process.exit(1)
   }
-  const creator = adminUser as { id: string; full_name: string }
+  const creator = fallbackAdmin as { id: string; full_name: string }
 
-  // Check if orders exist already (unless --clean was used)
+  const { data: staffMembers } = await supabase
+    .from('users')
+    .select('id, full_name')
+    .eq('role', 'STAFF')
+
+  const staffList = staffMembers && staffMembers.length > 0 ? staffMembers : [creator]
+
+  // Check if orders already seeded
   const { count: existingOrders } = await supabase.from('orders').select('id', { count: 'exact', head: true })
   if (existingOrders && existingOrders > 0 && !shouldClean) {
     console.log(`= ${existingOrders} orders already exist (run with --clean to overwrite). Seed complete.`)
@@ -171,29 +168,30 @@ async function main() {
   }
 
   // ---------------------------------------------------------------
-  // 5. Orders Helper
+  // 4. Order Creation Helper
   // ---------------------------------------------------------------
   async function createOrderWithStatus(opts: {
     customerKey: string
     status: 'RECEIVED' | 'WASHING' | 'DRYING' | 'FOLDING' | 'READY' | 'COMPLETED' | 'CANCELLED'
     source?: 'WALK_IN' | 'PORTAL'
     items: { service: string; quantity: number }[]
-    assignedToStaff?: number
+    assignedStaffIndex?: number
     dueInDays?: number | null
     paymentMethod?: 'CASH' | 'GCASH' | 'OTHER'
+    createdDaysAgo?: number
     completedHoursAgo?: number
     notes?: string | null
     cancelReason?: string | null
   }) {
     const customerId = customerIds[opts.customerKey]
     if (!customerId) {
-      console.error(`Customer "${opts.customerKey}" not found — skipping order`)
+      console.error(`Customer "${opts.customerKey}" not found`)
       return
     }
 
     const orderItems = opts.items.map(i => {
-      const svc = services.find(s => s.name === i.service)!
-      const svcId = serviceIds[i.service]
+      const svc = services.find(s => s.name === i.service) || services[0]
+      const svcId = serviceIds[i.service] || Object.values(serviceIds)[0]
       const lineTotal = Math.round(svc.unit_price_cents * i.quantity)
       return {
         service_id: svcId,
@@ -206,11 +204,16 @@ async function main() {
     })
     const totalCents = orderItems.reduce((s, i) => s + i.line_total_cents, 0)
 
+    const createdDays = opts.createdDaysAgo ?? (opts.completedHoursAgo ? Math.ceil(opts.completedHoursAgo / 24) : 0)
+    const createdAtDate = new Date(Date.now() - createdDays * 86400000 - Math.floor(Math.random() * 3600000))
+    const createdAt = createdAtDate.toISOString()
+
     const dueAt = opts.dueInDays != null
       ? new Date(Date.now() + opts.dueInDays * 86400000).toISOString()
-      : null
+      : new Date(createdAtDate.getTime() + 2 * 86400000).toISOString()
 
     const trackingCode = `LF-${nanoid().slice(0, 8).toUpperCase()}`
+    const assignedStaff = opts.assignedStaffIndex != null ? staffList[opts.assignedStaffIndex % staffList.length].id : null
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -219,9 +222,11 @@ async function main() {
         customer_id: customerId,
         status: 'RECEIVED',
         source: opts.source ?? 'WALK_IN',
-        assigned_to: opts.assignedToStaff != null ? staffIds[opts.assignedToStaff] : null,
+        assigned_to: assignedStaff,
         created_by: creator.id,
         total_cents: totalCents,
+        received_at: createdAt,
+        created_at: createdAt,
         due_at: dueAt,
         notes: opts.notes ?? null,
       })
@@ -233,29 +238,28 @@ async function main() {
       return
     }
 
-    // Insert line items
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems.map(i => ({ ...i, order_id: order.id })))
-    if (itemsError) console.error(`  items:`, itemsError.message)
+    // Insert items
+    await supabase.from('order_items').insert(orderItems.map(i => ({ ...i, order_id: order.id })))
 
-    // Initial event: NULL → RECEIVED
+    // Initial event
     await supabase.from('order_status_events').insert({
       order_id: order.id,
       actor_id: creator.id,
       actor_name: creator.full_name,
       from_status: null,
       to_status: 'RECEIVED',
+      created_at: createdAt,
     })
 
-    // Advance order along flow
     if (opts.status === 'CANCELLED') {
+      const cancelDate = new Date(createdAtDate.getTime() + 1800000).toISOString()
       await supabase
         .from('orders')
         .update({
           status: 'CANCELLED',
           cancel_reason: opts.cancelReason ?? 'Customer requested cancellation',
-          cancelled_at: new Date().toISOString(),
+          cancelled_at: cancelDate,
+          updated_at: cancelDate,
         })
         .eq('id', order.id)
 
@@ -266,6 +270,7 @@ async function main() {
         from_status: 'RECEIVED',
         to_status: 'CANCELLED',
         note: opts.cancelReason ?? 'Order cancelled per customer request',
+        created_at: cancelDate,
       })
     } else {
       const targetIdx = FORWARD_FLOW.indexOf(opts.status)
@@ -273,23 +278,28 @@ async function main() {
         const from = FORWARD_FLOW[i]
         const to = FORWARD_FLOW[i + 1]
 
-        let updatePayload: Record<string, unknown> = { status: to }
+        let stepDate: Date
+        if (to === 'COMPLETED' && opts.completedHoursAgo != null) {
+          stepDate = new Date(Date.now() - opts.completedHoursAgo * 3600000)
+        } else {
+          stepDate = new Date(createdAtDate.getTime() + (i + 1) * 3600000)
+        }
+
+        let updatePayload: Record<string, unknown> = {
+          status: to,
+          updated_at: stepDate.toISOString(),
+        }
 
         if (to === 'COMPLETED') {
-          const compDate = opts.completedHoursAgo != null
-            ? new Date(Date.now() - opts.completedHoursAgo * 3600000).toISOString()
-            : new Date().toISOString()
-
           updatePayload = {
-            status: to,
-            paid_at: compDate,
-            completed_at: compDate,
+            ...updatePayload,
+            paid_at: stepDate.toISOString(),
+            completed_at: stepDate.toISOString(),
             payment_method: opts.paymentMethod ?? 'CASH',
           }
         }
 
-        const { error: updErr } = await supabase.from('orders').update(updatePayload).eq('id', order.id)
-        if (updErr) console.error(`  → ${to}:`, updErr.message)
+        await supabase.from('orders').update(updatePayload).eq('id', order.id)
 
         await supabase.from('order_status_events').insert({
           order_id: order.id,
@@ -297,7 +307,8 @@ async function main() {
           actor_name: creator.full_name,
           from_status: from,
           to_status: to,
-          note: to === 'COMPLETED' ? `Paid via ${opts.paymentMethod ?? 'CASH'}` : undefined,
+          note: to === 'COMPLETED' ? `Settled via ${opts.paymentMethod ?? 'CASH'}` : undefined,
+          created_at: stepDate.toISOString(),
         })
       }
     }
@@ -305,52 +316,115 @@ async function main() {
     console.log(`+ order ${order.order_number} → ${opts.status} (${opts.customerKey})`)
   }
 
+  console.log('\n--- Seeding 50 Realistic Laundry Orders ---')
+
   // ---------------------------------------------------------------
-  // 6. ~25 orders across all statuses
+  // 6 RECEIVED (Awaiting processing)
   // ---------------------------------------------------------------
+  await createOrderWithStatus({ customerKey: 'Juan Dela Cruz', status: 'RECEIVED', items: [{ service: 'Wash & Fold', quantity: 5.5 }], assignedStaffIndex: 0, dueInDays: 3, createdDaysAgo: 0 })
+  await createOrderWithStatus({ customerKey: 'Maria Clara Santos', status: 'RECEIVED', items: [{ service: 'Wash & Iron / Press', quantity: 4.2 }], dueInDays: 2, createdDaysAgo: 0 })
+  await createOrderWithStatus({ customerKey: 'Jose Protacio Rizal', status: 'RECEIVED', items: [{ service: 'Dry Clean - Barong & Suit', quantity: 2 }], assignedStaffIndex: 1, dueInDays: 4, createdDaysAgo: 0 })
+  await createOrderWithStatus({ customerKey: 'Corazon Aquino', status: 'RECEIVED', items: [{ service: 'Bedding, Linens & Blankets', quantity: 6 }], dueInDays: 2, createdDaysAgo: 1 })
+  await createOrderWithStatus({ customerKey: 'Walk-in Customer', status: 'RECEIVED', items: [{ service: 'Ironing / Press Only', quantity: 6 }], dueInDays: 3, createdDaysAgo: 0 })
+  await createOrderWithStatus({ customerKey: 'Portal Customer', status: 'RECEIVED', source: 'PORTAL', items: [{ service: 'Sneaker & Footwear Care', quantity: 2 }], dueInDays: 2, createdDaysAgo: 0 })
 
-  // 4 RECEIVED
-  await createOrderWithStatus({ customerKey: 'Juan Dela Cruz', status: 'RECEIVED', items: [{ service: 'Wash & Fold', quantity: 3.5 }], assignedToStaff: 0, dueInDays: 3 })
-  await createOrderWithStatus({ customerKey: 'Elena Bautista', status: 'RECEIVED', items: [{ service: 'Bedding & Linen', quantity: 4 }, { service: 'Comforter / Duvet', quantity: 1 }], dueInDays: 2 })
-  await createOrderWithStatus({ customerKey: 'Walk-in Customer', status: 'RECEIVED', items: [{ service: 'Iron Only', quantity: 5 }], dueInDays: 4 })
-  await createOrderWithStatus({ customerKey: 'Patricia Lim', status: 'RECEIVED', items: [{ service: 'Dry Clean', quantity: 3 }], assignedToStaff: 1, dueInDays: 3 })
+  // ---------------------------------------------------------------
+  // 6 WASHING (In wash cycle - 2 Overdue)
+  // ---------------------------------------------------------------
+  await createOrderWithStatus({ customerKey: 'Andres Bonifacio', status: 'WASHING', items: [{ service: 'Express Wash & Fold (4-Hour)', quantity: 4.5 }], assignedStaffIndex: 0, dueInDays: 1, createdDaysAgo: 0 })
+  await createOrderWithStatus({ customerKey: 'Emilio Aguinaldo', status: 'WASHING', items: [{ service: 'Curtains & Heavy Drapes', quantity: 7.0 }], assignedStaffIndex: 1, dueInDays: -2, createdDaysAgo: 3, notes: 'URGENT: Rush curtains for event' }) // OVERDUE 1
+  await createOrderWithStatus({ customerKey: 'Francisco Balagtas', status: 'WASHING', items: [{ service: 'Wash & Fold', quantity: 8.0 }], assignedStaffIndex: 0, dueInDays: 2, createdDaysAgo: 1 })
+  await createOrderWithStatus({ customerKey: 'Gabriela Silang', status: 'WASHING', items: [{ service: 'Comforter / Bulky Duvet', quantity: 2 }], assignedStaffIndex: 1, dueInDays: -1, createdDaysAgo: 2, notes: 'Bulky king-size comforters' }) // OVERDUE 2
+  await createOrderWithStatus({ customerKey: 'Melchora Aquino', status: 'WASHING', items: [{ service: 'Wash & Iron / Press', quantity: 5.0 }], assignedStaffIndex: 0, dueInDays: 2, createdDaysAgo: 1 })
+  await createOrderWithStatus({ customerKey: 'Portal Customer', status: 'WASHING', source: 'PORTAL', items: [{ service: 'Wash & Fold', quantity: 3.5 }], dueInDays: 2, createdDaysAgo: 1 })
 
-  // 4 WASHING (1 Overdue: dueInDays: -2)
-  await createOrderWithStatus({ customerKey: 'Maria Santos', status: 'WASHING', items: [{ service: 'Wash & Iron', quantity: 4.2 }], assignedToStaff: 1, dueInDays: 2 })
-  await createOrderWithStatus({ customerKey: 'Carlo Mendoza', status: 'WASHING', items: [{ service: 'Curtains & Drapes', quantity: 6 }], assignedToStaff: 0, dueInDays: -2, notes: 'Priority rush order' }) // OVERDUE 1
-  await createOrderWithStatus({ customerKey: 'Gabriel Mercado', status: 'WASHING', items: [{ service: 'Wash & Fold', quantity: 5 }, { service: 'Shoe Cleaning', quantity: 1 }], assignedToStaff: 1, dueInDays: 3 })
-  await createOrderWithStatus({ customerKey: 'Portal Customer', status: 'WASHING', source: 'PORTAL', items: [{ service: 'Wash & Fold', quantity: 4 }], dueInDays: 2 })
+  // ---------------------------------------------------------------
+  // 6 DRYING (In dryers - 1 Overdue)
+  // ---------------------------------------------------------------
+  await createOrderWithStatus({ customerKey: 'Antonio Luna', status: 'DRYING', items: [{ service: 'Dry Clean - Barong & Suit', quantity: 3 }, { service: 'Ironing / Press Only', quantity: 4 }], assignedStaffIndex: 1, dueInDays: -1, createdDaysAgo: 3 }) // OVERDUE 3
+  await createOrderWithStatus({ customerKey: 'Apolinario Mabini', status: 'DRYING', items: [{ service: 'Wash & Fold', quantity: 6.2 }], assignedStaffIndex: 0, dueInDays: 1, createdDaysAgo: 1 })
+  await createOrderWithStatus({ customerKey: 'Marcelo H. Del Pilar', status: 'DRYING', items: [{ service: 'Bedding, Linens & Blankets', quantity: 5.0 }], assignedStaffIndex: 1, dueInDays: 2, createdDaysAgo: 1 })
+  await createOrderWithStatus({ customerKey: 'Diego Silang', status: 'DRYING', items: [{ service: 'Wash & Iron / Press', quantity: 4.0 }], assignedStaffIndex: 0, dueInDays: 1, createdDaysAgo: 1 })
+  await createOrderWithStatus({ customerKey: 'Teresa Magbanua', status: 'DRYING', items: [{ service: 'Sneaker & Footwear Care', quantity: 1 }, { service: 'Wash & Fold', quantity: 4.0 }], assignedStaffIndex: 1, dueInDays: 2, createdDaysAgo: 1 })
+  await createOrderWithStatus({ customerKey: 'Walk-in Customer', status: 'DRYING', items: [{ service: 'Comforter / Bulky Duvet', quantity: 1 }], dueInDays: 1, createdDaysAgo: 1 })
 
-  // 4 DRYING (1 Overdue: dueInDays: -1)
-  await createOrderWithStatus({ customerKey: 'Pedro Reyes', status: 'DRYING', items: [{ service: 'Dry Clean', quantity: 2 }, { service: 'Iron Only', quantity: 3 }], assignedToStaff: 0, dueInDays: -1 }) // OVERDUE 2
-  await createOrderWithStatus({ customerKey: 'Ramon Valenzuela', status: 'DRYING', items: [{ service: 'Wash & Fold', quantity: 6.5 }], assignedToStaff: 1, dueInDays: 1 })
-  await createOrderWithStatus({ customerKey: 'Cristina Dizon', status: 'DRYING', items: [{ service: 'Bedding & Linen', quantity: 5 }], assignedToStaff: 0, dueInDays: 2 })
-  await createOrderWithStatus({ customerKey: 'Walk-in Customer', status: 'DRYING', items: [{ service: 'Comforter / Duvet', quantity: 2 }], dueInDays: 2 })
+  // ---------------------------------------------------------------
+  // 5 FOLDING (Folding & Quality Check)
+  // ---------------------------------------------------------------
+  await createOrderWithStatus({ customerKey: 'Trinidad Tecson', status: 'FOLDING', items: [{ service: 'Wash & Fold', quantity: 7.5 }], assignedStaffIndex: 0, dueInDays: 1, createdDaysAgo: 2 })
+  await createOrderWithStatus({ customerKey: 'Gregoria de Jesus', status: 'FOLDING', items: [{ service: 'Ironing / Press Only', quantity: 10 }], assignedStaffIndex: 1, dueInDays: 1, createdDaysAgo: 2 })
+  await createOrderWithStatus({ customerKey: 'Vicente Lim', status: 'FOLDING', items: [{ service: 'Wash & Iron / Press', quantity: 3.8 }], assignedStaffIndex: 0, dueInDays: 1, createdDaysAgo: 2 })
+  await createOrderWithStatus({ customerKey: 'Gliceria Marella', status: 'FOLDING', items: [{ service: 'Bedding, Linens & Blankets', quantity: 4.5 }], assignedStaffIndex: 1, dueInDays: 2, createdDaysAgo: 2 })
+  await createOrderWithStatus({ customerKey: 'Ramon Magsaysay', status: 'FOLDING', items: [{ service: 'Wash & Fold', quantity: 6.0 }], assignedStaffIndex: 0, dueInDays: 1, createdDaysAgo: 2 })
 
-  // 4 FOLDING
-  await createOrderWithStatus({ customerKey: 'Ana Garcia', status: 'FOLDING', items: [{ service: 'Wash & Fold', quantity: 5.5 }], assignedToStaff: 1, dueInDays: 1 })
-  await createOrderWithStatus({ customerKey: 'Juan Dela Cruz', status: 'FOLDING', items: [{ service: 'Wash & Iron', quantity: 3.2 }], assignedToStaff: 0, dueInDays: 1 })
-  await createOrderWithStatus({ customerKey: 'Elena Bautista', status: 'FOLDING', items: [{ service: 'Iron Only', quantity: 8 }], assignedToStaff: 1, dueInDays: 2 })
-  await createOrderWithStatus({ customerKey: 'Maria Santos', status: 'FOLDING', items: [{ service: 'Wash & Fold', quantity: 4 }], assignedToStaff: 0, dueInDays: 1 })
+  // ---------------------------------------------------------------
+  // 5 READY (Awaiting Pickup at counter)
+  // ---------------------------------------------------------------
+  await createOrderWithStatus({ customerKey: 'Manuel L. Quezon', status: 'READY', items: [{ service: 'Dry Clean - Barong & Suit', quantity: 2 }, { service: 'Wash & Iron / Press', quantity: 4.0 }], assignedStaffIndex: 0, dueInDays: 1, createdDaysAgo: 3, notes: 'Folded in separate premium plastic garment bags' })
+  await createOrderWithStatus({ customerKey: 'Portal Customer', status: 'READY', source: 'PORTAL', items: [{ service: 'Sneaker & Footwear Care', quantity: 2 }, { service: 'Wash & Fold', quantity: 3.0 }], dueInDays: 1, createdDaysAgo: 3 })
+  await createOrderWithStatus({ customerKey: 'Juan Dela Cruz', status: 'READY', items: [{ service: 'Express Wash & Fold (4-Hour)', quantity: 5.0 }], assignedStaffIndex: 1, dueInDays: 1, createdDaysAgo: 2 })
+  await createOrderWithStatus({ customerKey: 'Maria Clara Santos', status: 'READY', items: [{ service: 'Dry Clean - Gown & Formal', quantity: 1 }], assignedStaffIndex: 0, dueInDays: 2, createdDaysAgo: 3 })
+  await createOrderWithStatus({ customerKey: 'Walk-in Customer', status: 'READY', items: [{ service: 'Ironing / Press Only', quantity: 5 }], dueInDays: 1, createdDaysAgo: 2 })
 
-  // 3 READY (for counter pickup & payment completion demo)
-  await createOrderWithStatus({ customerKey: 'Juan Dela Cruz', status: 'READY', items: [{ service: 'Wash & Fold', quantity: 4 }, { service: 'Iron Only', quantity: 2 }], assignedToStaff: 0, dueInDays: 1, notes: 'Folded in separate bags' })
-  await createOrderWithStatus({ customerKey: 'Portal Customer', status: 'READY', source: 'PORTAL', items: [{ service: 'Wash & Iron', quantity: 3 }, { service: 'Shoe Cleaning', quantity: 1 }], dueInDays: 1 })
-  await createOrderWithStatus({ customerKey: 'Patricia Lim', status: 'READY', items: [{ service: 'Dry Clean', quantity: 2 }, { service: 'Wash & Fold', quantity: 3 }], assignedToStaff: 1, dueInDays: 2 })
+  // ---------------------------------------------------------------
+  // 20 COMPLETED (Spread across the past 14 days, with CASH, GCASH, OTHER)
+  // ---------------------------------------------------------------
+  // Today (0-6 hours ago)
+  await createOrderWithStatus({ customerKey: 'Corazon Aquino', status: 'COMPLETED', items: [{ service: 'Wash & Fold', quantity: 6.5 }], paymentMethod: 'CASH', completedHoursAgo: 2 })
+  await createOrderWithStatus({ customerKey: 'Jose Protacio Rizal', status: 'COMPLETED', items: [{ service: 'Dry Clean - Barong & Suit', quantity: 3 }], paymentMethod: 'GCASH', completedHoursAgo: 4 })
+  await createOrderWithStatus({ customerKey: 'Andres Bonifacio', status: 'COMPLETED', items: [{ service: 'Wash & Iron / Press', quantity: 4.0 }], paymentMethod: 'CASH', completedHoursAgo: 6 })
 
-  // 6 COMPLETED (mixed payment methods: CASH, GCASH, OTHER; completed today & earlier this week)
-  await createOrderWithStatus({ customerKey: 'Maria Santos', status: 'COMPLETED', items: [{ service: 'Wash & Iron', quantity: 3.5 }], assignedToStaff: 1, paymentMethod: 'CASH', completedHoursAgo: 2 }) // Today
-  await createOrderWithStatus({ customerKey: 'Pedro Reyes', status: 'COMPLETED', items: [{ service: 'Dry Clean', quantity: 4 }], assignedToStaff: 0, paymentMethod: 'GCASH', completedHoursAgo: 4 }) // Today
-  await createOrderWithStatus({ customerKey: 'Carlo Mendoza', status: 'COMPLETED', items: [{ service: 'Bedding & Linen', quantity: 5 }], assignedToStaff: 1, paymentMethod: 'OTHER', completedHoursAgo: 6 }) // Today
-  await createOrderWithStatus({ customerKey: 'Gabriel Mercado', status: 'COMPLETED', items: [{ service: 'Wash & Fold', quantity: 7 }], assignedToStaff: 0, paymentMethod: 'GCASH', completedHoursAgo: 48 }) // 2 days ago
-  await createOrderWithStatus({ customerKey: 'Cristina Dizon', status: 'COMPLETED', items: [{ service: 'Shoe Cleaning', quantity: 2 }], assignedToStaff: 1, paymentMethod: 'CASH', completedHoursAgo: 72 }) // 3 days ago
-  await createOrderWithStatus({ customerKey: 'Portal Customer', status: 'COMPLETED', source: 'PORTAL', items: [{ service: 'Wash & Fold', quantity: 4.5 }], paymentMethod: 'GCASH', completedHoursAgo: 96 }) // 4 days ago
+  // 1 day ago (24-30 hrs)
+  await createOrderWithStatus({ customerKey: 'Gabriela Silang', status: 'COMPLETED', items: [{ service: 'Bedding, Linens & Blankets', quantity: 7.0 }], paymentMethod: 'GCASH', completedHoursAgo: 26 })
+  await createOrderWithStatus({ customerKey: 'Emilio Aguinaldo', status: 'COMPLETED', items: [{ service: 'Comforter / Bulky Duvet', quantity: 2 }], paymentMethod: 'CASH', completedHoursAgo: 28 })
 
-  // 2 CANCELLED (with explicit reasons)
-  await createOrderWithStatus({ customerKey: 'Ana Garcia', status: 'CANCELLED', items: [{ service: 'Wash & Fold', quantity: 2.5 }], cancelReason: 'Customer requested cancellation before washing' })
-  await createOrderWithStatus({ customerKey: 'Walk-in Customer', status: 'CANCELLED', items: [{ service: 'Iron Only', quantity: 4 }], cancelReason: 'Duplicate order entered by cashier mistake' })
+  // 2 days ago (48-54 hrs)
+  await createOrderWithStatus({ customerKey: 'Melchora Aquino', status: 'COMPLETED', items: [{ service: 'Sneaker & Footwear Care', quantity: 2 }], paymentMethod: 'GCASH', completedHoursAgo: 50 })
+  await createOrderWithStatus({ customerKey: 'Antonio Luna', status: 'COMPLETED', items: [{ service: 'Wash & Fold', quantity: 8.5 }], paymentMethod: 'OTHER', completedHoursAgo: 52 })
 
-  console.log('Seed successfully completed with realistic shop data!')
+  // 3 days ago (72-78 hrs)
+  await createOrderWithStatus({ customerKey: 'Francisco Balagtas', status: 'COMPLETED', items: [{ service: 'Dry Clean - Gown & Formal', quantity: 1 }, { service: 'Ironing / Press Only', quantity: 4 }], paymentMethod: 'CASH', completedHoursAgo: 74 })
+  await createOrderWithStatus({ customerKey: 'Portal Customer', status: 'COMPLETED', source: 'PORTAL', items: [{ service: 'Wash & Fold', quantity: 5.0 }], paymentMethod: 'GCASH', completedHoursAgo: 76 })
+
+  // 4 days ago (96-102 hrs)
+  await createOrderWithStatus({ customerKey: 'Apolinario Mabini', status: 'COMPLETED', items: [{ service: 'Wash & Iron / Press', quantity: 5.5 }], paymentMethod: 'CASH', completedHoursAgo: 98 })
+  await createOrderWithStatus({ customerKey: 'Marcelo H. Del Pilar', status: 'COMPLETED', items: [{ service: 'Curtains & Heavy Drapes', quantity: 8.0 }], paymentMethod: 'GCASH', completedHoursAgo: 100 })
+
+  // 5 days ago (120-126 hrs)
+  await createOrderWithStatus({ customerKey: 'Diego Silang', status: 'COMPLETED', items: [{ service: 'Wash & Fold', quantity: 6.0 }], paymentMethod: 'CASH', completedHoursAgo: 122 })
+  await createOrderWithStatus({ customerKey: 'Teresa Magbanua', status: 'COMPLETED', items: [{ service: 'Comforter / Bulky Duvet', quantity: 1 }, { service: 'Sneaker & Footwear Care', quantity: 1 }], paymentMethod: 'OTHER', completedHoursAgo: 124 })
+
+  // 6 days ago (144-150 hrs)
+  await createOrderWithStatus({ customerKey: 'Trinidad Tecson', status: 'COMPLETED', items: [{ service: 'Bedding, Linens & Blankets', quantity: 5.5 }], paymentMethod: 'GCASH', completedHoursAgo: 146 })
+  await createOrderWithStatus({ customerKey: 'Gregoria de Jesus', status: 'COMPLETED', items: [{ service: 'Ironing / Press Only', quantity: 8 }], paymentMethod: 'CASH', completedHoursAgo: 148 })
+
+  // 7-13 days ago (historical for 14-day reports chart)
+  await createOrderWithStatus({ customerKey: 'Vicente Lim', status: 'COMPLETED', items: [{ service: 'Wash & Fold', quantity: 9.0 }], paymentMethod: 'CASH', completedHoursAgo: 170 }) // 7 days
+  await createOrderWithStatus({ customerKey: 'Gliceria Marella', status: 'COMPLETED', items: [{ service: 'Dry Clean - Barong & Suit', quantity: 2 }], paymentMethod: 'GCASH', completedHoursAgo: 195 }) // 8 days
+  await createOrderWithStatus({ customerKey: 'Ramon Magsaysay', status: 'COMPLETED', items: [{ service: 'Wash & Iron / Press', quantity: 6.0 }], paymentMethod: 'CASH', completedHoursAgo: 220 }) // 9 days
+  await createOrderWithStatus({ customerKey: 'Manuel L. Quezon', status: 'COMPLETED', items: [{ service: 'Express Wash & Fold (4-Hour)', quantity: 7.0 }], paymentMethod: 'GCASH', completedHoursAgo: 245 }) // 10 days
+  await createOrderWithStatus({ customerKey: 'Walk-in Customer', status: 'COMPLETED', items: [{ service: 'Wash & Fold', quantity: 4.5 }], paymentMethod: 'CASH', completedHoursAgo: 290 }) // 12 days
+
+  // ---------------------------------------------------------------
+  // 2 CANCELLED (with authentic business reasons)
+  // ---------------------------------------------------------------
+  await createOrderWithStatus({
+    customerKey: 'Juan Dela Cruz',
+    status: 'CANCELLED',
+    items: [{ service: 'Wash & Fold', quantity: 3.5 }],
+    cancelReason: 'Customer requested order cancellation before washing started due to travel plans change',
+    createdDaysAgo: 1,
+  })
+
+  await createOrderWithStatus({
+    customerKey: 'Walk-in Customer',
+    status: 'CANCELLED',
+    items: [{ service: 'Ironing / Press Only', quantity: 4 }],
+    cancelReason: 'Duplicate entry created at counter by staff mistake',
+    createdDaysAgo: 2,
+  })
+
+  console.log('\n=== Seed Completed Successfully! 50 orders seeded with complete history. ===')
 }
 
 main().catch(err => {

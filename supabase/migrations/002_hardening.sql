@@ -448,6 +448,7 @@ DECLARE
   v_customer_count INTEGER;
   v_status_counts JSONB;
   v_recent_orders JSONB;
+  v_daily_trend JSONB;
 BEGIN
   -- Overdue orders (not completed, not cancelled, due_at has passed)
   SELECT COUNT(*) INTO v_overdue_count
@@ -506,6 +507,32 @@ BEGIN
     LIMIT 8
   ) r;
 
+  -- 7-day daily trend in Asia/Manila for Dashboard chart
+  SELECT COALESCE(jsonb_agg(d), '[]'::jsonb) INTO v_daily_trend
+  FROM (
+    SELECT
+      to_char(days.d, 'YYYY-MM-DD') AS date,
+      to_char(days.d, 'Dy') AS day_name,
+      to_char(days.d, 'Mon DD') AS label,
+      COALESCE(SUM(o.total_cents), 0)::INTEGER AS revenue_cents,
+      COUNT(o.id)::INTEGER AS completed_orders,
+      (
+        SELECT COUNT(*)::INTEGER
+        FROM orders ord
+        WHERE (ord.created_at AT TIME ZONE 'Asia/Manila')::DATE = days.d::DATE
+      ) AS created_orders
+    FROM generate_series(
+      (NOW() AT TIME ZONE 'Asia/Manila')::DATE - INTERVAL '6 days',
+      (NOW() AT TIME ZONE 'Asia/Manila')::DATE,
+      INTERVAL '1 day'
+    ) AS days(d)
+    LEFT JOIN orders o ON
+      o.status = 'COMPLETED'
+      AND (o.completed_at AT TIME ZONE 'Asia/Manila')::DATE = days.d::DATE
+    GROUP BY days.d
+    ORDER BY days.d ASC
+  ) d;
+
   RETURN jsonb_build_object(
     'overdue_count', v_overdue_count,
     'ready_count', v_ready_count,
@@ -517,7 +544,8 @@ BEGIN
     'active_orders', v_active_orders,
     'customer_count', v_customer_count,
     'status_counts', v_status_counts,
-    'recent_orders', v_recent_orders
+    'recent_orders', v_recent_orders,
+    'daily_trend', v_daily_trend
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
@@ -532,6 +560,8 @@ DECLARE
   v_revenue_total INTEGER;
   v_orders_by_service JSONB;
   v_status_breakdown JSONB;
+  v_daily_trend JSONB;
+  v_payment_breakdown JSONB;
 BEGIN
   -- Orders today in Asia/Manila
   SELECT COUNT(*) INTO v_orders_today
@@ -582,6 +612,45 @@ BEGIN
     GROUP BY status
   ) sb;
 
+  -- 14-day daily trend in Asia/Manila for Reports chart
+  SELECT COALESCE(jsonb_agg(d), '[]'::jsonb) INTO v_daily_trend
+  FROM (
+    SELECT
+      to_char(days.d, 'YYYY-MM-DD') AS date,
+      to_char(days.d, 'Dy') AS day_name,
+      to_char(days.d, 'Mon DD') AS label,
+      COALESCE(SUM(o.total_cents), 0)::INTEGER AS revenue_cents,
+      COUNT(o.id)::INTEGER AS completed_orders,
+      (
+        SELECT COUNT(*)::INTEGER
+        FROM orders ord
+        WHERE (ord.created_at AT TIME ZONE 'Asia/Manila')::DATE = days.d::DATE
+      ) AS created_orders
+    FROM generate_series(
+      (NOW() AT TIME ZONE 'Asia/Manila')::DATE - INTERVAL '13 days',
+      (NOW() AT TIME ZONE 'Asia/Manila')::DATE,
+      INTERVAL '1 day'
+    ) AS days(d)
+    LEFT JOIN orders o ON
+      o.status = 'COMPLETED'
+      AND (o.completed_at AT TIME ZONE 'Asia/Manila')::DATE = days.d::DATE
+    GROUP BY days.d
+    ORDER BY days.d ASC
+  ) d;
+
+  -- Payment methods breakdown (COMPLETED orders only)
+  SELECT COALESCE(jsonb_agg(p ORDER BY (p->>'total_cents')::INTEGER DESC), '[]'::jsonb) INTO v_payment_breakdown
+  FROM (
+    SELECT jsonb_build_object(
+      'method', COALESCE(payment_method::TEXT, 'CASH'),
+      'count', COUNT(*)::INTEGER,
+      'total_cents', COALESCE(SUM(total_cents), 0)::INTEGER
+    ) AS p
+    FROM orders
+    WHERE status = 'COMPLETED'
+    GROUP BY payment_method
+  ) pb;
+
   RETURN jsonb_build_object(
     'orders_today', v_orders_today,
     'orders_this_week', v_orders_this_week,
@@ -589,7 +658,9 @@ BEGIN
     'revenue_this_week', v_revenue_this_week,
     'revenue_total', v_revenue_total,
     'orders_by_service', v_orders_by_service,
-    'status_breakdown', v_status_breakdown
+    'status_breakdown', v_status_breakdown,
+    'daily_trend', v_daily_trend,
+    'payment_breakdown', v_payment_breakdown
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;

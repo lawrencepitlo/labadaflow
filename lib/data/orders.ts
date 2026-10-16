@@ -367,6 +367,14 @@ export async function getDashboardStats() {
       customer: { id: string; full_name: string }
       items: Array<{ service_name: string; quantity: number }>
     }>
+    daily_trend?: Array<{
+      date: string
+      day_name: string
+      label: string
+      revenue_cents: number
+      completed_orders: number
+      created_orders: number
+    }>
   }
 
   return {
@@ -381,5 +389,6 @@ export async function getDashboardStats() {
     receivedCount: metrics.received_count ?? 0,
     customerCount: metrics.customer_count ?? 0,
     recentOrders: metrics.recent_orders ?? [],
+    dailyTrend: metrics.daily_trend ?? [],
   }
 }

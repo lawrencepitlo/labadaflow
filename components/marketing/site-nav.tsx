@@ -67,7 +67,7 @@ export function SiteNav() {
             Sign in
           </Link>
           <Link
-            href="/sign-in"
+            href="/sign-up"
             className="ml-1 inline-flex h-8 items-center gap-1.5 rounded-md bg-white px-3.5 text-[13px] font-medium text-black transition-colors hover:bg-zinc-200"
           >
             Get started
