@@ -19,9 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LabadaFlow — Every load has a flow",
+  title: "LabadaFlow — Laundry Shop Operations System",
   description:
-    "A polished SaaS-style laundry management system. Track orders from intake to release with a defined operational workflow.",
+    "Modern laundry operations management software. Track orders from intake to pickup, manage workflow stages, and record payments.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

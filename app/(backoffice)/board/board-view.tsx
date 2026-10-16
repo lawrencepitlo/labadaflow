@@ -32,8 +32,13 @@ import {
   Clock,
   Phone,
   CheckSquare,
+  Square,
   X,
   ExternalLink,
+  Plus,
+  ListFilter,
+  PackageCheck,
+  Sparkles,
 } from 'lucide-react'
 import { cn } from 'cn'
 
@@ -42,15 +47,51 @@ interface ColumnConfig {
   label: string
   actionLabel: string
   nextStatus: OrderStatus | 'COMPLETED'
-  colorClass: string
+  dotClass: string
+  headerBg: string
 }
 
 const COLUMNS: ColumnConfig[] = [
-  { status: 'RECEIVED', label: 'Received', actionLabel: 'Start Washing', nextStatus: 'WASHING', colorClass: 'border-blue-500/20 bg-blue-500/5 text-blue-700 dark:text-blue-300' },
-  { status: 'WASHING', label: 'Washing', actionLabel: 'Start Drying', nextStatus: 'DRYING', colorClass: 'border-sky-500/20 bg-sky-500/5 text-sky-700 dark:text-sky-300' },
-  { status: 'DRYING', label: 'Drying', actionLabel: 'Start Folding', nextStatus: 'FOLDING', colorClass: 'border-indigo-500/20 bg-indigo-500/5 text-indigo-700 dark:text-indigo-300' },
-  { status: 'FOLDING', label: 'Folding', actionLabel: 'Mark Ready', nextStatus: 'READY', colorClass: 'border-violet-500/20 bg-violet-500/5 text-violet-700 dark:text-violet-300' },
-  { status: 'READY', label: 'Ready for Pickup', actionLabel: 'Complete Order', nextStatus: 'COMPLETED', colorClass: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300' },
+  {
+    status: 'RECEIVED',
+    label: 'Received',
+    actionLabel: 'Start Wash',
+    nextStatus: 'WASHING',
+    dotClass: 'bg-blue-500 shadow-blue-500/30',
+    headerBg: 'bg-blue-500/5 text-blue-700 dark:text-blue-300',
+  },
+  {
+    status: 'WASHING',
+    label: 'Washing',
+    actionLabel: 'Move to Dryer',
+    nextStatus: 'DRYING',
+    dotClass: 'bg-sky-500 shadow-sky-500/30',
+    headerBg: 'bg-sky-500/5 text-sky-700 dark:text-sky-300',
+  },
+  {
+    status: 'DRYING',
+    label: 'Drying',
+    actionLabel: 'Move to Fold',
+    nextStatus: 'FOLDING',
+    dotClass: 'bg-amber-500 shadow-amber-500/30',
+    headerBg: 'bg-amber-500/5 text-amber-700 dark:text-amber-300',
+  },
+  {
+    status: 'FOLDING',
+    label: 'Folding',
+    actionLabel: 'Mark Ready',
+    nextStatus: 'READY',
+    dotClass: 'bg-purple-500 shadow-purple-500/30',
+    headerBg: 'bg-purple-500/5 text-purple-700 dark:text-purple-300',
+  },
+  {
+    status: 'READY',
+    label: 'Ready for Pickup',
+    actionLabel: 'Complete & Pay',
+    nextStatus: 'COMPLETED',
+    dotClass: 'bg-emerald-500 shadow-emerald-500/30',
+    headerBg: 'bg-emerald-500/5 text-emerald-700 dark:text-emerald-300',
+  },
 ]
 
 export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
@@ -69,11 +110,6 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
   const [batchCompleteOpen, setBatchCompleteOpen] = useState(false)
   const [batchPaymentMethod, setBatchPaymentMethod] = useState<'CASH' | 'GCASH' | 'OTHER'>('CASH')
 
-  // Keep local state in sync when server props refresh
-  if (initialOrders !== orders && !isPending && selectedIds.length === 0) {
-    // If not actively mutating
-  }
-
   const now = Date.now()
 
   function getColumnOrders(status: OrderStatus) {
@@ -88,7 +124,7 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
 
   function selectAllInColumn(status: OrderStatus) {
     const colIds = getColumnOrders(status).map(o => o.id)
-    const allSelected = colIds.every(id => selectedIds.includes(id))
+    const allSelected = colIds.length > 0 && colIds.every(id => selectedIds.includes(id))
     if (allSelected) {
       setSelectedIds(prev => prev.filter(id => !colIds.includes(id)))
     } else {
@@ -141,7 +177,7 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
     const order = completingOrder
     const previousOrders = [...orders]
 
-    // Optimistic UI: remove from board since COMPLETED is not shown
+    // Optimistic UI: remove from board since COMPLETED is not shown on active board
     setOrders(prev => prev.filter(o => o.id !== order.id))
     setSelectedIds(prev => prev.filter(id => id !== order.id))
     setCompletingOrder(null)
@@ -167,7 +203,6 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
     const selectedOrders = orders.filter(o => selectedIds.includes(o.id))
     if (selectedOrders.length === 0) return
 
-    // If any selected orders are READY, they require payment selection
     const hasReady = selectedOrders.some(o => o.status === 'READY')
     if (hasReady) {
       setBatchCompleteOpen(true)
@@ -219,44 +254,82 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
     })
   }
 
+  const overdueCount = orders.filter(
+    o => o.due_at && new Date(o.due_at).getTime() < now
+  ).length
+
   return (
-    <div className="flex flex-col gap-4 pb-20">
-      {/* Header */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-6 pb-24">
+      {/* Top Header & Context Actions */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Staff Operations Board</h1>
-          <p className="text-xs text-muted-foreground">
-            Track and advance active laundry orders across workflow stages.
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Operations Board</h1>
+            <Badge variant="secondary" className="px-2 py-0.5 text-xs font-semibold">
+              {orders.length} Active
+            </Badge>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Move laundry loads across shop stations in real time.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" render={<Link href="/orders" />}>
-            List View
+
+        <div className="flex items-center gap-2.5">
+          <Button variant="outline" size="sm" render={<Link href="/orders" />} className="h-9 gap-1.5 text-xs font-medium">
+            <ListFilter className="h-3.5 w-3.5 text-muted-foreground" />
+            Orders List
           </Button>
-          <Button size="sm" render={<Link href="/orders/new" />}>
-            New Order
+          <Button size="sm" render={<Link href="/orders/new" />} className="h-9 gap-1.5 text-xs font-medium">
+            <Plus className="h-3.5 w-3.5" />
+            New Intake
           </Button>
         </div>
+      </div>
+
+      {/* Stage Summary Indicator Bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        {COLUMNS.map(col => {
+          const count = getColumnOrders(col.status).length
+          return (
+            <div
+              key={col.status}
+              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-2xs"
+            >
+              <span className={cn('h-2 w-2 rounded-full ring-2 ring-current/20', col.dotClass)} />
+              <span className="font-medium text-foreground">{col.label}</span>
+              <span className="rounded-full bg-muted px-1.5 py-0.2 font-mono text-[11px] font-semibold text-foreground">
+                {count}
+              </span>
+            </div>
+          )
+        })}
+
+        {overdueCount > 0 && (
+          <div className="ml-auto flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            <span>{overdueCount} Overdue Load{overdueCount > 1 ? 's' : ''}</span>
+          </div>
+        )}
       </div>
 
       {errorMessage && (
         <div
           role="alert"
-          className="flex items-center justify-between rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+          className="flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
         >
           <span>{errorMessage}</span>
           <button
             type="button"
             onClick={() => setErrorMessage(null)}
-            className="text-destructive hover:underline"
+            className="text-xs font-semibold hover:underline"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Mobile column tabs (<768px) */}
-      <div className="flex overflow-x-auto rounded-lg border bg-muted/40 p-1 md:hidden">
+      {/* Mobile Stage Switcher (<768px) */}
+      <div className="flex overflow-x-auto gap-1 rounded-xl border bg-muted/40 p-1.5 md:hidden">
         {COLUMNS.map(col => {
           const count = getColumnOrders(col.status).length
           const isActive = activeTab === col.status
@@ -266,19 +339,15 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
               type="button"
               onClick={() => setActiveTab(col.status)}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium whitespace-nowrap transition-colors',
+                'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold whitespace-nowrap transition-colors',
                 isActive
                   ? 'bg-background text-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
+              <span className={cn('h-1.5 w-1.5 rounded-full', col.dotClass)} />
               <span>{col.label}</span>
-              <span
-                className={cn(
-                  'rounded-full px-1.5 py-0.2 text-[10px] font-semibold',
-                  isActive ? 'bg-muted text-foreground' : 'bg-muted/80 text-muted-foreground'
-                )}
-              >
+              <span className="rounded-full bg-muted/80 px-1.5 py-0.2 text-[10px] font-mono">
                 {count}
               </span>
             </button>
@@ -286,15 +355,15 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
         })}
       </div>
 
-      {/* Mobile single column active view */}
+      {/* Mobile Active Column View */}
       <div className="md:hidden">
         {COLUMNS.filter(c => c.status === activeTab).map(col => {
           const colOrders = getColumnOrders(col.status)
           return (
             <div key={col.status} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {col.label} ({colOrders.length})
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {col.label} · {colOrders.length} order{colOrders.length === 1 ? '' : 's'}
                 </span>
                 {colOrders.length > 0 && (
                   <Button
@@ -308,11 +377,13 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
                 )}
               </div>
               {colOrders.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
-                  No orders in {col.label.toLowerCase()}
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 p-10 text-center">
+                  <PackageCheck className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                  <p className="text-sm font-medium text-foreground">No orders in {col.label.toLowerCase()}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Loads moved to this station will appear here.</p>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {colOrders.map(order => renderCard(order, col))}
                 </div>
               )}
@@ -321,8 +392,8 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
         })}
       </div>
 
-      {/* Desktop 5-column horizontal grid (>= 768px) */}
-      <div className="hidden md:grid md:grid-cols-5 md:gap-3 lg:gap-4 items-start">
+      {/* Desktop 5-Column Spacious Board (>= 768px) */}
+      <div className="hidden md:flex gap-4 xl:gap-5 overflow-x-auto pb-6 items-start">
         {COLUMNS.map(col => {
           const colOrders = getColumnOrders(col.status)
           const allSelected =
@@ -331,40 +402,44 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
           return (
             <div
               key={col.status}
-              className="flex flex-col rounded-lg border bg-muted/20 min-h-[500px]"
+              className="flex-1 min-w-[280px] max-w-[340px] flex flex-col rounded-2xl border border-border/70 bg-muted/30 dark:bg-zinc-900/30 p-2.5 shadow-2xs"
             >
               {/* Column Header */}
-              <div className="flex items-center justify-between border-b bg-card px-3 py-2.5 rounded-t-lg">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="truncate text-xs font-semibold uppercase tracking-wider text-foreground">
+              <div className="flex items-center justify-between px-2 py-2 mb-2 rounded-xl bg-background/80 backdrop-blur-xs border border-border/40">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={cn('h-2.5 w-2.5 rounded-full ring-2 ring-current/20', col.dotClass)} />
+                  <span className="truncate text-xs font-bold tracking-tight text-foreground uppercase">
                     {col.label}
                   </span>
-                  <Badge variant="secondary" className="h-5 px-1.5 text-[11px] font-mono">
-                    {colOrders.length}
-                  </Badge>
                 </div>
-                {colOrders.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => selectAllInColumn(col.status)}
-                    title={allSelected ? 'Deselect all' : 'Select all'}
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <CheckSquare
-                      className={cn(
-                        'h-3.5 w-3.5',
-                        allSelected ? 'text-primary' : 'text-muted-foreground/60'
+                <div className="flex items-center gap-1.5">
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-mono font-semibold text-foreground">
+                    {colOrders.length}
+                  </span>
+                  {colOrders.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => selectAllInColumn(col.status)}
+                      title={allSelected ? 'Deselect column' : 'Select column'}
+                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      {allSelected ? (
+                        <CheckSquare className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <Square className="h-3.5 w-3.5 text-muted-foreground/60" />
                       )}
-                    />
-                  </button>
-                )}
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Cards List */}
-              <div className="flex-1 space-y-2 p-2 overflow-y-auto max-h-[calc(100vh-220px)]">
+              {/* Cards Container */}
+              <div className="flex-1 space-y-3 p-1 min-h-[520px] max-h-[calc(100vh-230px)] overflow-y-auto">
                 {colOrders.length === 0 ? (
-                  <div className="flex h-32 items-center justify-center rounded-md border border-dashed border-border/60 text-[11px] text-muted-foreground">
-                    Empty
+                  <div className="flex h-44 flex-col items-center justify-center rounded-xl border border-dashed border-border/60 text-center p-4">
+                    <Sparkles className="h-5 w-5 text-muted-foreground/30 mb-1.5" />
+                    <p className="text-xs font-medium text-muted-foreground">All clear</p>
+                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">No orders waiting</p>
                   </div>
                 ) : (
                   colOrders.map(order => renderCard(order, col))
@@ -380,9 +455,9 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
         <div
           role="region"
           aria-label="Bulk actions"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full border bg-background/95 px-4 py-2.5 shadow-xl backdrop-blur ring-1 ring-border"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 rounded-full border border-border/80 bg-background/95 px-5 py-2.5 shadow-2xl backdrop-blur-md ring-1 ring-black/5 dark:ring-white/10"
         >
-          <span className="text-xs font-medium text-foreground">
+          <span className="text-xs font-semibold text-foreground">
             {selectedIds.length} order{selectedIds.length === 1 ? '' : 's'} selected
           </span>
           <div className="h-4 w-px bg-border" />
@@ -390,10 +465,10 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
             size="sm"
             disabled={isPending}
             onClick={handleBatchAdvance}
-            className="h-8 gap-1 rounded-full text-xs"
+            className="h-8 gap-1.5 rounded-full text-xs font-medium px-4 shadow-xs"
           >
+            <span>Advance Stage</span>
             <ChevronRight className="h-3.5 w-3.5" />
-            Advance Selected
           </Button>
           <Button
             variant="ghost"
@@ -407,33 +482,34 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
         </div>
       )}
 
-      {/* Single Complete Order Dialog */}
+      {/* Single Complete Order & Payment Dialog */}
       {completingOrder && (
         <Dialog open={!!completingOrder} onOpenChange={open => !open && setCompletingOrder(null)}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Complete Order & Collect Payment</DialogTitle>
               <DialogDescription>
-                Record final payment and mark order {completingOrder.order_number} as completed.
+                Record final customer payment and complete order #{completingOrder.order_number}.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-2">
-              <div className="flex items-center justify-between rounded-lg border bg-muted/40 p-3">
+              <div className="flex items-center justify-between rounded-xl border bg-muted/40 p-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Customer</p>
-                  <p className="text-sm font-semibold">{completingOrder.customer.full_name}</p>
+                  <p className="text-sm font-bold text-foreground mt-0.5">{completingOrder.customer.full_name}</p>
+                  <p className="text-xs font-mono text-muted-foreground mt-0.5">{completingOrder.order_number}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Amount Due</p>
-                  <p className="text-base font-bold text-foreground">
+                  <p className="text-xs text-muted-foreground">Total Due</p>
+                  <p className="text-lg font-extrabold text-foreground tabular-nums">
                     {formatMoney(completingOrder.total_cents)}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Payment Method</label>
+                <label className="text-xs font-semibold text-foreground">Payment Method</label>
                 <Select
                   value={paymentMethod}
                   onValueChange={val => setPaymentMethod(val as 'CASH' | 'GCASH' | 'OTHER')}
@@ -442,15 +518,15 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CASH">Cash</SelectItem>
-                    <SelectItem value="GCASH">GCash</SelectItem>
-                    <SelectItem value="OTHER">Other / Card</SelectItem>
+                    <SelectItem value="CASH">Cash Payment</SelectItem>
+                    <SelectItem value="GCASH">GCash / Digital QR</SelectItem>
+                    <SelectItem value="OTHER">Card / Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 variant="outline"
                 disabled={isPending}
@@ -458,8 +534,9 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
               >
                 Cancel
               </Button>
-              <Button disabled={isPending} onClick={handleConfirmComplete}>
-                Confirm & Complete
+              <Button disabled={isPending} onClick={handleConfirmComplete} className="gap-1.5">
+                <PackageCheck className="h-4 w-4" />
+                Collect Payment & Complete
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -470,10 +547,10 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
       <Dialog open={batchCompleteOpen} onOpenChange={setBatchCompleteOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Batch Advance Selection</DialogTitle>
+            <DialogTitle>Advance Selected Orders</DialogTitle>
             <DialogDescription>
               Some selected orders are in Ready for Pickup and will be marked as Completed. Select
-              the payment method for completed orders.
+              the payment method to record.
             </DialogDescription>
           </DialogHeader>
 
@@ -487,9 +564,9 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
                 <SelectValue placeholder="Select payment method" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="CASH">Cash</SelectItem>
+                <SelectItem value="CASH">Cash Payment</SelectItem>
                 <SelectItem value="GCASH">GCash</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
+                <SelectItem value="OTHER">Card / Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -525,71 +602,77 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
       <div
         key={order.id}
         className={cn(
-          'group relative flex flex-col justify-between rounded-lg border bg-card p-3 shadow-2xs transition-all hover:border-foreground/30',
-          isSelected && 'border-primary ring-1 ring-primary/30 bg-primary/[0.02]',
-          isOverdue && 'border-amber-500/40'
+          'group relative flex flex-col justify-between rounded-xl border bg-card p-3.5 shadow-xs transition-all duration-150 hover:shadow-md hover:border-foreground/30',
+          isSelected && 'border-primary ring-2 ring-primary/30 bg-primary/[0.02]',
+          isOverdue && 'border-amber-500/50 bg-amber-500/[0.02]'
         )}
       >
-        <div className="space-y-2">
-          {/* Card top: checkbox, order number, due/overdue status */}
-          <div className="flex items-start justify-between gap-1.5">
+        <div className="space-y-2.5">
+          {/* Card Top: Selection Checkbox, Order Number, Due Badge */}
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <Checkbox
                 checked={isSelected}
                 onCheckedChange={() => toggleSelect(order.id)}
                 aria-label={`Select ${order.order_number}`}
-                className="h-4 w-4"
+                className="h-4 w-4 rounded"
               />
               <Link
                 href={`/orders/${order.id}`}
-                className="font-mono text-xs font-semibold hover:underline flex items-center gap-1 text-foreground"
+                className="font-mono text-xs font-bold text-foreground hover:text-primary transition-colors flex items-center gap-1 group-hover:underline"
               >
                 {order.order_number}
                 <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
               </Link>
             </div>
+
             {isOverdue ? (
               <Badge
                 variant="destructive"
-                className="shrink-0 text-[10px] px-1.5 py-0 h-4 bg-amber-600 dark:bg-amber-500 hover:bg-amber-600 text-white gap-1"
+                className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 h-4.5 bg-amber-600 dark:bg-amber-500 text-white gap-1"
               >
                 <AlertTriangle className="h-2.5 w-2.5" />
                 Overdue
               </Badge>
             ) : order.due_at ? (
               <span className="shrink-0 text-[11px] text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" />
+                <Clock className="h-3 w-3 text-muted-foreground/70" />
                 {formatDate(order.due_at)}
               </span>
             ) : null}
           </div>
 
-          {/* Customer info */}
-          <div className="text-xs">
-            <p className="font-medium text-foreground truncate">{order.customer.full_name}</p>
+          {/* Customer Details */}
+          <div className="pt-0.5">
+            <p className="text-sm font-semibold text-foreground tracking-tight line-clamp-1">
+              {order.customer.full_name}
+            </p>
             {order.customer.phone && (
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                <Phone className="h-2.5 w-2.5 shrink-0" />
-                <span className="truncate">{order.customer.phone}</span>
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-1 font-mono">
+                <Phone className="h-3 w-3 shrink-0 text-muted-foreground/60" />
+                <span>{order.customer.phone}</span>
               </p>
             )}
           </div>
         </div>
 
-        {/* Card footer: price & one-tap advance */}
-        <div className="mt-3 flex items-center justify-between border-t pt-2">
-          <span className="text-xs font-semibold text-foreground">
-            {formatMoney(order.total_cents)}
-          </span>
+        {/* Card Footer: Total Price & Quick Action */}
+        <div className="mt-3.5 flex items-center justify-between border-t pt-2.5">
+          <div className="leading-tight">
+            <span className="block text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Amount</span>
+            <span className="text-sm font-bold text-foreground tabular-nums">
+              {formatMoney(order.total_cents)}
+            </span>
+          </div>
+
           <Button
             size="sm"
-            variant="outline"
             disabled={isPending}
             onClick={() => handleAdvance(order)}
-            className="h-6 px-2 text-[11px] gap-1 hover:bg-accent"
+            className="h-7.5 px-3 text-xs font-medium rounded-lg gap-1 shadow-2xs hover:scale-[1.02] active:scale-[0.98] transition-transform"
           >
             <span>{col.actionLabel}</span>
-            <ChevronRight className="h-3 w-3" />
+            <ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>

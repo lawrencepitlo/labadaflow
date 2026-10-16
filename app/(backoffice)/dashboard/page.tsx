@@ -167,17 +167,19 @@ export default async function DashboardPage() {
       </section>
 
       {/* Visual Revenue & Volume Trend */}
-      <DashboardRevenueChart dailyTrend={stats.dailyTrend} />
+      <div className="mt-6">
+        <DashboardRevenueChart dailyTrend={stats.dailyTrend} />
+      </div>
 
       {/* Needs attention */}
-      <Card className="mt-4 gap-0 overflow-hidden py-0">
-        <CardHeader className="px-4 py-3">
-          <CardTitle className="text-[13px]">Needs attention</CardTitle>
-          <CardDescription>Orders waiting on staff action</CardDescription>
+      <Card className="mt-6 gap-0 overflow-hidden rounded-xl border border-border/80 shadow-xs py-0">
+        <CardHeader className="px-5 py-4">
+          <CardTitle className="text-sm font-semibold">Needs attention</CardTitle>
+          <CardDescription className="text-xs">Orders waiting on staff action</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {!needsAttention ? (
-            <p className="border-t px-4 py-4 text-[13px] text-muted-foreground">
+            <p className="border-t px-5 py-4 text-xs text-muted-foreground">
               All clear — nothing is waiting on staff right now.
             </p>
           ) : (
@@ -185,18 +187,18 @@ export default async function DashboardPage() {
               <Link
                 href="/orders?status=READY"
                 aria-label={`${readyForPickup} orders ready for pickup`}
-                className="flex flex-1 items-center gap-2.5 px-4 py-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
+                className="flex flex-1 items-center gap-3 px-5 py-3.5 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
               >
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" aria-hidden="true" />
-                <span className="tnum min-w-0 flex-1 text-[13px]">
-                  <span className="font-semibold">{readyForPickup} ready for pickup</span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    Notify customers to collect
+                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" aria-hidden="true" />
+                <span className="tnum min-w-0 flex-1 text-sm">
+                  <span className="font-semibold text-foreground">{readyForPickup} ready for pickup</span>
+                  <span className="block truncate text-xs text-muted-foreground mt-0.5">
+                    Notify customers to collect & collect payment
                   </span>
                 </span>
                 {readyForPickup > 0 && (
-                  <span className="shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                    Action needed
+                  <span className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    Ready
                   </span>
                 )}
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden="true" />
@@ -204,13 +206,13 @@ export default async function DashboardPage() {
               <Link
                 href="/orders?status=RECEIVED"
                 aria-label={`${receivedCount} orders awaiting processing`}
-                className="flex flex-1 items-center gap-2.5 px-4 py-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
+                className="flex flex-1 items-center gap-3 px-5 py-3.5 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
               >
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" aria-hidden="true" />
-                <span className="tnum min-w-0 flex-1 text-[13px]">
-                  <span className="font-semibold">{receivedCount} awaiting processing</span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    Received orders not yet in wash
+                <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500 ring-2 ring-blue-500/20" aria-hidden="true" />
+                <span className="tnum min-w-0 flex-1 text-sm">
+                  <span className="font-semibold text-foreground">{receivedCount} awaiting processing</span>
+                  <span className="block truncate text-xs text-muted-foreground mt-0.5">
+                    Received orders waiting for washer assignment
                   </span>
                 </span>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden="true" />
@@ -221,16 +223,16 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Order pipeline */}
-      <Card className="mt-4 gap-0 py-0">
-        <CardHeader className="px-4 py-3">
-          <CardTitle className="text-[13px]">Order pipeline</CardTitle>
-          <CardDescription>Live count per stage — select a stage to filter orders.</CardDescription>
+      <Card className="mt-6 gap-0 overflow-hidden rounded-xl border border-border/80 shadow-xs py-0">
+        <CardHeader className="px-5 py-4">
+          <CardTitle className="text-sm font-semibold">Order pipeline</CardTitle>
+          <CardDescription className="text-xs">Live count per stage — select a stage to view orders.</CardDescription>
           <CardAction>
-            <span className="tnum text-xs text-muted-foreground">{totalOrders} total</span>
+            <span className="tnum text-xs font-medium text-muted-foreground">{totalOrders} total orders</span>
           </CardAction>
         </CardHeader>
-        <CardContent className="px-2 pb-2">
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border bg-border sm:grid-cols-3 xl:grid-cols-6">
+        <CardContent className="px-3 pb-3">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-3 xl:grid-cols-6">
             {flow.map(({ status, count }) => {
               const share = totalOrders > 0 ? Math.min(100, (count / totalOrders) * 100) : 0
               return (
@@ -238,19 +240,19 @@ export default async function DashboardPage() {
                   key={status}
                   href={`/orders?status=${status}`}
                   aria-label={`${status}: ${count} orders`}
-                  className="tnum bg-card p-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
+                  className="tnum bg-card p-3.5 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
                 >
-                  <div className="flex items-center gap-1.5">
-                    <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOT_CLASS[status])} aria-hidden="true" />
-                    <span className="truncate text-xs font-medium text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <span className={cn('h-2 w-2 shrink-0 rounded-full', STATUS_DOT_CLASS[status])} aria-hidden="true" />
+                    <span className="truncate text-xs font-semibold text-foreground">
                       {status.charAt(0) + status.slice(1).toLowerCase()}
                     </span>
-                    <span className="ml-auto text-[15px] font-semibold tracking-tight">{count}</span>
+                    <span className="ml-auto text-sm font-bold tracking-tight text-foreground">{count}</span>
                   </div>
-                  <p className="mt-1 truncate text-[11px] text-muted-foreground">{FLOW_DESCRIPTION[status]}</p>
-                  <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                  <p className="mt-1 truncate text-xs text-muted-foreground">{FLOW_DESCRIPTION[status]}</p>
+                  <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
                     <div
-                      className={cn('h-full rounded-full', status === 'READY' && count > 0 ? 'bg-green-500' : 'bg-foreground/30')}
+                      className={cn('h-full rounded-full', status === 'READY' && count > 0 ? 'bg-emerald-500' : 'bg-foreground/40')}
                       style={{ width: `${share}%` }}
                     />
                   </div>
@@ -262,16 +264,16 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Recent orders */}
-      <Card className="mt-4 gap-0 overflow-hidden py-0">
-        <CardHeader className="px-4 py-3">
+      <Card className="mt-6 gap-0 overflow-hidden rounded-xl border border-border/80 shadow-xs py-0 mb-12">
+        <CardHeader className="px-5 py-4">
           <div>
-            <CardTitle className="text-[13px]">Recent orders</CardTitle>
-            <CardDescription>Latest activity across the shop</CardDescription>
+            <CardTitle className="text-sm font-semibold">Recent orders</CardTitle>
+            <CardDescription className="text-xs">Latest customer activity across the shop</CardDescription>
           </div>
           <CardAction>
-            <Button variant="ghost" size="sm" render={<Link href="/orders" />}>
+            <Button variant="ghost" size="sm" render={<Link href="/orders" />} className="h-8 text-xs font-medium gap-1">
               View all
-              <ArrowRight aria-hidden="true" />
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Button>
           </CardAction>
         </CardHeader>

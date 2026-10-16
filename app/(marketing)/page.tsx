@@ -60,23 +60,22 @@ export default function MarketingPage() {
             <Reveal>
               <p className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] py-1.5 pl-3 pr-3.5 text-[12px] text-zinc-400">
                 <span className="landing-pulse-dot h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-                Laundry operations, brought into focus
+                Operations platform for laundry shops
               </p>
             </Reveal>
             <Reveal delay={80}>
               <h1
                 id="hero-heading"
-                className="mx-auto mt-7 max-w-[820px] text-[48px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[76px]"
+                className="mx-auto mt-7 max-w-[860px] text-[46px] font-semibold leading-[1.02] tracking-[-0.04em] text-white sm:text-[74px]"
               >
-                Every load
+                The operating system
                 <br />
-                has a flow.
+                for your laundry shop.
               </h1>
             </Reveal>
             <Reveal delay={160}>
-              <p className="mx-auto mt-6 max-w-[560px] text-[15px] leading-relaxed text-zinc-400 sm:text-[17px]">
-                LabadaFlow gives laundry teams one clear place to manage every order — from received to
-                completed — and lets customers follow along.
+              <p className="mx-auto mt-6 max-w-[580px] text-[15px] leading-relaxed text-zinc-400 sm:text-[17px]">
+                Intake orders faster, track wash stages in real time, record payments, and give your customers instant tracking — all in one clean workspace.
               </p>
             </Reveal>
             <Reveal delay={220}>

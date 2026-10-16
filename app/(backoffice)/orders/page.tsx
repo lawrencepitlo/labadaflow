@@ -90,7 +90,7 @@ export default async function OrdersPage({
       />
 
       {orders.length === 0 ? (
-        <div className="overflow-hidden rounded-lg border bg-card">
+        <div className="mt-5 overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
           <EmptyState
             icon={hasFilters ? SearchX : ClipboardList}
             title={hasFilters ? 'No matching orders' : 'No orders yet'}
@@ -104,7 +104,7 @@ export default async function OrdersPage({
           />
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border bg-card">
+        <div className="mt-5 overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
           {/* Desktop — Linear-style issue rows */}
           <div className="hidden md:block">
             <Table aria-label="Orders">

@@ -275,7 +275,14 @@ export function BackofficeShell({ actor, children }: BackofficeShellProps) {
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto print:overflow-visible">
-          <div className="mx-auto w-full max-w-[1040px] px-4 py-5 sm:px-6 sm:py-6 print:max-w-none print:px-0 print:py-0">
+          <div
+            className={cn(
+              'mx-auto w-full px-4 py-5 sm:px-6 sm:py-6 print:max-w-none print:px-0 print:py-0',
+              pathname === '/board' || pathname.startsWith('/board/')
+                ? 'max-w-[1700px] px-4 sm:px-6 lg:px-8'
+                : 'max-w-[1180px]'
+            )}
+          >
             {children}
           </div>
         </main>

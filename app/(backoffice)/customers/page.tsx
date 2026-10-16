@@ -64,7 +64,7 @@ export default async function CustomersPage({
       <CustomersSearch key={params.search ?? ''} currentSearch={params.search} />
 
       {customers.length === 0 ? (
-        <div className="overflow-hidden rounded-lg border bg-card">
+        <div className="mt-5 overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
           <EmptyState
             icon={hasSearch ? SearchX : Users}
             title={hasSearch ? 'No matching customers' : 'No customers yet'}
@@ -72,7 +72,7 @@ export default async function CustomersPage({
           />
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border bg-card">
+        <div className="mt-5 overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
           {/* Desktop — Linear-style directory rows */}
           <div className="hidden md:block">
             <Table aria-label="Customers">
