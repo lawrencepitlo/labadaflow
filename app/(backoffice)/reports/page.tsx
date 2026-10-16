@@ -39,11 +39,6 @@ export default async function ReportsPage() {
     <>
       <PageHeader title="Reports" description="Today, this week, and lifetime shop performance" />
 
-      {/* Fixed reporting windows — mirrors the backend semantics, presentation only */}
-      <p className="mb-3 text-xs text-muted-foreground">
-        Today starts at local midnight · Week covers the last 7 days · Revenue counts completed orders only.
-      </p>
-
       {/* Summary — clean SaaS KPI grid */}
       <section aria-label="Report summary" className="mt-6">
         <div className="tnum grid grid-cols-2 gap-3.5 sm:grid-cols-3 xl:grid-cols-5">

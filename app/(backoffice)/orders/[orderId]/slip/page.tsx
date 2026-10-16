@@ -31,36 +31,42 @@ export default async function OrderSlipPage({
   })
 
   return (
-    <div className="mx-auto max-w-xl">
-      {/* Print stylesheet for 80mm receipt format */}
+    <div className="mx-auto max-w-xl print:max-w-none print:w-full print:m-0 print:p-0">
+      {/* Print stylesheet for clean receipt format */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
             @media print {
               @page {
-                size: 80mm auto;
-                margin: 3mm;
+                margin: 0.5cm;
               }
-              body {
+              html, body {
                 background: white !important;
                 color: black !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                width: 100% !important;
+                height: auto !important;
               }
               .receipt-container {
-                width: 72mm !important;
-                max-width: 72mm !important;
+                width: 100% !important;
+                max-width: 80mm !important;
                 margin: 0 auto !important;
-                padding: 2mm !important;
+                padding: 4mm 2mm !important;
                 border: none !important;
                 box-shadow: none !important;
                 font-size: 11px !important;
+                color: black !important;
+                background: white !important;
+              }
+              .receipt-container * {
+                color: black !important;
               }
               .receipt-container table {
                 font-size: 11px !important;
               }
               .receipt-container h1 {
-                font-size: 16px !important;
+                font-size: 18px !important;
               }
             }
           `,
@@ -165,7 +171,7 @@ export default async function OrderSlipPage({
         </div>
 
         <div className="mt-6 text-center print:hidden">
-          <PrintButton />
+          <PrintButton trackingUrl={trackingUrl} />
         </div>
       </div>
     </div>

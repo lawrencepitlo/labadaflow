@@ -39,6 +39,8 @@ import {
   ListFilter,
   PackageCheck,
   Sparkles,
+  RotateCcw,
+  Search,
 } from 'lucide-react'
 import { cn } from 'cn'
 
@@ -98,6 +100,8 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
   const router = useRouter()
   const [orders, setOrders] = useState<BoardOrder[]>(initialOrders)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [desktopFilter, setDesktopFilter] = useState<'ALL' | OrderStatus>('ALL')
+  const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<OrderStatus>('RECEIVED')
   const [isPending, startTransition] = useTransition()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -113,7 +117,17 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
   const now = Date.now()
 
   function getColumnOrders(status: OrderStatus) {
-    return orders.filter(o => o.status === status)
+    return orders.filter(o => {
+      if (o.status !== status) return false
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim()
+        const matchNum = o.order_number.toLowerCase().includes(q)
+        const matchCust = o.customer.full_name.toLowerCase().includes(q)
+        const matchPhone = o.customer.phone?.toLowerCase().includes(q)
+        if (!matchNum && !matchCust && !matchPhone) return false
+      }
+      return true
+    })
   }
 
   function toggleSelect(id: string) {
@@ -134,6 +148,40 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
 
   function clearSelection() {
     setSelectedIds([])
+  }
+
+  // Single card step backward / revert
+  function handleRevert(order: BoardOrder) {
+    const prevMap: Partial<Record<OrderStatus, OrderStatus>> = {
+      WASHING: 'RECEIVED',
+      DRYING: 'WASHING',
+      FOLDING: 'DRYING',
+      READY: 'FOLDING',
+    }
+    const prevStatus = prevMap[order.status as OrderStatus]
+    if (!prevStatus) return
+
+    const previousOrders = [...orders]
+    // Optimistic UI
+    setOrders(prev =>
+      prev.map(o => (o.id === order.id ? { ...o, status: prevStatus } : o))
+    )
+    setErrorMessage(null)
+
+    startTransition(async () => {
+      const res = await advanceOrderStatus({
+        order_id: order.id,
+        to_status: prevStatus,
+        note: 'Reverted station step on board',
+      })
+
+      if (res?.error) {
+        setOrders(previousOrders)
+        setErrorMessage(`Failed to revert ${order.order_number}: ${res.error}`)
+      } else {
+        router.refresh()
+      }
+    })
   }
 
   // Single card advance
@@ -286,30 +334,71 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
         </div>
       </div>
 
-      {/* Stage Summary Indicator Bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        {COLUMNS.map(col => {
-          const count = getColumnOrders(col.status).length
-          return (
-            <div
-              key={col.status}
-              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-2xs"
+      {/* Interactive Filter Bar */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setDesktopFilter('ALL')}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors outline-none',
+              desktopFilter === 'ALL'
+                ? 'bg-foreground text-background shadow-xs'
+                : 'border bg-card text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+            )}
+          >
+            <span>All Stations</span>
+            <span
+              className={cn(
+                'tnum rounded-md px-1.5 py-0.2 text-[10px] font-semibold',
+                desktopFilter === 'ALL' ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground'
+              )}
             >
-              <span className={cn('h-2 w-2 rounded-full ring-2 ring-current/20', col.dotClass)} />
-              <span className="font-medium text-foreground">{col.label}</span>
-              <span className="rounded-full bg-muted px-1.5 py-0.2 font-mono text-[11px] font-semibold text-foreground">
-                {count}
-              </span>
-            </div>
-          )
-        })}
+              {orders.length}
+            </span>
+          </button>
 
-        {overdueCount > 0 && (
-          <div className="ml-auto flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-            <span>{overdueCount} Overdue Load{overdueCount > 1 ? 's' : ''}</span>
-          </div>
-        )}
+          {COLUMNS.map(col => {
+            const count = getColumnOrders(col.status).length
+            const active = desktopFilter === col.status
+            return (
+              <button
+                key={col.status}
+                type="button"
+                onClick={() => setDesktopFilter(col.status)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors outline-none',
+                  active
+                    ? 'bg-foreground text-background shadow-xs'
+                    : 'border bg-card text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                )}
+              >
+                <span className={cn('h-2 w-2 rounded-full ring-2 ring-current/20', col.dotClass)} />
+                <span>{col.label}</span>
+                <span
+                  className={cn(
+                    'tnum rounded-md px-1.5 py-0.2 text-[10px] font-semibold',
+                    active ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground'
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Search box to narrow cards */}
+        <div className="relative w-full sm:w-56">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
+          <input
+            type="text"
+            placeholder="Filter board by name or #…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="h-8 w-full rounded-lg border border-border/70 bg-muted/30 pl-8 pr-3 text-xs outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-ring focus:bg-background"
+          />
+        </div>
       </div>
 
       {errorMessage && (
@@ -394,7 +483,7 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
 
       {/* Desktop 5-Column Spacious Board (>= 768px) */}
       <div className="hidden md:flex gap-4 xl:gap-5 overflow-x-auto pb-6 items-start">
-        {COLUMNS.map(col => {
+        {COLUMNS.filter(col => desktopFilter === 'ALL' || col.status === desktopFilter).map(col => {
           const colOrders = getColumnOrders(col.status)
           const allSelected =
             colOrders.length > 0 && colOrders.every(o => selectedIds.includes(o.id))
@@ -402,7 +491,10 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
           return (
             <div
               key={col.status}
-              className="flex-1 min-w-[280px] max-w-[340px] flex flex-col rounded-2xl border border-border/70 bg-muted/30 dark:bg-zinc-900/30 p-2.5 shadow-2xs"
+              className={cn(
+                'flex-1 flex flex-col rounded-2xl border border-border/70 bg-muted/30 dark:bg-zinc-900/30 p-2.5 shadow-2xs',
+                desktopFilter === 'ALL' ? 'min-w-[280px] max-w-[340px]' : 'max-w-2xl mx-auto'
+              )}
             >
               {/* Column Header */}
               <div className="flex items-center justify-between px-2 py-2 mb-2 rounded-xl bg-background/80 backdrop-blur-xs border border-border/40">
@@ -665,15 +757,30 @@ export function BoardView({ initialOrders }: { initialOrders: BoardOrder[] }) {
             </span>
           </div>
 
-          <Button
-            size="sm"
-            disabled={isPending}
-            onClick={() => handleAdvance(order)}
-            className="h-7.5 px-3 text-xs font-medium rounded-lg gap-1 shadow-2xs hover:scale-[1.02] active:scale-[0.98] transition-transform"
-          >
-            <span>{col.actionLabel}</span>
-            <ChevronRight className="h-3.5 w-3.5" />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            {order.status !== 'RECEIVED' && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title="Undo / Step backward"
+                disabled={isPending}
+                onClick={() => handleRevert(order)}
+                className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
+                aria-label="Revert to previous stage"
+              >
+                <RotateCcw className="h-3 w-3" />
+              </Button>
+            )}
+            <Button
+              size="sm"
+              disabled={isPending}
+              onClick={() => handleAdvance(order)}
+              className="h-7.5 px-3 text-xs font-medium rounded-lg gap-1 shadow-2xs hover:scale-[1.02] active:scale-[0.98] transition-transform"
+            >
+              <span>{col.actionLabel}</span>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
     )

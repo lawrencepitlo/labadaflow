@@ -1,16 +1,19 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import {
   BarChart3,
   ClipboardList,
   Kanban,
   LayoutDashboard,
   Plus,
+  Search,
   Settings,
   Users,
   UsersRound,
   Wrench,
+  Package,
 } from 'lucide-react'
 import {
   CommandDialog,
@@ -40,38 +43,76 @@ const ROUTES = [
 
 export function CommandPalette({ open, onOpenChange, role }: CommandPaletteProps) {
   const router = useRouter()
+  const [search, setSearch] = useState('')
 
   function go(href: string) {
     onOpenChange(false)
+    setSearch('')
     router.push(href)
   }
 
   const routes = ROUTES.filter(r => (r.roles as readonly string[]).includes(role))
+  const trimmed = search.trim()
 
   return (
     <CommandDialog
       open={open}
-      onOpenChange={onOpenChange}
-      title="Jump to…"
-      description="Navigate LabadaFlow without touching the mouse."
+      onOpenChange={(val) => {
+        onOpenChange(val)
+        if (!val) setSearch('')
+      }}
+      title="Quick Search"
+      description="Search orders, customers, or jump to any section."
     >
-      <CommandInput placeholder="Jump to orders, customers, reports…" />
+      <CommandInput
+        value={search}
+        onValueChange={setSearch}
+        placeholder="Type order #, customer name, or page…"
+      />
       <CommandList>
-        <CommandEmpty>No matching pages.</CommandEmpty>
-        <CommandGroup heading="Actions">
+        <CommandEmpty>No direct matches found.</CommandEmpty>
+
+        {trimmed.length > 0 && (
+          <CommandGroup heading="Direct Search">
+            <CommandItem
+              value={`search orders ${trimmed}`}
+              onSelect={() => go(`/orders?search=${encodeURIComponent(trimmed)}`)}
+            >
+              <Search className="h-4 w-4 text-emerald-500" aria-hidden="true" />
+              <span>Search orders for <strong className="font-semibold text-foreground">"{trimmed}"</strong></span>
+            </CommandItem>
+            <CommandItem
+              value={`search customers ${trimmed}`}
+              onSelect={() => go(`/customers?search=${encodeURIComponent(trimmed)}`)}
+            >
+              <Users className="h-4 w-4 text-blue-500" aria-hidden="true" />
+              <span>Search customers for <strong className="font-semibold text-foreground">"{trimmed}"</strong></span>
+            </CommandItem>
+            <CommandItem
+              value={`track code ${trimmed}`}
+              onSelect={() => go(`/track/${encodeURIComponent(trimmed)}`)}
+            >
+              <Package className="h-4 w-4 text-purple-500" aria-hidden="true" />
+              <span>Track public order <strong className="font-semibold text-foreground">"{trimmed}"</strong></span>
+            </CommandItem>
+          </CommandGroup>
+        )}
+
+        <CommandGroup heading="Quick Actions">
           <CommandItem value="new order create intake walk-in" onSelect={() => go('/orders/new')}>
             <Plus aria-hidden="true" />
             New order
           </CommandItem>
-          <CommandItem value="find order search tracking customer" onSelect={() => go('/orders')}>
+          <CommandItem value="orders list pipeline workflow" onSelect={() => go('/orders')}>
             <ClipboardList aria-hidden="true" />
-            Find order
+            All orders
           </CommandItem>
-          <CommandItem value="go to board kanban workflow stations" onSelect={() => go('/board')}>
+          <CommandItem value="operations board kanban workflow" onSelect={() => go('/board')}>
             <Kanban aria-hidden="true" />
-            Go to board
+            Operations board
           </CommandItem>
         </CommandGroup>
+
         <CommandGroup heading="Navigation">
           {routes.map(route => (
             <CommandItem

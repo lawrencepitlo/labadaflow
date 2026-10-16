@@ -185,7 +185,7 @@ export function BackofficeShell({ actor, children }: BackofficeShellProps) {
       </aside>
 
       {/* Main column */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:h-auto print:overflow-visible">
         {/* Mobile header */}
         <header className="flex h-12 shrink-0 items-center gap-1 border-b bg-background/80 px-2 backdrop-blur lg:hidden print:hidden">
           <Button

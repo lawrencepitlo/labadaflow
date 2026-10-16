@@ -58,6 +58,7 @@ export function NewOrderForm({
 
   // Customer state & quick-add dialog
   const [customerList, setCustomerList] = useState<CustomerOption[]>(initialCustomers)
+  const [customerSearch, setCustomerSearch] = useState('')
   const [customerId, setCustomerId] = useState('')
   const [quickCustomerOpen, setQuickCustomerOpen] = useState(false)
   const [newCustomerName, setNewCustomerName] = useState('')
@@ -65,12 +66,22 @@ export function NewOrderForm({
   const [quickCustomerError, setQuickCustomerError] = useState<string | null>(null)
   const [isCreatingCustomer, startCreateCustomer] = useTransition()
 
-  // Due date prefilled
+  // Due date & physical location
   const [dueAt, setDueAt] = useState(() => getDefaultDueDateTimeString(defaultDueDays))
+  const [basketTag, setBasketTag] = useState('')
   const [notes, setNotes] = useState('')
   const [rows, setRows] = useState<{ service_id: string; quantity: number }[]>([
     { service_id: '', quantity: 1 },
   ])
+
+  // Filter customer list based on search
+  const filteredCustomerList = useMemo(() => {
+    if (!customerSearch.trim()) return customerList
+    const q = customerSearch.toLowerCase().trim()
+    return customerList.filter(c =>
+      c.full_name.toLowerCase().includes(q) || (c.phone && c.phone.toLowerCase().includes(q))
+    )
+  }, [customerList, customerSearch])
 
   // Merge items reactively for live total and summary display
   const mergedSummary = useMemo(() => {
@@ -127,6 +138,7 @@ export function NewOrderForm({
         }
         setCustomerList(prev => [newCust, ...prev])
         setCustomerId(res.id)
+        setCustomerSearch('')
         setQuickCustomerOpen(false)
         setNewCustomerName('')
         setNewCustomerPhone('')
@@ -142,12 +154,18 @@ export function NewOrderForm({
     if (rows.length === 0 || rows.some(r => rowError(r))) {
       return setError('Every item needs a service and a positive quantity.')
     }
+
+    const finalNotes = [
+      basketTag.trim() ? `[Location: ${basketTag.trim()}]` : null,
+      notes.trim() || null,
+    ].filter(Boolean).join(' · ') || null
+
     startTransition(async () => {
       const result = await createOrder({
         customer_id: customerId,
         source: 'WALK_IN',
         due_at: dueAt ? new Date(dueAt).toISOString() : null,
-        notes: notes.trim() || null,
+        notes: finalNotes,
         items: rows,
       })
       if (result?.error) setError(result.error)
@@ -196,21 +214,38 @@ export function NewOrderForm({
                   </Button>
                 </div>
               ) : (
-                <>
-                  <Label htmlFor="customer">Customer *</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="customer">Customer *</Label>
+                    {customerList.length > 5 && (
+                      <span className="text-[11px] text-muted-foreground">{filteredCustomerList.length} of {customerList.length}</span>
+                    )}
+                  </div>
+                  {customerList.length > 5 && (
+                    <Input
+                      placeholder="Type to filter customer by name or phone…"
+                      value={customerSearch}
+                      onChange={e => setCustomerSearch(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  )}
                   <Select value={customerId} onValueChange={v => { if (v !== null) setCustomerId(v) }}>
                     <SelectTrigger id="customer">
                       <SelectValue placeholder="Select customer" />
                     </SelectTrigger>
                     <SelectContent>
-                      {customerList.map(c => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.full_name}{c.phone ? ` — ${c.phone}` : ''}
-                        </SelectItem>
-                      ))}
+                      {filteredCustomerList.length === 0 ? (
+                        <div className="p-3 text-xs text-muted-foreground text-center">No customers match "{customerSearch}"</div>
+                      ) : (
+                        filteredCustomerList.map(c => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.full_name}{c.phone ? ` — ${c.phone}` : ''}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
-                </>
+                </div>
               )}
             </section>
 
@@ -301,13 +336,24 @@ export function NewOrderForm({
                 <p className="text-[11px] text-muted-foreground">Default estimated window: {defaultDueDays} days</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="notes">Notes (optional)</Label>
+                <Label htmlFor="basketTag">Basket / Rack / Station (optional)</Label>
+                <Input
+                  id="basketTag"
+                  value={basketTag}
+                  onChange={e => setBasketTag(e.target.value)}
+                  placeholder="e.g. Basket #4, Rack B-2"
+                  className="h-9 text-xs"
+                />
+                <p className="text-[11px] text-muted-foreground">Physical location tag for shop floor</p>
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="notes">Special instructions (optional)</Label>
                 <Textarea
                   id="notes"
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   maxLength={1000}
-                  placeholder="Stains, preferences, special instructions…"
+                  placeholder="Fabric care, delicate items, special customer requests…"
                   rows={2}
                 />
               </div>
