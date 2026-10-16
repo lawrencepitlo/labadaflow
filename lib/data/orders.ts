@@ -120,10 +120,22 @@ export async function getOrders(options: {
   // Strip PostgREST `or`-filter syntax characters (`,`/`(`/`)`) so a search
   // term can never corrupt the filter expression into a query error (which
   // would surface as an "Access Denied" empty state for an authorized user).
+  // Search by order number, tracking code, or customer name
   if (options.search?.trim()) {
     const term = options.search.trim().replace(/[,()]/g, '')
     if (term) {
-      query = query.or(`order_number.ilike.%${term}%,tracking_code.ilike.%${term}%,customers.full_name.ilike.%${term}%`)
+      // Find matching customer IDs first since PostgREST cannot use dotted paths in .or()
+      const { data: matchedCustomers } = await supabase
+        .from('customers')
+        .select('id')
+        .ilike('full_name', `%${term}%`)
+
+      const custIds = (matchedCustomers ?? []).map(c => c.id)
+      let orClause = `order_number.ilike.%${term}%,tracking_code.ilike.%${term}%`
+      if (custIds.length > 0) {
+        orClause += `,customer_id.in.(${custIds.join(',')})`
+      }
+      query = query.or(orClause)
     }
   }
 
@@ -133,7 +145,10 @@ export async function getOrders(options: {
 
   const { data, count, error } = await query
 
-  if (error || !data) return null
+  if (error || !data) {
+    if (error) console.error('getOrders query error:', error)
+    return null
+  }
 
   const orders: OrderListItem[] = data.map(o => ({
     id: o.id,
@@ -342,7 +357,10 @@ export async function getDashboardStats() {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('get_dashboard_metrics')
 
-  if (error || !data) return null
+  if (error || !data) {
+    if (error) console.error('get_dashboard_metrics RPC error:', error)
+    return null
+  }
 
   const metrics = data as {
     overdue_count: number

@@ -18,9 +18,10 @@ export interface Actor {
 }
 
 /**
- * Get actor by Clerk user ID, wrapped in React cache() so it runs once per request.
+ * Direct unmemoized query for actor, used when syncUser has just mutated the row
+ * within the same server request.
  */
-export const getActorByClerkId = cache(async (clerkUserId: string): Promise<Actor | null> => {
+export async function fetchActorDirect(clerkUserId: string): Promise<Actor | null> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('users')
@@ -30,6 +31,13 @@ export const getActorByClerkId = cache(async (clerkUserId: string): Promise<Acto
 
   if (!data || !data.is_active) return null
   return data as Actor
+}
+
+/**
+ * Get actor by Clerk user ID, wrapped in React cache() so it runs once per request.
+ */
+export const getActorByClerkId = cache(async (clerkUserId: string): Promise<Actor | null> => {
+  return fetchActorDirect(clerkUserId)
 })
 
 /**

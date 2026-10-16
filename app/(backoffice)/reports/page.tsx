@@ -14,7 +14,12 @@ export default async function ReportsPage() {
   const report = await getReports()
 
   if (!report) {
-    return <EmptyState title="Access Denied" description="You do not have permission to view reports." />
+    return (
+      <EmptyState
+        title="Unable to load reports"
+        description="We encountered an issue computing business reports. Please refresh the page."
+      />
+    )
   }
 
   const metrics = [

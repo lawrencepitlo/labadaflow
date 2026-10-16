@@ -52,7 +52,12 @@ export default async function OrdersPage({
   })
 
   if (!result) {
-    return <EmptyState title="Access Denied" description="You do not have permission to view orders." />
+    return (
+      <EmptyState
+        title="Unable to load orders"
+        description="We encountered an issue retrieving orders. Please refresh the page."
+      />
+    )
   }
 
   const { orders, total, page: currentPage, pageSize } = result

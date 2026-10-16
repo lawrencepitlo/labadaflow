@@ -33,7 +33,12 @@ export default async function CustomersPage({
   })
 
   if (!result) {
-    return <EmptyState title="Access Denied" description="You do not have permission to view customers." />
+    return (
+      <EmptyState
+        title="Unable to load customers"
+        description="We encountered an issue retrieving customer records. Please refresh the page."
+      />
+    )
   }
 
   const { customers, total, page: currentPage, pageSize } = result

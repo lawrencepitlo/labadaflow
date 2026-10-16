@@ -19,8 +19,7 @@ export default function BackofficeError({
   const isAccessDenied =
     error.message?.includes('FORBIDDEN') ||
     error.message?.includes('UNAUTHENTICATED') ||
-    error.message?.toLowerCase().includes('access denied') ||
-    error.message?.toLowerCase().includes('permission')
+    error.message?.toLowerCase() === 'access denied'
 
   if (isAccessDenied) {
     return (

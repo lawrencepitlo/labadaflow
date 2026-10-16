@@ -78,7 +78,12 @@ export default async function DashboardPage() {
   const stats = await getDashboardStats()
 
   if (!stats) {
-    return <EmptyState title="Access Denied" description="You do not have permission to view this page." />
+    return (
+      <EmptyState
+        title="Unable to load dashboard"
+        description="We encountered an issue retrieving dashboard statistics. Please refresh the page."
+      />
+    )
   }
 
   const counts = stats.statusCounts ?? {}

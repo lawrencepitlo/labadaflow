@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
-import { getActor } from '@/lib/auth'
+import { getActor, fetchActorDirect } from '@/lib/auth'
 import { getCustomerByClerkId } from '@/lib/data/customers'
 import { syncUser } from '@/lib/actions/team'
 import { PortalShell } from './portal-shell'
@@ -17,7 +17,7 @@ export default async function PortalLayout({
   let actor = await getActor()
   if (!actor) {
     await syncUser()
-    actor = await getActor()
+    actor = await fetchActorDirect(userId)
   }
 
   if (!actor) redirect('/sign-in')

@@ -107,6 +107,11 @@ export async function syncUser() {
 
   const supabase = await createClient()
 
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean)
+
   // Check if user already exists
   const { data: existing } = await supabase
     .from('users')
@@ -114,17 +119,35 @@ export async function syncUser() {
     .eq('clerk_user_id', userId)
     .single()
 
-  if (existing) return { success: true, role: existing.role }
+  if (existing) {
+    if (existing.role !== 'ADMIN') {
+      try {
+        const clerk = await clerkClient()
+        const clerkUser = await clerk.users.getUser(userId)
+        const primary = clerkUser.emailAddresses?.[0]
+        const email = primary?.emailAddress?.toLowerCase() || ''
+        const isVerified = primary?.verification?.status === 'verified'
+        const isAdmin = Boolean(email && isVerified && adminEmails.includes(email))
+        const rawRole = clerkUser.publicMetadata?.role as string | undefined
+
+        if (isAdmin || rawRole === 'ADMIN') {
+          await supabase
+            .from('users')
+            .update({ role: 'ADMIN', updated_at: new Date().toISOString() })
+            .eq('id', existing.id)
+          return { success: true, role: 'ADMIN' }
+        }
+      } catch {
+        // non-blocking
+      }
+    }
+    return { success: true, role: existing.role }
+  }
 
   // Get user info from Clerk
   try {
     const clerk = await clerkClient()
     const clerkUser = await clerk.users.getUser(userId)
-
-    const adminEmails = (process.env.ADMIN_EMAILS || '')
-      .split(',')
-      .map(e => e.trim().toLowerCase())
-      .filter(Boolean)
 
     const primary = clerkUser.emailAddresses?.[0]
     const email = primary?.emailAddress?.toLowerCase() || ''

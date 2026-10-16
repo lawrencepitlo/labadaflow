@@ -40,7 +40,10 @@ export async function getReports(): Promise<ReportData | null> {
 
   const { data, error } = await supabase.rpc('get_reports_data')
 
-  if (error || !data) return null
+  if (error || !data) {
+    if (error) console.error('get_reports_data RPC error:', error)
+    return null
+  }
 
   const row = data as {
     orders_today: number

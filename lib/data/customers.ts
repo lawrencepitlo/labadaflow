@@ -77,7 +77,10 @@ export async function getCustomers(options: {
 
   const { data, count, error } = await query
 
-  if (error || !data) return null
+  if (error || !data) {
+    if (error) console.error('getCustomers query error:', error)
+    return null
+  }
 
   // Get order counts for these customers
   const customerIds = data.map(c => c.id)
