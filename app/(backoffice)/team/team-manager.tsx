@@ -11,7 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { EmptyState } from '@/components/app/empty-state'
-import { Users, Shield, UserCheck } from 'lucide-react'
+import { Users } from 'lucide-react'
 import type { TeamMember } from '@/lib/data/team'
 
 export function RoleSelect({ member }: { member: TeamMember }) {

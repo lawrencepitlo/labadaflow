@@ -86,7 +86,7 @@ async function main() {
       `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(account.email)}`,
       { headers: clerkHeaders }
     )
-    const existingUsers = (await searchRes.json()) as any[]
+    const existingUsers = (await searchRes.json()) as Array<{ id: string }>
 
     let clerkId: string
 
@@ -114,8 +114,8 @@ async function main() {
           public_metadata: { role: account.role },
         }),
       })
-      const created = (await createRes.json()) as any
-      if (created.errors) {
+      const created = (await createRes.json()) as { id?: string; errors?: unknown[] }
+      if (created.errors || !created.id) {
         console.warn(`  Clerk creation warning: ${JSON.stringify(created.errors)}`)
         clerkId = `clerk-demo-${account.firstName.toLowerCase()}-${account.role.toLowerCase()}`
       } else {

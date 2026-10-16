@@ -8,7 +8,6 @@ import { formatMoney } from '@/lib/money'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -158,13 +157,13 @@ export function NewOrderForm({
 
   return (
     <>
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
-        <Card className="gap-0 py-0 lg:col-span-2">
-          <CardHeader className="px-4 py-3">
-            <CardTitle className="text-[13px]">Order details</CardTitle>
-            <CardDescription>Customer → items → pickup estimate</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5 px-4 pb-4">
+      <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+        <div className="overflow-hidden rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs lg:col-span-2 space-y-6">
+          <div className="border-b pb-3">
+            <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Order Intake Details</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">Select customer, specify services, and set estimated ready date</p>
+          </div>
+          <div className="space-y-6">
             <section aria-labelledby="new-order-customer" className="space-y-2">
               <div className="flex items-center justify-between">
                 <h2 id="new-order-customer" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
@@ -315,50 +314,56 @@ export function NewOrderForm({
             </section>
 
             {error && (
-              <p className="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] text-destructive" role="alert">
+              <p className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/10 px-3.5 py-2.5 text-xs text-destructive" role="alert">
                 <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 <span>{error}</span>
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="h-fit gap-0 py-0 lg:sticky lg:top-6">
-          <CardHeader className="px-4 py-3">
-            <CardTitle className="text-[13px]">Summary</CardTitle>
-            <CardDescription>{mergedSummary.length} service item{mergedSummary.length === 1 ? '' : 's'} · pay on pickup</CardDescription>
-          </CardHeader>
-          <CardContent className="tnum space-y-3 px-4 pb-4">
-            <dl className="space-y-1.5 text-[13px]">
-              {mergedSummary.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No services selected yet.</p>
-              ) : (
-                mergedSummary.map(item => (
-                  <div key={item.serviceId} className="flex justify-between gap-2">
-                    <dt className="truncate text-muted-foreground">
-                      {item.quantity}× {item.name}
-                    </dt>
-                    <dd className="shrink-0 font-medium">
-                      {formatMoney(item.totalCents)}
-                    </dd>
-                  </div>
-                ))
-              )}
-            </dl>
-            <Separator />
-            <div className="flex items-baseline justify-between gap-2 border-t pt-3">
-              <span className="text-[13px] font-medium">Total</span>
-              <span className="text-xl font-semibold tracking-tight" aria-live="polite">{formatMoney(totalCents)}</span>
+        {/* Live Calculation & Summary Card */}
+        <div className="overflow-hidden rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs lg:sticky lg:top-6 space-y-4">
+          <div className="border-b pb-3">
+            <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Order Summary</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">{mergedSummary.length} item line{mergedSummary.length === 1 ? '' : 's'} · pay upon collection</p>
+          </div>
+          
+          <dl className="tnum space-y-2 text-xs">
+            {mergedSummary.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">No services selected yet.</p>
+            ) : (
+              mergedSummary.map(item => (
+                <div key={item.serviceId} className="flex justify-between items-baseline gap-2 py-1 border-b border-border/40 last:border-b-0">
+                  <dt className="truncate text-foreground font-medium">
+                    {item.quantity} {item.pricingUnit === 'PER_KG' ? 'kg' : 'pc'} × {item.name}
+                  </dt>
+                  <dd className="shrink-0 font-semibold font-mono text-foreground">
+                    {formatMoney(item.totalCents)}
+                  </dd>
+                </div>
+              ))
+            )}
+          </dl>
+
+          <div className="border-t pt-3">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-sm font-semibold text-foreground">Estimated Total</span>
+              <span className="text-2xl font-bold font-mono text-foreground" aria-live="polite">{formatMoney(totalCents)}</span>
             </div>
-            <p className="text-xs text-muted-foreground">Pay on pickup — payment method is recorded when order is completed.</p>
-            <Button onClick={submit} disabled={isPending} className="w-full" size="lg" aria-busy={isPending}>
-              {isPending ? 'Creating…' : 'Create Order'}
-            </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              Order starts at Received.
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Payment method will be recorded at pickup (Cash, GCash, or Other).
             </p>
-          </CardContent>
-        </Card>
+          </div>
+
+          <Button onClick={submit} disabled={isPending} className="w-full h-11 text-sm font-semibold mt-2" size="lg" aria-busy={isPending}>
+            {isPending ? 'Creating Order…' : 'Create Order & Print Slip'}
+          </Button>
+
+          <p className="text-center text-[11px] text-muted-foreground">
+            Order starts at Received stage on the operations board.
+          </p>
+        </div>
       </div>
 
       {/* Quick Create Customer Dialog */}

@@ -2,7 +2,6 @@ import { getReports } from '@/lib/data/reports'
 import { PageHeader } from '@/components/app/page-header'
 import { EmptyState } from '@/components/app/empty-state'
 import { StatusBadge } from '@/components/app/status-badge'
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'

@@ -37,11 +37,16 @@ async function main() {
   console.log('--- Ensuring All Developer Accounts are ADMIN in Clerk & Supabase ---')
 
   const res = await fetch('https://api.clerk.com/v1/users?limit=50', { headers })
-  const clerkUsers = (await res.json()) as any[]
+  const clerkUsers = (await res.json()) as Array<{
+    id: string
+    first_name?: string
+    last_name?: string
+    email_addresses?: Array<{ email_address: string }>
+  }>
 
   for (const email of ADMIN_ACCOUNTS) {
     const found = clerkUsers.find(u =>
-      u.email_addresses?.some((e: any) => e.email_address?.toLowerCase() === email.toLowerCase())
+      u.email_addresses?.some((e: { email_address: string }) => e.email_address?.toLowerCase() === email.toLowerCase())
     )
 
     if (found) {

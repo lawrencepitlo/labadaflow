@@ -5,11 +5,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
@@ -98,7 +93,7 @@ export function ReportsCharts({
   return (
     <div className="mt-4 space-y-4">
       {/* 14-day Revenue trend */}
-      <Card className="gap-0 overflow-hidden py-0">
+      <Card className="gap-0 overflow-hidden rounded-2xl border border-border/80 shadow-xs py-0">
         <CardHeader className="flex flex-row items-center justify-between px-4 py-3 border-b">
           <div>
             <CardTitle className="text-[13px]">14-Day Revenue Trajectory</CardTitle>
@@ -159,7 +154,7 @@ export function ReportsCharts({
       {/* Two columns: Payment Breakdown + Top Services */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Payment Methods */}
-        <Card className="gap-0 overflow-hidden py-0">
+        <Card className="gap-0 overflow-hidden rounded-2xl border border-border/80 shadow-xs py-0">
           <CardHeader className="px-4 py-3 border-b">
             <CardTitle className="text-[13px]">Payment Method Breakdown</CardTitle>
             <CardDescription>Share of revenue by settlement type</CardDescription>
@@ -206,7 +201,7 @@ export function ReportsCharts({
         </Card>
 
         {/* Top Services by Revenue */}
-        <Card className="gap-0 overflow-hidden py-0">
+        <Card className="gap-0 overflow-hidden rounded-2xl border border-border/80 shadow-xs py-0">
           <CardHeader className="px-4 py-3 border-b">
             <CardTitle className="text-[13px]">Top Services by Revenue</CardTitle>
             <CardDescription>Highest grossing offerings</CardDescription>

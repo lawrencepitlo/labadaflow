@@ -59,12 +59,20 @@ export function CommandPalette({ open, onOpenChange, role }: CommandPaletteProps
       <CommandList>
         <CommandEmpty>No matching pages.</CommandEmpty>
         <CommandGroup heading="Actions">
-          <CommandItem value="new order create intake" onSelect={() => go('/orders/new')}>
+          <CommandItem value="new order create intake walk-in" onSelect={() => go('/orders/new')}>
             <Plus aria-hidden="true" />
             New order
           </CommandItem>
+          <CommandItem value="find order search tracking customer" onSelect={() => go('/orders')}>
+            <ClipboardList aria-hidden="true" />
+            Find order
+          </CommandItem>
+          <CommandItem value="go to board kanban workflow stations" onSelect={() => go('/board')}>
+            <Kanban aria-hidden="true" />
+            Go to board
+          </CommandItem>
         </CommandGroup>
-        <CommandGroup heading="Go to">
+        <CommandGroup heading="Navigation">
           {routes.map(route => (
             <CommandItem
               key={route.href}

@@ -45,8 +45,8 @@ async function run() {
           const filename = `${r.name}_${vp.name}_${theme}.png`
           await page.screenshot({ path: resolve(outDir, filename), fullPage: false })
           console.log(`Saved screenshot: ${filename}`)
-        } catch (err: any) {
-          console.error(`Error capturing ${r.path} (${vp.name}, ${theme}):`, err.message)
+        } catch (err: unknown) {
+          console.error(`Error capturing ${r.path} (${vp.name}, ${theme}):`, err instanceof Error ? err.message : String(err))
         }
       }
 

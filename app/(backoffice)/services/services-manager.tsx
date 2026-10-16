@@ -6,10 +6,9 @@ import { createService, updateService, toggleServiceActive } from '@/lib/actions
 import { formatMoney, pesosToCentavos, centavosToPesos } from '@/lib/money'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { EmptyState } from '@/components/app/empty-state'
-import { Package, Plus, Sparkles } from 'lucide-react'
+import { Package, Plus } from 'lucide-react'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'

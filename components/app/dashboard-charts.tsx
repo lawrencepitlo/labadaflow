@@ -4,11 +4,7 @@ import * as React from 'react'
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
@@ -34,11 +30,6 @@ interface DailyTrendItem {
   revenue_cents: number
   completed_orders: number
   created_orders: number
-}
-
-interface DashboardChartsProps {
-  dailyTrend: DailyTrendItem[]
-  statusCounts: Record<string, number>
 }
 
 const chartConfig = {
@@ -69,7 +60,7 @@ export function DashboardRevenueChart({ dailyTrend }: { dailyTrend: DailyTrendIt
   }, [dailyTrend])
 
   return (
-    <Card className="mt-4 gap-0 overflow-hidden py-0">
+    <Card className="gap-0 overflow-hidden rounded-2xl border border-border/80 shadow-xs py-0">
       <CardHeader className="flex flex-row items-center justify-between px-4 py-3 border-b">
         <div>
           <CardTitle className="text-[13px]">Revenue & Volume Trend</CardTitle>
