@@ -1,5 +1,6 @@
 /**
  * Data Access Layer — Reports (Admin and Staff)
+ * Aggregations computed directly in PostgreSQL via RPC with Asia/Manila boundaries.
  */
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@/lib/supabase/server'
@@ -24,49 +25,27 @@ export async function getReports(): Promise<ReportData | null> {
 
   const supabase = await createClient()
 
-  const now = new Date()
-  const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0)
-  const startOfWeek = new Date(startOfToday); startOfWeek.setDate(startOfWeek.getDate() - 6)
+  const { data, error } = await supabase.rpc('get_reports_data')
 
-  const [{ data: createdOrders }, { data: completed }, { data: items }, { data: statuses }] =
-    await Promise.all([
-      supabase.from('orders').select('created_at'),
-      supabase.from('orders').select('total_cents, completed_at').eq('status', 'COMPLETED'),
-      supabase.from('order_items').select('service_name, quantity, line_total_cents'),
-      supabase.from('orders').select('status'),
-    ])
+  if (error || !data) return null
 
-  const countSince = (rows: { created_at?: string }[] | null, since: Date) =>
-    rows?.filter(r => r.created_at && new Date(r.created_at) >= since).length ?? 0
-
-  type CompletedRow = { total_cents: number; completed_at: string | null }
-  const revenueSince = (rows: CompletedRow[] | null, since: Date) =>
-    rows?.filter(r => r.completed_at && new Date(r.completed_at) >= since)
-      .reduce((s, r) => s + r.total_cents, 0) ?? 0
-
-  type ItemRow = { service_name: string; quantity: number; line_total_cents: number }
-  const byService = new Map<string, { count: number; revenue_cents: number }>()
-  ;(items as ItemRow[] | null)?.forEach(i => {
-    const entry = byService.get(i.service_name) ?? { count: 0, revenue_cents: 0 }
-    entry.count += 1
-    entry.revenue_cents += i.line_total_cents
-    byService.set(i.service_name, entry)
-  })
-
-  const statusBreakdown: Record<string, number> = {}
-  ;(statuses as { status: string }[] | null)?.forEach(s => {
-    statusBreakdown[s.status] = (statusBreakdown[s.status] || 0) + 1
-  })
+  const row = data as {
+    orders_today: number
+    orders_this_week: number
+    revenue_today: number
+    revenue_this_week: number
+    revenue_total: number
+    orders_by_service: { service_name: string; count: number; revenue_cents: number }[]
+    status_breakdown: Record<string, number>
+  }
 
   return {
-    ordersToday: countSince(createdOrders, startOfToday),
-    ordersThisWeek: countSince(createdOrders, startOfWeek),
-    revenueToday: revenueSince(completed, startOfToday),
-    revenueThisWeek: revenueSince(completed, startOfWeek),
-    revenueTotal: (completed as CompletedRow[] | null)?.reduce((s, r) => s + r.total_cents, 0) ?? 0,
-    ordersByService: Array.from(byService.entries())
-      .map(([service_name, v]) => ({ service_name, ...v }))
-      .sort((a, b) => b.revenue_cents - a.revenue_cents),
-    statusBreakdown,
+    ordersToday: row.orders_today ?? 0,
+    ordersThisWeek: row.orders_this_week ?? 0,
+    revenueToday: row.revenue_today ?? 0,
+    revenueThisWeek: row.revenue_this_week ?? 0,
+    revenueTotal: row.revenue_total ?? 0,
+    ordersByService: row.orders_by_service ?? [],
+    statusBreakdown: row.status_breakdown ?? {},
   }
 }

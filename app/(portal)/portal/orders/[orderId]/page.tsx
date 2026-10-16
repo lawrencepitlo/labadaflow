@@ -181,6 +181,26 @@ export default async function PortalOrderDetailPage({
                 <dd><StatusBadge status={order.status} size="sm" /></dd>
               </div>
               <div className="flex items-center justify-between gap-2 py-2">
+                <dt className="text-xs text-muted-foreground">Payment</dt>
+                <dd className="font-medium text-xs">
+                  {order.paid_at ? (
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      Paid ({order.payment_method ?? 'CASH'})
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 dark:text-amber-400">
+                      Unpaid · Pay on pickup
+                    </span>
+                  )}
+                </dd>
+              </div>
+              {order.paid_at && (
+                <div className="flex items-center justify-between gap-2 py-2">
+                  <dt className="text-xs text-muted-foreground">Paid at</dt>
+                  <dd>{formatDateTime(order.paid_at)}</dd>
+                </div>
+              )}
+              <div className="flex items-center justify-between gap-2 py-2">
                 <dt className="text-xs text-muted-foreground">Received</dt>
                 <dd>{formatDateTime(order.received_at)}</dd>
               </div>

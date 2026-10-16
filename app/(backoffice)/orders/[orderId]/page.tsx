@@ -1,12 +1,15 @@
 import Link from 'next/link'
+import { getActor } from '@/lib/auth'
 import { getOrderById } from '@/lib/data/orders'
 import { getActiveServices } from '@/lib/data/services'
+import { getShopName } from '@/lib/settings'
 import { StatusBadge, STATUS_DOT_CLASS } from '@/components/app/status-badge'
 import { EmptyState } from '@/components/app/empty-state'
 import { OrderFlowStepper } from '@/components/app/order-flow-stepper'
 import { OrderActions } from '@/components/app/order-actions'
 import { OrderPrimaryAction } from '@/components/app/order-primary-action'
 import { OrderItemsEditor } from '@/components/app/order-items-editor'
+import { ReadyCustomerNotifier } from '@/components/app/ready-customer-notifier'
 import { Button } from '@/components/ui/button'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -23,12 +26,16 @@ export default async function OrderDetailPage({
   params: Promise<{ orderId: string }>
 }) {
   const { orderId } = await params
-  const order = await getOrderById(orderId)
+  const [order, actor] = await Promise.all([
+    getOrderById(orderId),
+    getActor(),
+  ])
 
   if (!order) {
     return <EmptyState title="Order not found" description="This order does not exist or you do not have access." />
   }
 
+  const isAdmin = actor?.role === 'ADMIN'
   const services = order.status === 'RECEIVED' ? await getActiveServices() : []
   // eslint-disable-next-line react-hooks/purity -- server component: evaluated once per request, not a client re-render
   const now = Date.now()
@@ -79,7 +86,7 @@ export default async function OrderDetailPage({
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <OrderPrimaryAction orderId={order.id} status={order.status} />
+          <OrderPrimaryAction orderId={order.id} status={order.status} totalCents={order.total_cents} />
           <Button variant="outline" render={<Link href={`/orders/${order.id}/slip`} />}>
             <Printer aria-hidden="true" />
             Print Slip
@@ -87,24 +94,26 @@ export default async function OrderDetailPage({
         </div>
       </header>
 
-      {(isReady || (isOverdue && order.due_at)) && (
+      {isReady && (
+        <div className="mb-4">
+          <ReadyCustomerNotifier
+            customerName={order.customer.full_name}
+            phone={order.customer.phone}
+            orderNumber={order.order_number}
+            trackingCode={order.tracking_code}
+            totalCents={order.total_cents}
+            shopName={getShopName()}
+          />
+        </div>
+      )}
+
+      {isOverdue && order.due_at && (
         <div className="mb-4 flex flex-col divide-y divide-border overflow-hidden rounded-lg border bg-card" role="status">
-          {isReady && (
-            <p className="tnum flex items-center gap-2.5 px-4 py-2.5 text-[13px]">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" aria-hidden="true" />
-              <span className="font-semibold">Ready for customer pickup</span>
-              <span className="truncate text-xs text-muted-foreground">
-                Tracking {order.tracking_code.slice(0, 12)}…
-              </span>
-            </p>
-          )}
-          {isOverdue && order.due_at && (
-            <p className="tnum flex items-center gap-2.5 px-4 py-2.5 text-[13px]">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true" />
-              <span className="font-semibold">Past due date — {formatDate(order.due_at)}</span>
-              <span className="truncate text-xs text-muted-foreground">Prioritize this order.</span>
-            </p>
-          )}
+          <p className="tnum flex items-center gap-2.5 px-4 py-2.5 text-[13px]">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true" />
+            <span className="font-semibold">Past due date — {formatDate(order.due_at)}</span>
+            <span className="truncate text-xs text-muted-foreground">Prioritize this order.</span>
+          </p>
         </div>
       )}
 
@@ -215,6 +224,10 @@ export default async function OrderDetailPage({
                 </dd>
               </div>
               <div className="flex items-center justify-between gap-2 py-2">
+                <dt className="text-xs text-muted-foreground">Payment method</dt>
+                <dd className="font-medium">{order.payment_method ?? '—'}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-2 py-2">
                 <dt className="text-xs text-muted-foreground">Paid at</dt>
                 <dd>{order.paid_at ? formatDateTime(order.paid_at) : '—'}</dd>
               </div>
@@ -245,7 +258,12 @@ export default async function OrderDetailPage({
           <section aria-labelledby="order-actions" className="px-4 py-3.5">
             <h2 id="order-actions" className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Actions</h2>
             <p className="mt-0.5 mb-3 text-xs text-muted-foreground">Advance, move back, or cancel</p>
-            <OrderActions orderId={order.id} status={order.status} />
+            <OrderActions
+              orderId={order.id}
+              status={order.status}
+              totalCents={order.total_cents}
+              isAdmin={isAdmin}
+            />
           </section>
         </aside>
 

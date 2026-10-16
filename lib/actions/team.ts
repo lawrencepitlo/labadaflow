@@ -120,18 +120,37 @@ export async function syncUser() {
   try {
     const clerk = await clerkClient()
     const clerkUser = await clerk.users.getUser(userId)
+
+    const adminEmails = (process.env.ADMIN_EMAILS || '')
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean)
+
+    const primary = clerkUser.emailAddresses?.[0]
+    const email = primary?.emailAddress?.toLowerCase() || ''
+    const isVerified = primary?.verification?.status === 'verified'
+    const isAdmin = Boolean(email && isVerified && adminEmails.includes(email))
+
     const rawRole = clerkUser.publicMetadata?.role as string | undefined
-    // Allow-list: Clerk metadata is operator-controlled, but never let an
-    // unexpected value reach the users.role column.
-    const role = rawRole && (VALID_ROLES as readonly string[]).includes(rawRole) ? rawRole : 'CUSTOMER'
-    const fullName = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || clerkUser.emailAddresses?.[0]?.emailAddress || 'Unknown'
-    const email = clerkUser.emailAddresses?.[0]?.emailAddress || ''
+    let role = rawRole && (VALID_ROLES as readonly string[]).includes(rawRole) ? rawRole : 'CUSTOMER'
+    if (isAdmin) {
+      role = 'ADMIN'
+      try {
+        await clerk.users.updateUserMetadata(userId, {
+          publicMetadata: { role: 'ADMIN' },
+        })
+      } catch {
+        // non-blocking
+      }
+    }
+
+    const fullName = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || email || 'Unknown'
 
     const { data, error } = await supabase
       .from('users')
       .insert({
         clerk_user_id: userId,
-        role,
+        role: role as 'ADMIN' | 'STAFF' | 'CUSTOMER',
         full_name: fullName,
         email,
       })

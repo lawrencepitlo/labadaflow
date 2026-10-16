@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
-import { getActorByClerkId } from '@/lib/auth'
+import { getActor } from '@/lib/auth'
 import { syncUser } from '@/lib/actions/team'
 import { BackofficeShell } from './backoffice-shell'
 
@@ -12,10 +12,13 @@ export default async function BackofficeLayout({
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  // Sync user to Supabase if not exists
-  await syncUser()
+  // Only run syncUser when the users row is missing
+  let actor = await getActor()
+  if (!actor) {
+    await syncUser()
+    actor = await getActor()
+  }
 
-  const actor = await getActorByClerkId(userId)
   if (!actor || !['ADMIN', 'STAFF'].includes(actor.role)) {
     redirect('/portal')
   }

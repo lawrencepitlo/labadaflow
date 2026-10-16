@@ -7,6 +7,7 @@ import { UserButton } from '@clerk/nextjs'
 import type { Actor } from '@/lib/auth'
 import {
   LayoutDashboard,
+  Kanban,
   ClipboardList,
   Users,
   Wrench,
@@ -31,6 +32,7 @@ const NAV_SECTIONS = [
     label: 'Workspace',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'STAFF'] },
+      { href: '/board', label: 'Board', icon: Kanban, roles: ['ADMIN', 'STAFF'] },
       { href: '/orders', label: 'Orders', icon: ClipboardList, roles: ['ADMIN', 'STAFF'] },
       { href: '/customers', label: 'Customers', icon: Users, roles: ['ADMIN', 'STAFF'] },
     ],
@@ -50,6 +52,7 @@ function sectionLabel(pathname: string): string {
   if (pathname.startsWith('/orders/new')) return 'New order'
   if (pathname.startsWith('/orders/')) return 'Order'
   if (pathname.startsWith('/customers/')) return 'Customer'
+  if (pathname === '/board' || pathname.startsWith('/board/')) return 'Board'
   for (const section of NAV_SECTIONS) {
     for (const item of section.items) {
       if (pathname === item.href || pathname.startsWith(item.href + '/')) return item.label

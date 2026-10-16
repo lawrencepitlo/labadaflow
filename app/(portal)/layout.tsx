@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
-import { getActorByClerkId } from '@/lib/auth'
+import { getActor } from '@/lib/auth'
 import { getCustomerByClerkId } from '@/lib/data/customers'
 import { syncUser } from '@/lib/actions/team'
 import { PortalShell } from './portal-shell'
@@ -13,9 +13,13 @@ export default async function PortalLayout({
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  await syncUser()
+  // Only run syncUser when the users row is missing
+  let actor = await getActor()
+  if (!actor) {
+    await syncUser()
+    actor = await getActor()
+  }
 
-  const actor = await getActorByClerkId(userId)
   if (!actor) redirect('/sign-in')
 
   if (actor.role !== 'CUSTOMER') {

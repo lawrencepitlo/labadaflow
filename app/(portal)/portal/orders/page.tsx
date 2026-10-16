@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { getCustomerOrders } from '@/lib/data/orders'
 import { PageHeader } from '@/components/app/page-header'
 import { StatusBadge } from '@/components/app/status-badge'
-import { EmptyState } from '@/components/app/empty-state'
+import { ClaimOrderDialog } from '@/components/app/claim-order-dialog'
 import { Button } from '@/components/ui/button'
 import { formatMoney } from '@/lib/money'
 import { formatDate, formatDateTime } from '@/lib/time'
@@ -27,10 +27,20 @@ export default async function PortalOrdersPage({
 
   if (!result) {
     return (
-      <EmptyState
-        title="No customer record linked"
-        description="Your account is not linked to a customer record yet. Please contact the shop."
-      />
+      <>
+        <PageHeader title="My Orders" description="Manage and track your laundry orders." />
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center bg-card">
+          <ClipboardList className="h-8 w-8 text-muted-foreground/60 mb-2" />
+          <h3 className="text-sm font-semibold text-foreground">No customer record linked yet</h3>
+          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+            If you placed an order at the counter, enter your tracking code from your receipt slip to
+            claim it and link your customer profile.
+          </p>
+          <div className="mt-4">
+            <ClaimOrderDialog triggerText="Claim an Order with Tracking Code" variant="default" />
+          </div>
+        </div>
+      </>
     )
   }
 
@@ -75,16 +85,28 @@ export default async function PortalOrdersPage({
 
   return (
     <>
-      <PageHeader
-        title="My Orders"
-        description={total === 0 ? 'Your laundry orders will appear here' : `${total} order${total === 1 ? '' : 's'} · newest first`}
-      />
-      {orders.length === 0 ? (
-        <EmptyState
-          icon={ClipboardList}
-          title="No orders yet"
-          description="When you drop off laundry at the shop, your orders will appear here with live status."
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <PageHeader
+          title="My Orders"
+          description={total === 0 ? 'Your laundry orders will appear here' : `${total} order${total === 1 ? '' : 's'} · newest first`}
         />
+        <div className="shrink-0">
+          <ClaimOrderDialog />
+        </div>
+      </div>
+
+      {orders.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center bg-card">
+          <ClipboardList className="h-8 w-8 text-muted-foreground/60 mb-2" />
+          <h3 className="text-sm font-semibold text-foreground">No orders found</h3>
+          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+            When you drop off laundry at the shop, your orders will appear here. Or claim an existing
+            order using your receipt slip.
+          </p>
+          <div className="mt-4">
+            <ClaimOrderDialog triggerText="Claim an Order" variant="default" />
+          </div>
+        </div>
       ) : (
         <>
           {activeOrders.length > 0 && (

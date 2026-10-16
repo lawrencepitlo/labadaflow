@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import {
   advanceOrderStatus,
   cancelOrder,
+  reopenOrder,
 } from '@/lib/actions/orders'
 import { getPreviousStatus, STATUS_CONFIG, type OrderStatus } from '@/lib/order-machine'
 import { Button } from '@/components/ui/button'
@@ -21,7 +22,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { ChevronLeft, XCircle } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { ChevronLeft, XCircle, RotateCcw } from 'lucide-react'
 import { OrderPrimaryAction } from '@/components/app/order-primary-action'
 import { STATUS_DOT_CLASS } from '@/components/app/status-badge'
 import { cn } from 'cn'
@@ -29,17 +39,27 @@ import { cn } from 'cn'
 interface OrderActionsProps {
   orderId: string
   status: OrderStatus
+  totalCents?: number
+  isAdmin?: boolean
 }
 
-export function OrderActions({ orderId, status }: OrderActionsProps) {
+export function OrderActions({
+  orderId,
+  status,
+  totalCents = 0,
+  isAdmin = false,
+}: OrderActionsProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [cancelReason, setCancelReason] = useState('')
+  const [reopenNote, setReopenNote] = useState('')
+  const [reopenDialogOpen, setReopenDialogOpen] = useState(false)
 
   const previous = getPreviousStatus(status)
-  const isTerminal = status === 'COMPLETED' || status === 'CANCELLED'
+  const isCompleted = status === 'COMPLETED'
+  const isCancelled = status === 'CANCELLED'
 
   function run(action: () => Promise<{ error?: string; success?: boolean }>) {
     setError(null)
@@ -50,20 +70,94 @@ export function OrderActions({ orderId, status }: OrderActionsProps) {
       } else {
         setNote('')
         setCancelReason('')
+        setReopenNote('')
+        setReopenDialogOpen(false)
         router.refresh()
       }
     })
   }
 
-  if (isTerminal) {
+  if (isCancelled) {
     return (
       <p className="flex items-center gap-1.5 py-2 text-[13px] text-muted-foreground">
         <span
           className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOT_CLASS[status])}
           aria-hidden="true"
         />
-        This order is {status.toLowerCase()} and cannot be changed.
+        This order is cancelled and cannot be reopened.
       </p>
+    )
+  }
+
+  if (isCompleted) {
+    return (
+      <div className="space-y-3 py-2">
+        <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+          <span
+            className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOT_CLASS[status])}
+            aria-hidden="true"
+          />
+          This order is completed and paid.
+        </p>
+
+        {isAdmin && (
+          <div>
+            <Dialog open={reopenDialogOpen} onOpenChange={setReopenDialogOpen}>
+              <DialogTrigger render={<Button variant="outline" size="sm" className="w-full gap-1.5" />}>
+                <RotateCcw className="h-3.5 w-3.5" />
+                Admin: Reopen Order
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Reopen Completed Order</DialogTitle>
+                  <DialogDescription>
+                    Reopening moves this order back to <strong>Ready for Pickup</strong>, clears
+                    the payment timestamp and method, and logs a status event.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-2 py-3">
+                  <label htmlFor="reopen-note" className="text-xs font-medium text-foreground">
+                    Reason for reopening (required)
+                  </label>
+                  <Textarea
+                    id="reopen-note"
+                    placeholder="e.g. Customer returned items for re-cleaning, payment correction..."
+                    value={reopenNote}
+                    onChange={e => setReopenNote(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    disabled={isPending}
+                    onClick={() => setReopenDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={isPending || !reopenNote.trim()}
+                    onClick={() =>
+                      run(() =>
+                        reopenOrder({
+                          order_id: orderId,
+                          note: reopenNote.trim(),
+                        })
+                      )
+                    }
+                  >
+                    {isPending ? 'Reopening…' : 'Confirm Reopen'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+        {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
+      </div>
     )
   }
 
@@ -76,7 +170,12 @@ export function OrderActions({ orderId, status }: OrderActionsProps) {
         <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
           {status === 'READY' ? 'Complete' : 'Next step'}
         </p>
-        <OrderPrimaryAction orderId={orderId} status={status} className="w-full" />
+        <OrderPrimaryAction
+          orderId={orderId}
+          status={status}
+          totalCents={totalCents}
+          className="w-full"
+        />
         {status === 'READY' && (
           <p className="text-xs text-muted-foreground">Collect payment, then complete the order.</p>
         )}

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getActorByClerkId } from '@/lib/auth'
 import { getCustomerByClerkId } from './customers'
 import type { OrderStatus } from '@/lib/order-machine'
+import type { Database } from '@/lib/supabase/database.types'
 
 const PAGE_SIZE = 20
 
@@ -41,6 +42,7 @@ export interface OrderDetailDTO {
   paid_at: string | null
   completed_at: string | null
   cancelled_at: string | null
+  payment_method: 'CASH' | 'GCASH' | 'OTHER' | null
   created_at: string
   updated_at: string
   customer: {
@@ -111,7 +113,7 @@ export async function getOrders(options: {
 
   // Filter by status
   if (options.status && options.status !== 'ALL') {
-    query = query.eq('status', options.status)
+    query = query.eq('status', options.status as Database['public']['Enums']['order_status'])
   }
 
   // Search by order number or customer name.
@@ -165,7 +167,7 @@ export async function getOrderById(orderId: string): Promise<OrderDetailDTO | nu
   const { data } = await supabase
     .from('orders')
     .select(`
-      id, order_number, tracking_code, status, source, total_cents, due_at, notes,
+      id, order_number, tracking_code, status, source, total_cents, due_at, notes, payment_method,
       received_at, paid_at, completed_at, cancelled_at, cancel_reason, created_at, updated_at,
       customer:customers!customer_id(id, full_name, phone, email),
       assigned_staff:users!assigned_to(id, full_name),
@@ -263,34 +265,72 @@ export async function getOrdersByCustomerForStaff(customerId: string) {
   return data ?? []
 }
 
+export type BoardOrder = OrderListItem
+
+/**
+ * Get active orders for the Kanban staff board.
+ * Statuses: RECEIVED, WASHING, DRYING, FOLDING, READY.
+ */
+export async function getBoardOrders(): Promise<BoardOrder[]> {
+  const { userId } = await auth()
+  if (!userId) return []
+
+  const actor = await getActorByClerkId(userId)
+  if (!actor || !['ADMIN', 'STAFF'].includes(actor.role)) return []
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      id, order_number, tracking_code, status, source, total_cents, received_at, due_at, created_at,
+      customer:customers!customer_id(id, full_name, phone)
+    `)
+    .in('status', ['RECEIVED', 'WASHING', 'DRYING', 'FOLDING', 'READY'])
+    .order('due_at', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: true })
+
+  if (error || !data) return []
+
+  return data.map(o => ({
+    id: o.id,
+    order_number: o.order_number,
+    tracking_code: o.tracking_code,
+    status: o.status as OrderStatus,
+    source: o.source as 'WALK_IN' | 'PORTAL',
+    total_cents: o.total_cents,
+    received_at: o.received_at,
+    due_at: o.due_at,
+    created_at: o.created_at,
+    customer: (Array.isArray(o.customer) ? o.customer[0] : o.customer) as OrderListItem['customer'],
+  }))
+}
+
 /**
  * Get order by tracking code (public tracking — no PII, no staff info).
  * Returns customer-safe progress history (status + timestamp only).
  */
 export async function getOrderByTrackingCode(trackingCode: string) {
   const supabase = await createClient()
-  const { data: order } = await supabase
-    .from('orders')
-    .select('id, order_number, status, received_at, due_at, updated_at')
-    .eq('tracking_code', trackingCode.trim())
-    .single()
+  const { data, error } = await supabase.rpc('get_tracking', {
+    p_code: trackingCode.trim(),
+  })
 
-  if (!order) return null
+  if (error || !data) return null
 
-  const { data: events } = await supabase
-    .from('order_status_events')
-    .select('to_status, created_at')
-    .eq('order_id', order.id)
-    .order('created_at', { ascending: true })
-
-  return {
-    ...order,
-    events: (events ?? []) as { to_status: OrderStatus; created_at: string }[],
+  const order = data as {
+    order_number: string
+    status: OrderStatus
+    received_at: string
+    due_at: string | null
+    updated_at: string
+    events: { to_status: OrderStatus; created_at: string }[]
   }
+
+  return order
 }
 
 /**
- * Dashboard stats.
+ * Dashboard stats computed in SQL/RPC using Asia/Manila day boundaries.
  */
 export async function getDashboardStats() {
   const { userId } = await auth()
@@ -300,51 +340,46 @@ export async function getDashboardStats() {
   if (!actor || !['ADMIN', 'STAFF'].includes(actor.role)) return null
 
   const supabase = await createClient()
+  const { data, error } = await supabase.rpc('get_dashboard_metrics')
 
-  // Get order counts by status
-  const { data: statusCounts } = await supabase
-    .from('orders')
-    .select('status')
+  if (error || !data) return null
 
-  const counts: Record<string, number> = {}
-  statusCounts?.forEach((o: { status: string }) => {
-    counts[o.status] = (counts[o.status] || 0) + 1
-  })
-
-  // Get recent orders with service summary + due info for operational overview
-  const { data: recentOrders } = await supabase
-    .from('orders')
-    .select(`
-      id, order_number, status, total_cents, received_at, due_at, updated_at, created_at,
-      customer:customers!customer_id(id, full_name),
-      items:order_items(service_name, quantity)
-    `)
-    .order('created_at', { ascending: false })
-    .limit(8)
-
-  // Get today's revenue (completed orders)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const { data: todayCompleted } = await supabase
-    .from('orders')
-    .select('total_cents')
-    .eq('status', 'COMPLETED')
-    .gte('completed_at', today.toISOString())
-
-  const todayRevenue = todayCompleted?.reduce((sum: number, o: { total_cents: number }) => sum + o.total_cents, 0) ?? 0
-
-  // Total customers
-  const { count: customerCount } = await supabase
-    .from('customers')
-    .select('id', { count: 'exact', head: true })
-    .is('archived_at', null)
+  const metrics = data as {
+    overdue_count: number
+    ready_count: number
+    in_progress_count: number
+    received_count: number
+    today_orders_count: number
+    today_revenue_cents: number
+    total_orders: number
+    active_orders: number
+    customer_count: number
+    status_counts: Record<string, number>
+    recent_orders: Array<{
+      id: string
+      order_number: string
+      status: string
+      total_cents: number
+      received_at: string
+      due_at: string | null
+      updated_at: string
+      created_at: string
+      customer: { id: string; full_name: string }
+      items: Array<{ service_name: string; quantity: number }>
+    }>
+  }
 
   return {
-    statusCounts: counts,
-    totalOrders: statusCounts?.length ?? 0,
-    activeOrders: statusCounts?.filter((o: { status: string }) => !['COMPLETED', 'CANCELLED'].includes(o.status)).length ?? 0,
-    todayRevenue,
-    customerCount: customerCount ?? 0,
-    recentOrders: recentOrders ?? [],
+    statusCounts: metrics.status_counts ?? {},
+    totalOrders: metrics.total_orders ?? 0,
+    activeOrders: metrics.active_orders ?? 0,
+    todayRevenue: metrics.today_revenue_cents ?? 0,
+    todayOrders: metrics.today_orders_count ?? 0,
+    overdueCount: metrics.overdue_count ?? 0,
+    readyCount: metrics.ready_count ?? 0,
+    inProgressCount: metrics.in_progress_count ?? 0,
+    receivedCount: metrics.received_count ?? 0,
+    customerCount: metrics.customer_count ?? 0,
+    recentOrders: metrics.recent_orders ?? [],
   }
 }

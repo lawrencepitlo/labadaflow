@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import {
   BarChart3,
   ClipboardList,
+  Kanban,
   LayoutDashboard,
   Plus,
   Settings,
@@ -28,6 +29,7 @@ interface CommandPaletteProps {
 
 const ROUTES = [
   { href: '/dashboard', label: 'Go to Dashboard', keywords: 'home overview today', icon: LayoutDashboard, roles: ['ADMIN', 'STAFF'] },
+  { href: '/board', label: 'Go to Board', keywords: 'kanban workflow columns staff operations active', icon: Kanban, roles: ['ADMIN', 'STAFF'] },
   { href: '/orders', label: 'Go to Orders', keywords: 'list pipeline workflow stages', icon: ClipboardList, roles: ['ADMIN', 'STAFF'] },
   { href: '/customers', label: 'Go to Customers', keywords: 'clients accounts', icon: Users, roles: ['ADMIN', 'STAFF'] },
   { href: '/reports', label: 'Go to Reports', keywords: 'revenue analytics', icon: BarChart3, roles: ['ADMIN', 'STAFF'] },

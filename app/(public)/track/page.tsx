@@ -14,7 +14,7 @@ export default function TrackPage() {
             </span>
             <span className="text-[13px] font-semibold">LabadaFlow</span>
           </Link>
-          <Link href="/login" className="text-[13px] font-medium text-muted-foreground hover:text-foreground">
+          <Link href="/sign-in" className="text-[13px] font-medium text-muted-foreground hover:text-foreground">
             Sign in
           </Link>
         </div>
@@ -33,7 +33,7 @@ export default function TrackPage() {
             </CardContent>
           </Card>
           <p className="mt-3 text-center text-xs text-muted-foreground">
-            Registered customer? <Link href="/login" className="font-medium text-foreground hover:underline">Sign in to see all your orders</Link>.
+            Registered customer? <Link href="/sign-in" className="font-medium text-foreground hover:underline">Sign in to see all your orders</Link>.
           </p>
         </div>
       </main>

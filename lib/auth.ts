@@ -2,6 +2,7 @@
  * Auth utilities — resolves Clerk session to application actor.
  * This is the bridge between Clerk identity and Supabase application data.
  */
+import { cache } from 'react'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@/lib/supabase/server'
 
@@ -17,30 +18,31 @@ export interface Actor {
 }
 
 /**
- * Get the current authenticated actor from Clerk session + Supabase users table.
- * Returns null if unauthenticated or user not found/inactive.
+ * Get actor by Clerk user ID, wrapped in React cache() so it runs once per request.
  */
-export async function getActor(): Promise<Actor | null> {
-  const { userId } = await auth()
-  if (!userId) return null
-
-  return getActorByClerkId(userId)
-}
-
-/**
- * Get actor by Clerk user ID.
- */
-export async function getActorByClerkId(clerkUserId: string): Promise<Actor | null> {
+export const getActorByClerkId = cache(async (clerkUserId: string): Promise<Actor | null> => {
   const supabase = await createClient()
   const { data } = await supabase
     .from('users')
     .select('id, clerk_user_id, role, full_name, email, is_active')
     .eq('clerk_user_id', clerkUserId)
-    .single()
+    .maybeSingle()
 
   if (!data || !data.is_active) return null
   return data as Actor
-}
+})
+
+/**
+ * Get the current authenticated actor from Clerk session + Supabase users table.
+ * Returns null if unauthenticated or user not found/inactive.
+ * Wrapped in React cache() so it deduplicates within a single server request.
+ */
+export const getActor = cache(async (): Promise<Actor | null> => {
+  const { userId } = await auth()
+  if (!userId) return null
+
+  return getActorByClerkId(userId)
+})
 
 /**
  * Require authentication — throws if no session.
