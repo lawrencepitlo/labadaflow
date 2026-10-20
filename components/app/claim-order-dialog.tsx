@@ -91,7 +91,7 @@ export function ClaimOrderDialog({
               <Label htmlFor="tracking-code-input">Tracking Code</Label>
               <Input
                 id="tracking-code-input"
-                placeholder="e.g. LF-82A1B9 or full code"
+                placeholder="e.g. FRESH-4821 or tracking code"
                 value={trackingCode}
                 onChange={e => setTrackingCode(e.target.value)}
                 autoFocus

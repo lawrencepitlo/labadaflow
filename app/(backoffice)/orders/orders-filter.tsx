@@ -13,6 +13,7 @@ import { Search, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
+import { OrderScanLookupDialog } from '@/components/app/order-scan-lookup-dialog'
 
 const STATUS_OPTIONS = [
   { value: 'ALL', label: 'All statuses' },

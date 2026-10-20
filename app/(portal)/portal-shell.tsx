@@ -4,11 +4,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from 'cn'
 import { UserButton } from '@clerk/nextjs'
-import { Droplets, ClipboardList, User } from 'lucide-react'
+import { Droplets, ClipboardList, User, PlusCircle } from 'lucide-react'
 import { ThemeToggle } from '@/components/app/theme-toggle'
 
 const NAV = [
   { href: '/portal/orders', label: 'My Orders', icon: ClipboardList },
+  { href: '/portal/orders/new', label: 'Book Laundry', icon: PlusCircle },
   { href: '/portal/profile', label: 'Profile', icon: User },
 ]
 

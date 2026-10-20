@@ -6,7 +6,7 @@ import { ClaimOrderDialog } from '@/components/app/claim-order-dialog'
 import { Button } from '@/components/ui/button'
 import { formatMoney } from '@/lib/money'
 import { formatDate, formatDateTime } from '@/lib/time'
-import { ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ClipboardList, Plus } from 'lucide-react'
 import type { OrderStatus } from '@/lib/order-machine'
 
 function parsePage(raw?: string): number {
@@ -36,8 +36,12 @@ export default async function PortalOrdersPage({
             If you placed an order at the counter, enter your tracking code from your receipt slip to
             claim it and link your customer profile.
           </p>
-          <div className="mt-4">
-            <ClaimOrderDialog triggerText="Claim an Order with Tracking Code" variant="default" />
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+            <Button render={<Link href="/portal/orders/new" />}>
+              <Plus className="h-4 w-4 mr-1" />
+              Book Laundry Online
+            </Button>
+            <ClaimOrderDialog triggerText="Claim with Tracking Code" variant="outline" />
           </div>
         </div>
       </>
@@ -90,7 +94,11 @@ export default async function PortalOrdersPage({
           title="My Orders"
           description={total === 0 ? 'Your laundry orders will appear here' : `${total} order${total === 1 ? '' : 's'} · newest first`}
         />
-        <div className="shrink-0">
+        <div className="shrink-0 flex items-center gap-2">
+          <Button render={<Link href="/portal/orders/new" />} size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Book Laundry
+          </Button>
           <ClaimOrderDialog />
         </div>
       </div>
@@ -105,8 +113,12 @@ export default async function PortalOrdersPage({
             When you drop off laundry at the shop, your orders will appear here. Or claim an existing
             order using your receipt slip.
           </p>
-          <div className="mt-5">
-            <ClaimOrderDialog triggerText="Claim an Order with Tracking Code" variant="default" />
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+            <Button render={<Link href="/portal/orders/new" />}>
+              <Plus className="h-4 w-4 mr-1" />
+              Book Laundry Online
+            </Button>
+            <ClaimOrderDialog triggerText="Claim an Order with Tracking Code" variant="outline" />
           </div>
         </div>
       ) : (

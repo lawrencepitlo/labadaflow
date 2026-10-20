@@ -1,14 +1,19 @@
 /**
- * Tracking code generation — 16-character URL-safe alphanumeric.
- * Uses nanoid for unguessable, unique codes.
+ * Real-world, human-friendly tracking code generation.
+ * Generates an easy-to-read, pronounceable laundry word + 4-digit number.
+ * Designed for customers and staff to easily read, pronounce, and type.
+ * Examples: "FRESH-4821", "CLEAN-9102", "COTTON-7381", "BUBBLE-2940"
  */
-import { nanoid } from 'nanoid'
+const LAUNDRY_WORDS = [
+  'FRESH', 'CLEAN', 'SPIN', 'WASH', 'BUBBLE', 'COTTON', 'BREEZE', 'SHINE',
+  'TIDE', 'STEAM', 'FOLD', 'CRISP', 'SOFT', 'PURE', 'SWIFT', 'SPARK',
+  'MINT', 'VELVET', 'OCEAN', 'LINEN', 'BRIGHT', 'SPRING', 'BLOOM', 'CREST',
+  'RIPPLE', 'GLOW', 'FLUFF', 'PEARL', 'WAVE', 'LUSH', 'FABRIC', 'CLOTH',
+  'ZEN', 'BLISS', 'AURA', 'GLINT', 'VAPOR', 'FOAM', 'SILK', 'WARM',
+] as const
 
-/**
- * Generate a unique tracking code.
- * Format: 16 characters, URL-safe alphanumeric.
- * Example: "V1StGXR8_Z5jdHi6"
- */
 export function generateTrackingCode(): string {
-  return nanoid(16)
+  const word = LAUNDRY_WORDS[Math.floor(Math.random() * LAUNDRY_WORDS.length)]
+  const num = Math.floor(1000 + Math.random() * 9000)
+  return `${word}-${num}`
 }

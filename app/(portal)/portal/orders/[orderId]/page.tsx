@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import QRCode from 'qrcode'
+import { PortalOrderPass } from '@/components/app/portal-order-pass'
 import { getOrderById } from '@/lib/data/orders'
 import { PageHeader } from '@/components/app/page-header'
 import { EmptyState } from '@/components/app/empty-state'
@@ -34,6 +36,17 @@ export default async function PortalOrderDetailPage({
     )
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const trackingUrl = `${baseUrl}/track/${order.tracking_code}`
+  const qrDataUrl = await QRCode.toDataURL(trackingUrl, {
+    margin: 1,
+    width: 200,
+    color: {
+      dark: '#000000',
+      light: '#ffffff',
+    },
+  })
+
   const isReady = order.status === 'READY'
   const isCompleted = order.status === 'COMPLETED'
   const isCancelled = order.status === 'CANCELLED'
@@ -57,6 +70,15 @@ export default async function PortalOrderDetailPage({
       <PageHeader title={`Order ${order.order_number}`} description={`Received ${formatDateTime(order.received_at)} · ${formatMoney(order.total_cents)}`}>
         <StatusBadge status={order.status} />
       </PageHeader>
+
+      <PortalOrderPass
+        orderNumber={order.order_number}
+        trackingCode={order.tracking_code}
+        qrDataUrl={qrDataUrl}
+        status={order.status}
+        totalFormatted={formatMoney(order.total_cents)}
+        source={order.source}
+      />
 
       {notice && (
         <div className="mb-4 rounded-lg border bg-card px-4 py-3" role="status">

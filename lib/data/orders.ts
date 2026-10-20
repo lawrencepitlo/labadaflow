@@ -122,13 +122,18 @@ export async function getOrders(options: {
   // would surface as an "Access Denied" empty state for an authorized user).
   // Search by order number, tracking code, or customer name
   if (options.search?.trim()) {
-    const term = options.search.trim().replace(/[,()]/g, '')
+    let term = options.search.trim()
+    const trackMatch = term.match(/\/track\/([A-Za-z0-9-_]+)/)
+    if (trackMatch) {
+      term = trackMatch[1]
+    }
+    term = term.replace(/^[#]/, '').replace(/[,()]/g, '').trim()
     if (term) {
-      // Find matching customer IDs first since PostgREST cannot use dotted paths in .or()
+      // Find matching customer IDs by name, phone, or email
       const { data: matchedCustomers } = await supabase
         .from('customers')
         .select('id')
-        .ilike('full_name', `%${term}%`)
+        .or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,email.ilike.%${term}%`)
 
       const custIds = (matchedCustomers ?? []).map(c => c.id)
       let orClause = `order_number.ilike.%${term}%,tracking_code.ilike.%${term}%`

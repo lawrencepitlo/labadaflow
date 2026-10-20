@@ -52,7 +52,7 @@ export async function getActiveServices(): Promise<ServiceItem[]> {
   if (!userId) return []
 
   const actor = await getActorByClerkId(userId)
-  if (!actor || !['ADMIN', 'STAFF'].includes(actor.role)) return []
+  if (!actor || !['ADMIN', 'STAFF', 'CUSTOMER'].includes(actor.role)) return []
 
   const supabase = await createClient()
   const { data } = await supabase

@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { getOrderByTrackingCode } from '@/lib/data/orders'
+import { getActor } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { STATUS_CONFIG, ORDER_STATUS_FLOW, type OrderStatus } from '@/lib/order-machine'
 import { StatusBadge, STATUS_DOT_CLASS } from '@/components/app/status-badge'
 import { OrderFlowStepper } from '@/components/app/order-flow-stepper'
@@ -22,6 +24,18 @@ export default async function TrackCodePage({
     trackingCode = ''
   }
   const order = trackingCode ? await getOrderByTrackingCode(trackingCode) : null
+
+  let staffOrderId: string | null = null
+  const actor = await getActor()
+  if (actor && ['ADMIN', 'STAFF'].includes(actor.role) && trackingCode) {
+    const supabase = await createClient()
+    const { data: staffOrder } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('tracking_code', trackingCode)
+      .maybeSingle()
+    if (staffOrder) staffOrderId = staffOrder.id
+  }
 
   const isCompleted = order?.status === 'COMPLETED'
   const isCancelled = order?.status === 'CANCELLED'
@@ -51,6 +65,18 @@ export default async function TrackCodePage({
           </Button>
         </div>
       </header>
+      {staffOrderId && (
+        <aside aria-label="Staff quick link" className="bg-primary/10 border-b border-primary/20 px-4 py-2.5 text-center text-xs">
+          <div className="mx-auto max-w-5xl flex flex-wrap items-center justify-between gap-2">
+            <span className="text-muted-foreground">
+              ⚡ <strong>Staff Quick Intake:</strong> Order <span className="font-mono font-bold text-foreground">{order?.order_number}</span> detected.
+            </span>
+            <Button size="sm" className="h-7 text-xs font-semibold gap-1" render={<Link href={`/orders/${staffOrderId}`} />}>
+              Open in Backoffice & Start Laundry →
+            </Button>
+          </div>
+        </aside>
+      )}
       <main className="flex flex-1 items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
           {!order ? (

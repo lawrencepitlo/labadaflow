@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table'
 import { formatMoney } from '@/lib/money'
 import { formatDateTime, formatDate } from '@/lib/time'
-import { Printer } from 'lucide-react'
+import { Printer, QrCode } from 'lucide-react'
 import { STATUS_CONFIG } from '@/lib/order-machine'
 import { cn } from 'cn'
 
@@ -94,6 +94,24 @@ export default async function OrderDetailPage({
           </Button>
         </div>
       </header>
+
+      {order.source === 'PORTAL' && order.status === 'RECEIVED' && (
+        <div className="mb-6 rounded-xl border border-sky-500/30 bg-sky-500/10 p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="space-y-1">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
+                <QrCode className="h-4 w-4" /> Customer Online Drop-off Intake
+              </span>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                This order was booked online. When the customer hands over their clothes at the counter, verify the weight/items below, then click <strong>Start Washing</strong> to start processing and notify the customer.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <OrderPrimaryAction orderId={order.id} status={order.status} totalCents={order.total_cents} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {isReady && (
         <div className="mb-6">

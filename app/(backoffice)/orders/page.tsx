@@ -16,6 +16,7 @@ import { formatMoney } from '@/lib/money'
 import { formatDate, formatDateTime } from '@/lib/time'
 import { Plus, ClipboardList, SearchX, ChevronLeft, ChevronRight } from 'lucide-react'
 import { OrdersFilter } from './orders-filter'
+import { OrderScanLookupDialog } from '@/components/app/order-scan-lookup-dialog'
 import { cn } from 'cn'
 
 function buildPageHref(
@@ -129,12 +130,19 @@ export default async function OrdersPage({
                       className="group h-12 transition-colors duration-100 hover:bg-muted/40 focus-within:bg-muted/40"
                     >
                       <TableCell className="pl-4">
-                        <Link
-                          href={`/orders/${order.id}`}
-                          className="rounded font-mono text-xs font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
-                        >
-                          {order.order_number}
-                        </Link>
+                        <div className="flex items-center gap-1.5">
+                          <Link
+                            href={`/orders/${order.id}`}
+                            className="rounded font-mono text-xs font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/40"
+                          >
+                            {order.order_number}
+                          </Link>
+                          {order.source === 'PORTAL' && (
+                            <span className="rounded bg-sky-500/10 px-1 py-0.2 text-[9px] font-semibold text-sky-600 dark:text-sky-400">
+                              Online
+                            </span>
+                          )}
+                        </div>
                         <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground/70">
                           {order.tracking_code}
                         </span>

@@ -80,6 +80,96 @@ export async function createOrder(input: {
   return { success: true, id: res.id, order_number: res.order_number }
 }
 
+export async function createPortalOrder(input: {
+  phone?: string | null
+  notes?: string | null
+  due_at?: string | null
+  items: { service_id: string; quantity: number }[]
+}) {
+  const { userId } = await auth()
+  if (!userId) return { error: 'Unauthenticated' }
+
+  const actor = await getActorByClerkId(userId)
+  if (!actor || !actor.is_active) return { error: 'Account not active or not found' }
+
+  const mergedItems = mergeServiceItems(input.items || [])
+  if (!mergedItems || mergedItems.length === 0) {
+    return { error: 'Please select at least one service item' }
+  }
+
+  for (const item of mergedItems) {
+    if (typeof item.quantity !== 'number' || item.quantity <= 0) {
+      return { error: 'Quantities must be greater than zero' }
+    }
+  }
+
+  const supabase = await createClient()
+
+  // Find or automatically provision customer record
+  let customerId: string | null = null
+  const { data: existingCustomer } = await supabase
+    .from('customers')
+    .select('id, phone')
+    .or(`clerk_user_id.eq.${userId},email.eq.${actor.email}`)
+    .maybeSingle()
+
+  if (existingCustomer) {
+    customerId = existingCustomer.id
+    const updatePayload: { clerk_user_id: string; updated_at: string; phone?: string } = {
+      clerk_user_id: userId,
+      updated_at: new Date().toISOString(),
+    }
+    if (input.phone && !existingCustomer.phone) {
+      updatePayload.phone = input.phone
+    }
+    await supabase.from('customers').update(updatePayload).eq('id', customerId)
+  } else {
+    const { data: newCustomer, error: custErr } = await supabase
+      .from('customers')
+      .insert({
+        clerk_user_id: userId,
+        full_name: actor.full_name || 'Customer',
+        email: actor.email,
+        phone: input.phone || null,
+      })
+      .select('id')
+      .single()
+
+    if (custErr || !newCustomer) {
+      return { error: custErr?.message || 'Failed to initialize customer account for booking' }
+    }
+    customerId = newCustomer.id
+  }
+
+  const trackingCode = generateTrackingCode()
+
+  // Atomic creation via create_order RPC
+  const { data, error } = await supabase.rpc('create_order', {
+    p_customer_id: customerId,
+    p_source: 'PORTAL',
+    p_assigned_to: null,
+    p_due_at: input.due_at || null,
+    p_notes: input.notes ? `[Online Order] ${input.notes}` : '[Online Order] Self drop-off',
+    p_created_by: actor.id,
+    p_actor_name: actor.full_name,
+    p_tracking_code: trackingCode,
+    p_items: mergedItems,
+  })
+
+  if (error || !data) {
+    return { error: error?.message || 'Failed to place online order' }
+  }
+
+  revalidatePath('/portal')
+  revalidatePath('/portal/orders')
+  revalidatePath('/orders')
+  revalidatePath('/board')
+  revalidatePath('/dashboard')
+
+  const res = data as { id: string; order_number: string; tracking_code: string; total_cents: number }
+  return { success: true, id: res.id, order_number: res.order_number, tracking_code: trackingCode }
+}
+
 export async function advanceOrderStatus(input: {
   order_id: string
   to_status: string
@@ -387,4 +477,54 @@ export async function claimOrder(trackingCode: string) {
   revalidatePath('/portal/orders')
   revalidatePath(`/portal/orders/${order.id}`)
   return { success: true, orderId: order.id }
+}
+
+
+export async function lookupOrderByCode(rawInput: string) {
+  const { userId } = await auth()
+  if (!userId) return { error: 'Unauthenticated' }
+
+  const actor = await getActorByClerkId(userId)
+  if (!actor || !['ADMIN', 'STAFF'].includes(actor.role)) return { error: 'Forbidden' }
+
+  let clean = rawInput.trim()
+  const urlMatch = clean.match(/\/track\/([A-Za-z0-9-_]+)/)
+  if (urlMatch) {
+    clean = urlMatch[1]
+  }
+  clean = clean.replace(/^[#]/, '').trim()
+
+  if (!clean) return { found: false }
+
+  const supabase = await createClient()
+
+  const { data: order } = await supabase
+    .from('orders')
+    .select(`
+      id, order_number, tracking_code, status, source, total_cents, received_at,
+      customer:customers!inner(id, full_name, phone)
+    `)
+    .or(`tracking_code.eq.${clean},order_number.ilike.%${clean}%`)
+    .limit(1)
+    .maybeSingle()
+
+  if (!order) {
+    return { found: false }
+  }
+
+  const cust = Array.isArray(order.customer) ? order.customer[0] : order.customer
+  return {
+    found: true,
+    order: {
+      id: order.id,
+      order_number: order.order_number,
+      tracking_code: order.tracking_code,
+      status: order.status as OrderStatus,
+      source: order.source as 'WALK_IN' | 'PORTAL',
+      total_cents: order.total_cents,
+      received_at: order.received_at,
+      customer_name: cust?.full_name ?? 'Customer',
+      customer_phone: cust?.phone ?? null,
+    },
+  }
 }

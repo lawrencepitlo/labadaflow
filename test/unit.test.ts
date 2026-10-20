@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { validateTransition, type OrderStatus } from '../lib/order-machine'
 import { mergeServiceItems } from '../lib/validation/order'
+import { generateTrackingCode } from '../lib/tracking'
 
 test('State Machine: valid forward transitions', () => {
   const forwardSteps: Array<[OrderStatus, OrderStatus]> = [
@@ -114,4 +115,24 @@ test('Duplicate-service merge logic: leaves unique items unchanged', () => {
   const merged = mergeServiceItems(items)
   assert.equal(merged.length, 3)
   assert.deepEqual(merged, items)
+})
+
+test('Search & QR scanner sanitization: extracts tracking code from URLs or hashtags', () => {
+  function extractCode(raw: string): string {
+    let clean = raw.trim()
+    const match = clean.match(/\/track\/([A-Za-z0-9-_]+)/)
+    if (match) clean = match[1]
+    return clean.replace(/^[#]/, '').trim()
+  }
+
+  assert.equal(extractCode('http://localhost:3000/track/FRESH-4821'), 'FRESH-4821')
+  assert.equal(extractCode('https://labadaflow.app/track/CLEAN-9102'), 'CLEAN-9102')
+  assert.equal(extractCode('#LF-00042'), 'LF-00042')
+  assert.equal(extractCode(' FRESH-4821 '), 'FRESH-4821')
+})
+
+test('Tracking code format: generates real-world readable WORD-NUMBER code', () => {
+  const code = generateTrackingCode()
+  assert.match(code, /^[A-Z]+-[1-9][0-9]{3}$/, `Tracking code ${code} must match WORD-XXXX format`)
+  assert.ok(!code.includes('_'), 'Tracking code must not contain developer symbols like underscore')
 })
