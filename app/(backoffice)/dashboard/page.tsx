@@ -141,9 +141,9 @@ export default async function DashboardPage() {
         title="Dashboard"
         description={`${todayLabel} · ${activeOrders} active in shop`}
       >
-        <Button render={<Link href="/orders/new" />}>
-          <Plus aria-hidden="true" />
-          New order
+        <Button render={<Link href="/orders/new" />} className="rounded-xl font-semibold shadow-xs">
+          <Plus className="h-4 w-4 mr-1" aria-hidden="true" />
+          + New Walk-in Intake
         </Button>
       </PageHeader>
 

@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { ArrowRight, Droplets, Menu, X } from 'lucide-react'
-import { cn } from 'cn'
+import { ArrowRight, Droplets, Menu, X, Search } from 'lucide-react'
+import { ThemeToggle } from '@/components/app/theme-toggle'
+import { cn } from '@/lib/utils'
 
 const LINKS = [
-  { label: 'Product', href: '#product' },
-  { label: 'How it works', href: '#how-it-works' },
-  { label: 'Tracking', href: '/track' },
+  { label: 'Walk-in Intake', href: '#features' },
+  { label: 'Live Stages', href: '#workflow' },
+  { label: 'Customer Tracking', href: '/track' },
 ]
 
 export function SiteNav() {
@@ -33,18 +34,18 @@ export function SiteNav() {
   return (
     <header
       className={cn(
-        'fixed inset-x-0 top-0 z-50 transition-colors duration-300',
+        'fixed inset-x-0 top-0 z-50 transition-all duration-200',
         scrolled || open
-          ? 'border-b border-white/[0.06] bg-[#060708]/80 backdrop-blur-xl'
+          ? 'border-b border-slate-200/80 bg-white/85 shadow-xs backdrop-blur-md dark:border-border/80 dark:bg-background/85'
           : 'border-b border-transparent bg-transparent'
       )}
     >
-      <div className="mx-auto flex h-14 max-w-[1120px] items-center justify-between px-5 sm:px-8">
-        <Link href="/" className="flex items-center gap-2" aria-label="LabadaFlow home">
-          <span className="flex h-5 w-5 items-center justify-center rounded-[6px] bg-white">
-            <Droplets className="h-3 w-3 text-black" aria-hidden="true" />
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5 sm:px-8">
+        <Link href="/" className="flex items-center gap-2.5 transition-transform hover:scale-105" aria-label="LabadaFlow home">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+            <Droplets className="h-4 w-4" aria-hidden="true" />
           </span>
-          <span className="text-[14px] font-semibold tracking-tight text-white">LabadaFlow</span>
+          <span className="text-sm font-bold tracking-tight text-foreground">LabadaFlow</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
@@ -52,70 +53,91 @@ export function SiteNav() {
             <Link
               key={l.href}
               href={l.href}
-              className="rounded-md px-3 py-1.5 text-[13px] text-zinc-400 transition-colors hover:text-white"
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
             >
               {l.label}
             </Link>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
+          <Link
+            href="/track"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-2xs transition-colors hover:bg-muted/70"
+          >
+            <Search className="h-3.5 w-3.5 text-primary" />
+            Track an Order
+          </Link>
           <Link
             href="/sign-in"
-            className="rounded-md px-3 py-1.5 text-[13px] text-zinc-400 transition-colors hover:text-white"
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
           >
             Sign in
           </Link>
           <Link
             href="/sign-up"
-            className="ml-1 inline-flex h-8 items-center gap-1.5 rounded-md bg-white px-3.5 text-[13px] font-medium text-black transition-colors hover:bg-zinc-200"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95"
           >
-            Get started
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            Launch Shop
+            <ArrowRight className="h-3 w-3" aria-hidden="true" />
           </Link>
+          <ThemeToggle />
         </div>
 
-        <button
-          type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-300 hover:bg-white/5 md:hidden"
-          onClick={() => setOpen(v => !v)}
-          aria-expanded={open}
-          aria-label={open ? 'Close menu' : 'Open menu'}
-        >
-          {open ? <X className="h-4 w-4" aria-hidden="true" /> : <Menu className="h-4 w-4" aria-hidden="true" />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground hover:bg-muted"
+            onClick={() => setOpen(v => !v)}
+            aria-expanded={open}
+            aria-label={open ? 'Close menu' : 'Open menu'}
+          >
+            {open ? <X className="h-4 w-4" aria-hidden="true" /> : <Menu className="h-4 w-4" aria-hidden="true" />}
+          </button>
+        </div>
       </div>
 
       {open && (
-        <div className="border-t border-white/[0.06] bg-[#060708]/95 px-5 pb-5 pt-3 backdrop-blur-xl md:hidden">
-          <nav className="flex flex-col" aria-label="Primary mobile">
+        <div className="border-t border-border/80 bg-background/95 px-5 pb-5 pt-3 shadow-lg backdrop-blur-xl md:hidden">
+          <nav className="flex flex-col space-y-1" aria-label="Primary mobile">
             {LINKS.map(l => (
               <Link
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-2 py-2.5 text-[14px] text-zinc-300 hover:bg-white/5 hover:text-white"
+                className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
               >
                 {l.label}
               </Link>
             ))}
           </nav>
-          <div className="mt-3 flex gap-2">
+          <div className="mt-4 flex flex-col gap-2 border-t border-border/60 pt-4">
             <Link
-              href="/sign-in"
+              href="/track"
               onClick={() => setOpen(false)}
-              className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-white/10 text-[13px] font-medium text-white"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border text-xs font-semibold text-foreground"
             >
-              Sign in
+              <Search className="h-3.5 w-3.5 text-primary" />
+              Track with Slip Code
             </Link>
-            <Link
-              href="/sign-in"
-              onClick={() => setOpen(false)}
-              className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md bg-white text-[13px] font-medium text-black"
-            >
-              Get started
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                href="/sign-in"
+                onClick={() => setOpen(false)}
+                className="inline-flex h-9 flex-1 items-center justify-center rounded-lg border border-border text-xs font-semibold text-foreground"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                onClick={() => setOpen(false)}
+                className="inline-flex h-9 flex-1 items-center justify-center gap-1 rounded-lg bg-primary text-xs font-semibold text-primary-foreground"
+              >
+                Launch Shop
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
           </div>
         </div>
       )}

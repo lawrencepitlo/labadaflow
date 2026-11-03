@@ -100,10 +100,10 @@ export default async function OrderDetailPage({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="space-y-1">
               <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
-                <QrCode className="h-4 w-4" /> Customer Online Drop-off Intake
+                <QrCode className="h-4 w-4" /> Customer Counter Drop-off Intake
               </span>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                This order was booked online. When the customer hands over their clothes at the counter, verify the weight/items below, then click <strong>Start Washing</strong> to start processing and notify the customer.
+                When the customer hands over their clothes at the counter, verify the weight/items below, then click <strong>Start Washing</strong> to start processing.
               </p>
             </div>
             <div className="shrink-0">

@@ -1,21 +1,17 @@
 import { Check } from 'lucide-react'
-import { cn } from 'cn'
+import { cn } from '@/lib/utils'
 
 function WindowShell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#0B0D0E] shadow-[0_30px_80px_-40px_rgba(0,0,0,0.9),0_0_60px_-48px_rgba(255,255,255,0.12)]">
-      <div
-        className="pointer-events-none absolute inset-x-[12%] top-0 z-10 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
-        aria-hidden="true"
-      />
-      <div className="flex h-10 items-center gap-3 border-b border-white/[0.06] px-4" aria-hidden="true">
+    <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xl shadow-slate-200/50 dark:border-border dark:bg-card dark:shadow-none">
+      <div className="flex h-10 items-center justify-between border-b border-border/80 bg-slate-50/80 px-4 dark:bg-muted/40" aria-hidden="true">
         <span className="flex gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-white/10" />
-          <span className="h-2 w-2 rounded-full bg-white/10" />
-          <span className="h-2 w-2 rounded-full bg-white/10" />
+          <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
         </span>
-        <span className="mx-auto font-mono text-[11px] text-zinc-600">{label}</span>
-        <span className="w-10" />
+        <span className="font-mono text-[11px] font-semibold text-muted-foreground">{label}</span>
+        <span className="w-8" />
       </div>
       <div className="p-4 sm:p-5">{children}</div>
     </div>
@@ -24,9 +20,9 @@ function WindowShell({ label, children }: { label: string; children: React.React
 
 function Eyebrow({ index, label }: { index: string; label: string }) {
   return (
-    <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-zinc-500">
-      <span className="text-zinc-600">{index}</span>
-      <span className="mx-2 text-zinc-700">—</span>
+    <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+      <span>{index}</span>
+      <span className="mx-2 text-muted-foreground/60">—</span>
       {label}
     </p>
   )
@@ -34,179 +30,149 @@ function Eyebrow({ index, label }: { index: string; label: string }) {
 
 export function ShowcaseDashboard() {
   const rows = [
-    { id: 'LF-1042', name: 'Mara Santos', service: 'Wash & Fold · 6.5 kg', status: 'Drying', dot: 'bg-amber-400', total: '₱420' },
-    { id: 'LF-1041', name: 'Jose Reyes', service: 'Wash & Fold · 4.0 kg', status: 'Folding', dot: 'bg-violet-400', total: '₱310' },
-    { id: 'LF-1040', name: 'Walk-in', service: 'Dry Clean · 2 pcs', status: 'Ready', dot: 'bg-emerald-400', total: '₱260' },
+    { id: 'LF-1042', name: 'Mara Santos', service: 'Wash & Fold · 6.5 kg', status: 'Drying', dot: 'bg-amber-500', total: '₱420' },
+    { id: 'LF-1041', name: 'Jose Reyes', service: 'Wash & Fold · 4.0 kg', status: 'Folding', dot: 'bg-purple-500', total: '₱310' },
+    { id: 'LF-1040', name: 'Walk-in', service: 'Dry Clean · 2 pcs', status: 'Ready', dot: 'bg-emerald-500', total: '₱260' },
   ]
   return (
     <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
       <div>
         <Eyebrow index="01" label="Dashboard" />
-        <h3 className="mt-3 text-[28px] font-semibold tracking-[-0.02em] text-white sm:text-[32px]">
-          Open the shop, see the shop.
+        <h3 className="mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Open the shop, see the whole floor.
         </h3>
-        <p className="mt-3 max-w-md text-[15px] leading-relaxed text-zinc-400">
-          Active orders, pickups waiting, today&apos;s revenue, and a live count per stage — plus the latest
-          orders with their statuses.
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+          Active loads, ready pickups, today&apos;s revenue, and live machine counts per stage — all updated in real time.
         </p>
         <ul className="mt-6 space-y-2.5">
-          {['Needs-attention strip for pickups and arrivals', 'Pipeline with per-stage counts', 'Recent orders with live statuses'].map(t => (
-            <li key={t} className="flex items-start gap-2.5 text-[14px] text-zinc-300">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400/80" aria-hidden="true" />
+          {['Needs-attention strip for pickups and overdue loads', 'Live pipeline with per-station load counts', 'Recent walk-in orders with 1-click status advances'].map(t => (
+            <li key={t} className="flex items-start gap-2.5 text-xs text-foreground font-medium">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
               {t}
             </li>
           ))}
         </ul>
       </div>
       <div className="relative">
-        <div
-          className="pointer-events-none absolute -inset-8 rounded-full bg-white/[0.03] blur-[90px]"
-          aria-hidden="true"
-        />
-        <div className="relative">
-          <WindowShell label="dashboard · today">
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.05]">
-          {[
-            { l: 'Active', v: '24' },
-            { l: 'Ready', v: '6' },
-            { l: 'Revenue', v: '₱8,420' },
-            { l: 'Customers', v: '312' },
-          ].map(m => (
-            <div key={m.l} className="bg-[#0B0D0E] px-4 py-3">
-              <p className="text-[10px] uppercase tracking-[0.12em] text-zinc-600">{m.l}</p>
-              <p className="tnum mt-0.5 text-[18px] font-semibold text-white">{m.v}</p>
-            </div>
-          ))}
-        </div>
-        <ul className="mt-3 divide-y divide-white/[0.05] rounded-lg border border-white/[0.06]">
-          {rows.map(r => (
-            <li key={r.id} className="flex items-center gap-3 px-4 py-2.5">
-              <span className="font-mono text-[12px] text-zinc-200">{r.id}</span>
-              <span className="min-w-0 flex-1 truncate text-[13px] text-zinc-400">
-                {r.name} · <span className="text-zinc-500">{r.service}</span>
-              </span>
-              <span className="hidden items-center gap-1.5 rounded-md border border-white/[0.07] bg-white/[0.03] px-2 py-0.5 text-[11px] text-zinc-200 sm:inline-flex">
-                <span className={cn('h-1.5 w-1.5 rounded-full', r.dot)} aria-hidden="true" />
-                {r.status}
-              </span>
-              <span className="tnum text-[13px] text-zinc-200">{r.total}</span>
-            </li>
-          ))}
-        </ul>
-          </WindowShell>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export function ShowcaseOrderDetail() {
-  const history = [
-    { move: 'Received → Washing', note: 'Load entered the wash cycle.', meta: 'Staff · 10:02 AM' },
-    { move: 'Washing → Drying', note: 'Transferred to dryers.', meta: 'Staff · 11:40 AM' },
-    { move: 'Drying → Folding', note: 'Folded and packed.', meta: 'Staff · 1:15 PM' },
-  ]
-  return (
-    <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-      <div className="order-1 lg:order-2">
-        <Eyebrow index="02" label="Order detail" />
-        <h3 className="mt-3 text-[28px] font-semibold tracking-[-0.02em] text-white sm:text-[32px]">
-          Every move leaves a record.
-        </h3>
-        <p className="mt-3 max-w-md text-[15px] leading-relaxed text-zinc-400">
-          Services, totals, and an append-only status history: what changed, when, who did it, and why.
-          Backward moves need a note — so the record explains itself.
-        </p>
-        <p className="mt-6 rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-3 font-mono text-[12px] leading-relaxed text-zinc-500">
-          forward: one step · backward: needs a note
-          <br />
-          cancel: needs a reason
-        </p>
-      </div>
-      <div className="order-2 lg:order-1">
-        <WindowShell label="orders · LF-1042 · history">
-          <ol className="space-y-2.5">
-            {history.map((h, i) => (
-              <li key={h.move} className="flex gap-3 rounded-lg border border-white/[0.06] bg-white/[0.015] p-4">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 text-[11px] font-medium text-zinc-300">
-                  {i + 1}
-                </span>
-                <span>
-                  <span className="block text-[13px] font-medium text-white">{h.move}</span>
-                  <span className="mt-0.5 block text-[13px] text-zinc-400">{h.note}</span>
-                  <span className="mt-1 block font-mono text-[11px] text-zinc-600">{h.meta}</span>
-                </span>
-              </li>
+        <WindowShell label="dashboard · today">
+          <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-xl bg-slate-50 p-2 dark:bg-muted/30">
+            {[
+              { l: 'Active Loads', v: '24' },
+              { l: 'Ready for Pickup', v: '6' },
+              { l: "Today's Intake", v: '₱8,420' },
+              { l: 'Avg Wash Time', v: '2.5 hrs' },
+            ].map(s => (
+              <div key={s.l} className="rounded-lg bg-card p-3 shadow-2xs border border-border/60">
+                <p className="text-[10px] font-semibold uppercase text-muted-foreground">{s.l}</p>
+                <p className="font-mono text-lg font-bold text-foreground mt-0.5">{s.v}</p>
+              </div>
             ))}
-          </ol>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Live Stage Queue
+            </p>
+            <div className="divide-y divide-border/60 rounded-xl border border-border/80 overflow-hidden">
+              {rows.map(r => (
+                <div key={r.id} className="flex items-center justify-between p-2.5 text-xs hover:bg-slate-50 dark:hover:bg-muted/40">
+                  <div>
+                    <span className="font-mono font-bold text-foreground">{r.id}</span>
+                    <span className="text-muted-foreground ml-2">{r.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground">
+                      <span className={cn('h-1.5 w-1.5 rounded-full', r.dot)} />
+                      {r.status}
+                    </span>
+                    <span className="font-mono font-bold text-foreground">{r.total}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </WindowShell>
       </div>
     </div>
   )
 }
 
+export function ShowcaseOrderDetail() {
+  return (
+    <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+      <div className="order-2 lg:order-1">
+        <WindowShell label="order LF-1042 · details">
+          <div className="rounded-xl border border-border/80 bg-slate-50/70 p-4 dark:bg-muted/40">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-mono text-xs font-bold text-foreground">LF-1042</span>
+                <p className="text-xs text-muted-foreground">Mara Santos · +63 917 555 0142</p>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                Drying
+              </span>
+            </div>
+
+            <div className="mt-4 border-t border-border/60 pt-3">
+              <div className="flex justify-between text-xs font-medium">
+                <span className="text-foreground">Wash, Dry & Fold · 6.5 kg</span>
+                <span className="font-mono font-bold">₱420.00</span>
+              </div>
+              <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+                <span>Payment</span>
+                <span className="font-semibold text-emerald-600">Paid (Cash)</span>
+              </div>
+            </div>
+          </div>
+        </WindowShell>
+      </div>
+      <div className="order-1 lg:order-2">
+        <Eyebrow index="02" label="Intake & Details" />
+        <h3 className="mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Everything on one slip, zero guesswork.
+        </h3>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+          Weight, services, due times, assigned washer, notes, and thermal receipt with a scannable QR code.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export function ShowcaseOrders() {
-  const steps = ['Received', 'Washing', 'Drying', 'Folding', 'Ready']
   return (
     <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
       <div>
-        <Eyebrow index="03" label="Orders" />
-        <h3 className="mt-3 text-[28px] font-semibold tracking-[-0.02em] text-white sm:text-[32px]">
-          One stepper on every order.
+        <Eyebrow index="03" label="Operations" />
+        <h3 className="mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          One-tap stage advancement.
         </h3>
-        <p className="mt-3 max-w-md text-[15px] leading-relaxed text-zinc-400">
-          Staff advance orders one stage at a time. The same stepper follows the order from the counter to the
-          customer&apos;s screen.
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+          Advance from Received → Washing → Drying → Folding → Ready with a single tap. Customers get live status updates instantly on their phones.
         </p>
-        <ul className="mt-6 space-y-2.5">
-          {['Forward moves are always one step', 'The customer follows the same stages', 'Ready is unmistakable'].map(t => (
-            <li key={t} className="flex items-start gap-2.5 text-[14px] text-zinc-300">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400/80" aria-hidden="true" />
-              {t}
-            </li>
-          ))}
-        </ul>
       </div>
-      <WindowShell label="orders · LF-1042 · now drying">
-        <div className="flex items-center justify-between">
-          <p className="text-[13px] font-medium text-white">Wash & Fold · 6.5 kg</p>
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-[12px] text-zinc-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden="true" />
-            Drying
-          </span>
-        </div>
-        <ol className="mt-5 flex items-center" aria-label="Order progress">
-          {steps.map((s, i) => {
-            const done = i < 2
-            const current = i === 2
-            return (
-              <li key={s} className="flex flex-1 items-center last:flex-none">
-                <span className="flex flex-col items-center">
-                  <span
-                    className={cn(
-                      'flex h-8 w-8 items-center justify-center rounded-full border text-[12px]',
-                      done && 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
-                      current && 'border-white/40 bg-white/[0.07] font-semibold text-white',
-                      !done && !current && 'border-white/10 text-zinc-600'
-                    )}
-                  >
-                    {done ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : i + 1}
-                  </span>
-                  <span className={cn('mt-1.5 text-[11px]', current ? 'font-medium text-white' : done ? 'text-zinc-400' : 'text-zinc-600')}>
-                    {s}
-                  </span>
-                </span>
-                {i < steps.length - 1 && (
-                  <span className={cn('mx-1.5 mb-5 h-px flex-1', i < 2 ? 'bg-emerald-400/30' : 'bg-white/10')} aria-hidden="true" />
-                )}
-              </li>
-            )
-          })}
-        </ol>
-        <p className="mt-4 border-t border-white/[0.06] pt-3 font-mono text-[11px] text-zinc-600">
-          Track: <span className="text-zinc-300">LF1042-X7Q2</span>
-        </p>
-      </WindowShell>
+      <div>
+        <WindowShell label="kanban · floor board">
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            {['Washing (4)', 'Drying (6)', 'Ready (7)'].map(title => (
+              <div key={title} className="rounded-xl border border-border/80 bg-slate-50/70 p-2.5 dark:bg-muted/30">
+                <p className="font-bold text-foreground text-[11px] mb-2">{title}</p>
+                <div className="space-y-1.5">
+                  <div className="rounded-lg bg-card p-2 shadow-2xs border border-border/60">
+                    <p className="font-mono font-bold text-[10px]">LF-1048</p>
+                    <p className="text-[10px] text-muted-foreground">Wash & Fold</p>
+                  </div>
+                  <div className="rounded-lg bg-card p-2 shadow-2xs border border-border/60">
+                    <p className="font-mono font-bold text-[10px]">LF-1047</p>
+                    <p className="text-[10px] text-muted-foreground">Comforter</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </WindowShell>
+      </div>
     </div>
   )
 }

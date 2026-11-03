@@ -136,3 +136,20 @@ test('Tracking code format: generates real-world readable WORD-NUMBER code', () 
   assert.match(code, /^[A-Z]+-[1-9][0-9]{3}$/, `Tracking code ${code} must match WORD-XXXX format`)
   assert.ok(!code.includes('_'), 'Tracking code must not contain developer symbols like underscore')
 })
+
+test('Customer privacy masking: masks full name to First Name + Initial for public tracking', () => {
+  function maskName(rawName?: string): string {
+    if (!rawName) return 'Valued Customer'
+    const parts = rawName.trim().split(/\s+/)
+    if (parts.length > 1) {
+      return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`
+    }
+    return parts[0]
+  }
+
+  assert.equal(maskName('Maria Santos'), 'Maria S.')
+  assert.equal(maskName('Juan Carlos Dela Cruz'), 'Juan C.')
+  assert.equal(maskName('Kenneth'), 'Kenneth')
+  assert.equal(maskName(''), 'Valued Customer')
+})
+

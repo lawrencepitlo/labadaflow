@@ -1,8 +1,8 @@
 'use client'
 
-import { cn } from 'cn'
+import { cn } from '@/lib/utils'
 import { ORDER_STATUS_FLOW, STATUS_CONFIG, type OrderStatus } from '@/lib/order-machine'
-import { STATUS_DOT_CLASS } from '@/components/app/status-badge'
+import { Check, Waves, Wind, Sparkles, ShoppingBag, PackageCheck } from 'lucide-react'
 
 interface OrderFlowStepperProps {
   currentStatus: OrderStatus
@@ -10,6 +10,14 @@ interface OrderFlowStepperProps {
 }
 
 const WORKFLOW_STEPS = ORDER_STATUS_FLOW.filter(s => s !== 'COMPLETED')
+
+const STEP_ICONS = {
+  RECEIVED: PackageCheck,
+  WASHING: Waves,
+  DRYING: Wind,
+  FOLDING: Sparkles,
+  READY: ShoppingBag,
+}
 
 export function OrderFlowStepper({ currentStatus, className }: OrderFlowStepperProps) {
   const isCancelled = currentStatus === 'CANCELLED'
@@ -19,30 +27,33 @@ export function OrderFlowStepper({ currentStatus, className }: OrderFlowStepperP
   return (
     <div className={cn('w-full', className)}>
       {/* Desktop horizontal stepper */}
-      <div className="hidden items-start md:flex" role="list" aria-label="Order progress">
+      <div className="hidden items-center md:flex" role="list" aria-label="Order progress">
         {WORKFLOW_STEPS.map((status, index) => {
           const isActive = status === currentStatus
           const isPast = isCompleted || (!isCancelled && currentIndex > index)
+          const Icon = STEP_ICONS[status as keyof typeof STEP_ICONS] || PackageCheck
 
           return (
-            <div key={status} className="flex flex-1 items-start last:flex-none" role="listitem">
-              <div className="flex min-w-0 flex-col items-center gap-1.5">
-                <span
+            <div key={status} className="flex flex-1 items-center last:flex-none" role="listitem">
+              <div className="flex flex-col items-center gap-1.5">
+                <div
                   className={cn(
-                    'h-2 w-2 shrink-0 rounded-full',
-                    isCancelled && 'bg-red-500/50',
-                    !isCancelled && isPast && (isCompleted ? 'bg-emerald-500' : 'bg-foreground/60'),
-                    !isCancelled && isActive && 'bg-foreground ring-4 ring-foreground/10',
-                    !isCancelled && !isPast && !isActive && 'bg-muted-foreground/25'
+                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all',
+                    isCancelled && 'bg-rose-500/20 text-rose-600',
+                    !isCancelled && isPast && 'bg-emerald-500 text-white shadow-xs',
+                    !isCancelled && isActive && 'bg-primary text-primary-foreground ring-4 ring-primary/20 shadow-xs',
+                    !isCancelled && !isPast && !isActive && 'border border-border bg-muted/60 text-muted-foreground/60'
                   )}
                   aria-hidden="true"
-                />
+                >
+                  {isPast ? <Check className="h-3.5 w-3.5 stroke-[2.5]" /> : <Icon className="h-3.5 w-3.5" />}
+                </div>
                 <span
                   className={cn(
-                    'text-center text-[11px] leading-tight whitespace-nowrap',
-                    isActive && !isCancelled && 'font-semibold text-foreground',
-                    !isActive && 'text-muted-foreground',
-                    !isPast && !isActive && 'text-muted-foreground/60',
+                    'text-center text-xs whitespace-nowrap',
+                    isActive && !isCancelled && 'font-bold text-foreground',
+                    isPast && !isActive && 'font-medium text-foreground',
+                    !isPast && !isActive && 'text-muted-foreground',
                     isCancelled && 'text-muted-foreground/60'
                   )}
                   aria-current={isActive ? 'step' : undefined}
@@ -51,10 +62,10 @@ export function OrderFlowStepper({ currentStatus, className }: OrderFlowStepperP
                 </span>
               </div>
               {index < WORKFLOW_STEPS.length - 1 && (
-                <span
+                <div
                   className={cn(
-                    'mx-2 mt-1 h-px min-w-4 flex-1',
-                    isPast ? (isCompleted ? 'bg-emerald-500/50' : 'bg-foreground/25') : 'bg-border'
+                    'mx-2 -mt-5 h-1 min-w-6 flex-1 rounded-full transition-all',
+                    isPast ? 'bg-emerald-500/70' : 'bg-muted'
                   )}
                   aria-hidden="true"
                 />
@@ -65,54 +76,44 @@ export function OrderFlowStepper({ currentStatus, className }: OrderFlowStepperP
       </div>
 
       {/* Mobile vertical stepper */}
-      <div className="space-y-2.5 md:hidden" role="list" aria-label="Order progress">
+      <div className="space-y-3 md:hidden" role="list" aria-label="Order progress">
         {WORKFLOW_STEPS.map((status, index) => {
           const isActive = status === currentStatus
           const isPast = isCompleted || (!isCancelled && currentIndex > index)
+          const Icon = STEP_ICONS[status as keyof typeof STEP_ICONS] || PackageCheck
 
           return (
-            <div key={status} className="flex items-center gap-2.5" role="listitem">
-              <span
+            <div key={status} className="flex items-center gap-3" role="listitem">
+              <div
                 className={cn(
-                  'h-2 w-2 shrink-0 rounded-full',
-                  isCancelled && 'bg-red-500/50',
-                  !isCancelled && isPast && (isCompleted ? 'bg-emerald-500' : 'bg-foreground/60'),
-                  !isCancelled && isActive && 'bg-foreground ring-4 ring-foreground/10',
-                  !isCancelled && !isPast && !isActive && 'bg-muted-foreground/25'
+                  'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                  isCancelled && 'bg-rose-500/20 text-rose-600',
+                  !isCancelled && isPast && 'bg-emerald-500 text-white',
+                  !isCancelled && isActive && 'bg-primary text-primary-foreground ring-3 ring-primary/20',
+                  !isCancelled && !isPast && !isActive && 'border border-border bg-muted text-muted-foreground/60'
                 )}
                 aria-hidden="true"
-              />
+              >
+                {isPast ? <Check className="h-3 w-3 stroke-[2.5]" /> : <Icon className="h-3 w-3" />}
+              </div>
               <span
                 className={cn(
-                  'text-[13px]',
-                  isActive && !isCancelled ? 'font-semibold text-foreground' : 'text-muted-foreground'
+                  'text-xs',
+                  isActive && !isCancelled ? 'font-bold text-foreground' : isPast ? 'font-medium text-foreground' : 'text-muted-foreground'
                 )}
                 aria-current={isActive ? 'step' : undefined}
               >
                 {STATUS_CONFIG[status].label}
               </span>
               {isActive && !isCancelled && (
-                <span className="text-[11px] text-muted-foreground">— current</span>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                  Active Now
+                </span>
               )}
-              <span className="sr-only">Step {index + 1} of {WORKFLOW_STEPS.length}</span>
             </div>
           )
         })}
       </div>
-
-      {/* Terminal status note */}
-      {(isCompleted || isCancelled) && (
-        <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground" role="status">
-          <span
-            className={cn(
-              'h-1.5 w-1.5 rounded-full',
-              isCompleted ? STATUS_DOT_CLASS.COMPLETED : STATUS_DOT_CLASS.CANCELLED
-            )}
-            aria-hidden="true"
-          />
-          {isCompleted ? 'Completed & paid — no further changes possible.' : 'Cancelled — no further changes possible.'}
-        </p>
-      )}
     </div>
   )
 }

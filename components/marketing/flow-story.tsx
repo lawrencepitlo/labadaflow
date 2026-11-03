@@ -104,38 +104,38 @@ export function FlowStory() {
     <div className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
       {/* sticky ticket */}
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0B0D0E]">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-card shadow-sm dark:border-border">
+          <div className="flex items-center justify-between border-b border-border/70 bg-slate-50/80 px-5 py-3.5 dark:bg-muted/40">
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-zinc-500">LF-1042 · Wash & Fold</p>
-              <p className="mt-0.5 text-[15px] font-semibold tracking-tight text-white" role="status">
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">LF-1042 · Walk-in Intake</p>
+              <p className="mt-0.5 text-[15px] font-bold tracking-tight text-foreground" role="status">
                 {stage.label}
               </p>
             </div>
             <span
               key={stage.status}
-              className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-[12px] font-medium text-zinc-100"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-background px-2.5 py-1 text-xs font-semibold text-foreground shadow-2xs"
             >
-              <span className={cn('h-1.5 w-1.5 rounded-full', stage.dot)} aria-hidden="true" />
+              <span className={cn('h-2 w-2 rounded-full', stage.dot)} aria-hidden="true" />
               {stage.label}
             </span>
           </div>
 
           <div className="px-5 py-4">
-            <div className="flex items-center justify-between font-mono text-[11px] text-zinc-500">
+            <div className="flex items-center justify-between font-mono text-[11px] text-muted-foreground">
               <span>
                 Stage {active + 1} of {STAGES.length}
               </span>
-              <span className="tnum">{Math.round(progress)}%</span>
+              <span className="font-bold text-primary">{Math.round(progress)}%</span>
             </div>
-            <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.07]" aria-hidden="true">
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-muted" aria-hidden="true">
               <div
-                className="h-full rounded-full bg-white/70 transition-all duration-500 ease-out motion-reduce:transition-none"
+                className="h-full rounded-full bg-linear-to-r from-blue-600 to-emerald-500 transition-all duration-500 ease-out"
                 style={{ width: `${Math.max(4, progress)}%` }}
               />
             </div>
 
-            <ol className="mt-4 space-y-0.5" aria-hidden="true">
+            <ol className="mt-4 space-y-1" aria-hidden="true">
               {STAGES.map((s, i) => {
                 const done = i < active
                 const current = i === active
@@ -143,24 +143,24 @@ export function FlowStory() {
                   <li key={s.status} className="flex items-center gap-3 py-1.5">
                     <span
                       className={cn(
-                        'flex h-6 w-6 items-center justify-center rounded-full border text-[11px] transition-colors duration-300 motion-reduce:transition-none',
-                        current && 'border-white/40 bg-white/[0.06] font-semibold text-white',
-                        done && 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
-                        !current && !done && 'border-white/[0.08] text-zinc-600'
+                        'flex h-6 w-6 items-center justify-center rounded-full border text-[11px] transition-colors',
+                        current && 'border-primary bg-primary/10 font-bold text-primary',
+                        done && 'border-emerald-500/40 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
+                        !current && !done && 'border-border text-muted-foreground/60'
                       )}
                     >
                       {done ? <Check className="h-3 w-3" aria-hidden="true" /> : <s.icon className="h-3 w-3" aria-hidden="true" />}
                     </span>
                     <span
                       className={cn(
-                        'text-[13px] transition-colors duration-300 motion-reduce:transition-none',
-                        current ? 'font-medium text-white' : done ? 'text-zinc-400' : 'text-zinc-600'
+                        'text-xs transition-colors',
+                        current ? 'font-bold text-foreground' : done ? 'font-medium text-muted-foreground' : 'text-muted-foreground/50'
                       )}
                     >
                       {s.label}
                     </span>
                     {current && (
-                      <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">now</span>
+                      <span className="ml-auto font-mono text-[10px] font-bold uppercase tracking-wider text-primary">now</span>
                     )}
                   </li>
                 )
@@ -168,16 +168,16 @@ export function FlowStory() {
             </ol>
           </div>
 
-          <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 py-3.5">
-            <p className="text-[12px] text-zinc-500">
-              Customer sees: <span className="font-medium text-zinc-200">{stage.customer}</span>
+          <div className="border-t border-border/70 bg-slate-50/50 px-5 py-3 dark:bg-muted/20">
+            <p className="text-xs text-muted-foreground">
+              Customer status: <span className="font-semibold text-foreground">{stage.customer}</span>
             </p>
           </div>
         </div>
       </div>
 
       {/* narrative */}
-      <ol className="space-y-3">
+      <ol className="space-y-3.5">
         {STAGES.map((s, i) => (
           <li key={s.status}>
             <article
@@ -187,38 +187,40 @@ export function FlowStory() {
               data-index={i}
               aria-current={i === active ? 'true' : undefined}
               className={cn(
-                'rounded-xl border p-6 transition-all duration-500 ease-out motion-reduce:transition-none sm:p-7',
+                'rounded-2xl border p-6 transition-all duration-300 sm:p-7',
                 i === active
-                  ? 'border-white/[0.14] bg-white/[0.03]'
+                  ? 'border-primary/40 bg-card shadow-md shadow-slate-200/40 dark:border-primary/50 dark:bg-card dark:shadow-none'
                   : i < active
-                    ? 'border-white/[0.06] bg-transparent opacity-60'
-                    : 'border-white/[0.06] bg-transparent opacity-45'
+                    ? 'border-border/70 bg-card/60 opacity-80'
+                    : 'border-border/50 bg-card/30 opacity-60'
               )}
             >
               <div className="flex items-center gap-4">
                 <span
                   className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-lg border transition-colors duration-500 motion-reduce:transition-none',
-                    i === active ? 'border-white/15 bg-white/[0.05] text-white' : 'border-white/[0.07] bg-white/[0.02] text-zinc-500'
+                    'flex h-10 w-10 items-center justify-center rounded-xl border transition-colors',
+                    i === active ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-muted/60 text-muted-foreground'
                   )}
                 >
-                  <s.icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                  <s.icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-zinc-600">
+                  <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Stage {i + 1} — {s.status}
                   </p>
                   <h3
                     className={cn(
-                      'mt-0.5 text-[20px] font-semibold tracking-tight transition-colors duration-500 motion-reduce:transition-none',
-                      i === active ? 'text-white' : 'text-zinc-400'
+                      'mt-0.5 text-lg font-bold tracking-tight',
+                      i === active ? 'text-foreground' : 'text-muted-foreground'
                     )}
                   >
                     {s.label}
                   </h3>
                 </div>
               </div>
-              <p className={cn('mt-4 text-[14px] leading-relaxed', i === active ? 'text-zinc-300' : 'text-zinc-500')}>{s.staff}</p>
+              <p className={cn('mt-3 text-sm leading-relaxed', i === active ? 'text-foreground' : 'text-muted-foreground')}>
+                {s.staff}
+              </p>
             </article>
           </li>
         ))}

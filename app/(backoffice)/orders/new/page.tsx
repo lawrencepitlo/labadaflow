@@ -13,7 +13,7 @@ export default async function NewOrderPage() {
 
   return (
     <>
-      <PageHeader title="New Order" description="Walk-in intake — customer, items, and pickup estimate." />
+      <PageHeader title="New Walk-in Order" description="Counter walk-in intake — customer, weighed laundry items, and estimated pickup." />
       <NewOrderForm
         customers={customers}
         services={services}

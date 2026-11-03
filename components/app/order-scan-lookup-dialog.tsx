@@ -169,7 +169,7 @@ export function OrderScanLookupDialog({
                     <StatusBadge status={result.status} size="sm" />
                     {result.source === 'PORTAL' && (
                       <span className="rounded bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400">
-                        Online Booking
+                        Counter Drop-off
                       </span>
                     )}
                   </div>

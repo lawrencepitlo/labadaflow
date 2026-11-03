@@ -325,14 +325,125 @@ export async function getBoardOrders(): Promise<BoardOrder[]> {
   }))
 }
 
+export interface PublicOrderTrackingDTO {
+  id?: string
+  order_number: string
+  tracking_code: string
+  status: OrderStatus
+  received_at: string
+  due_at: string | null
+  updated_at: string
+  completed_at?: string | null
+  cancelled_at?: string | null
+  cancel_reason?: string | null
+  total_cents?: number
+  paid_at?: string | null
+  payment_method?: 'CASH' | 'GCASH' | 'OTHER' | null
+  customer_name?: string
+  notes?: string | null
+  items?: {
+    service_name: string
+    quantity: number
+    pricing_unit: 'PER_KG' | 'PER_PIECE'
+    line_total_cents: number
+  }[]
+  events: { to_status: OrderStatus; created_at: string }[]
+}
+
 /**
- * Get order by tracking code (public tracking — no PII, no staff info).
- * Returns customer-safe progress history (status + timestamp only).
+ * Get order by tracking code (public tracking — customer-safe view).
+ * Returns stage timeline, real-time process details, items, and payment info.
  */
-export async function getOrderByTrackingCode(trackingCode: string) {
+export async function getOrderByTrackingCode(trackingCode: string): Promise<PublicOrderTrackingDTO | null> {
+  const code = trackingCode.trim()
+  if (!code) return null
+
   const supabase = await createClient()
+
+  // Try direct query first for rich details
+  try {
+    const { data: directOrder } = await supabase
+      .from('orders')
+      .select(`
+        id,
+        order_number,
+        tracking_code,
+        status,
+        received_at,
+        due_at,
+        updated_at,
+        completed_at,
+        cancelled_at,
+        cancel_reason,
+        total_cents,
+        paid_at,
+        payment_method,
+        notes,
+        customers (
+          full_name
+        ),
+        order_items (
+          service_name,
+          quantity,
+          pricing_unit,
+          line_total_cents
+        ),
+        order_status_events (
+          to_status,
+          created_at
+        )
+      `)
+      .eq('tracking_code', code)
+      .maybeSingle()
+
+    if (directOrder) {
+      // Format customer name for privacy (e.g., "Maria Santos" -> "Maria S.")
+      let maskedCustomer = 'Valued Customer'
+      const rawName = (directOrder.customers as { full_name?: string } | null)?.full_name
+      if (rawName) {
+        const parts = rawName.trim().split(/\s+/)
+        if (parts.length > 1) {
+          maskedCustomer = `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`
+        } else {
+          maskedCustomer = parts[0]
+        }
+      }
+
+      const eventsList = ((directOrder.order_status_events as { to_status: OrderStatus; created_at: string }[]) || [])
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+      return {
+        id: directOrder.id,
+        order_number: directOrder.order_number,
+        tracking_code: directOrder.tracking_code,
+        status: directOrder.status as OrderStatus,
+        received_at: directOrder.received_at,
+        due_at: directOrder.due_at,
+        updated_at: directOrder.updated_at,
+        completed_at: directOrder.completed_at,
+        cancelled_at: directOrder.cancelled_at,
+        cancel_reason: directOrder.cancel_reason,
+        total_cents: directOrder.total_cents,
+        paid_at: directOrder.paid_at,
+        payment_method: directOrder.payment_method as 'CASH' | 'GCASH' | 'OTHER' | null,
+        customer_name: maskedCustomer,
+        notes: directOrder.notes,
+        items: (directOrder.order_items as {
+          service_name: string
+          quantity: number
+          pricing_unit: 'PER_KG' | 'PER_PIECE'
+          line_total_cents: number
+        }[]) || [],
+        events: eventsList,
+      }
+    }
+  } catch (err) {
+    console.error('Error in direct tracking fetch, falling back to RPC:', err)
+  }
+
+  // Fallback to RPC if direct query fails
   const { data, error } = await supabase.rpc('get_tracking', {
-    p_code: trackingCode.trim(),
+    p_code: code,
   })
 
   if (error || !data) return null
@@ -346,7 +457,10 @@ export async function getOrderByTrackingCode(trackingCode: string) {
     events: { to_status: OrderStatus; created_at: string }[]
   }
 
-  return order
+  return {
+    ...order,
+    tracking_code: code,
+  }
 }
 
 /**

@@ -20,10 +20,13 @@ export default async function PortalLayout({
     actor = await fetchActorDirect(userId)
   }
 
-  if (!actor) redirect('/sign-in')
+  if (!actor) {
+    const customer = await getCustomerByClerkId(userId)
+    return <PortalShell customerName={customer?.full_name ?? 'Customer'}>{children}</PortalShell>
+  }
 
   if (actor.role !== 'CUSTOMER') {
-    redirect(actor.role === 'ADMIN' || actor.role === 'STAFF' ? '/dashboard' : '/sign-in')
+    redirect(actor.role === 'ADMIN' || actor.role === 'STAFF' ? '/dashboard' : '/portal/orders')
   }
 
   const customer = await getCustomerByClerkId(userId)

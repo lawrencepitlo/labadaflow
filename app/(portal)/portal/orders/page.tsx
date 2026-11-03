@@ -6,7 +6,15 @@ import { ClaimOrderDialog } from '@/components/app/claim-order-dialog'
 import { Button } from '@/components/ui/button'
 import { formatMoney } from '@/lib/money'
 import { formatDate, formatDateTime } from '@/lib/time'
-import { ChevronLeft, ChevronRight, ClipboardList, Plus } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  QrCode,
+  ArrowRight,
+  Sparkles,
+  ShoppingBag,
+} from 'lucide-react'
 import type { OrderStatus } from '@/lib/order-machine'
 
 function parsePage(raw?: string): number {
@@ -27,31 +35,32 @@ export default async function PortalOrdersPage({
 
   if (!result) {
     return (
-      <>
-        <PageHeader title="My Orders" description="Manage and track your laundry orders." />
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center bg-card">
-          <ClipboardList className="h-8 w-8 text-muted-foreground/60 mb-2" />
-          <h3 className="text-sm font-semibold text-foreground">No customer record linked yet</h3>
-          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-            If you placed an order at the counter, enter your tracking code from your receipt slip to
-            claim it and link your customer profile.
+      <div className="space-y-6">
+        <PageHeader title="My Orders" description="Track your laundry orders from drop-off to pickup." />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 p-10 text-center bg-card shadow-xs">
+          <div className="rounded-2xl bg-primary/10 p-3 text-primary mb-3">
+            <ClipboardList className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-foreground">No customer record linked yet</h3>
+          <p className="mt-1.5 max-w-sm text-xs text-muted-foreground leading-relaxed">
+            If you placed an order at the counter, enter the tracking code from your receipt slip to
+            claim it, or show your Walk-in Pass on your next visit!
           </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
-            <Button render={<Link href="/portal/orders/new" />}>
-              <Plus className="h-4 w-4 mr-1" />
-              Book Laundry Online
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <ClaimOrderDialog triggerText="Claim Slip with Tracking Code" variant="default" />
+            <Button variant="outline" render={<Link href="/portal/pass" />}>
+              <QrCode className="h-4 w-4 mr-1.5 text-primary" />
+              View Walk-in Pass
             </Button>
-            <ClaimOrderDialog triggerText="Claim with Tracking Code" variant="outline" />
           </div>
         </div>
-      </>
+      </div>
     )
   }
 
   const { orders, total, page, pageSize } = result
   const totalPages = Math.ceil(total / pageSize)
 
-  // Presentation-only grouping (newest-first preserved within each group).
   const activeOrders = orders.filter(o => !PAST_STATUSES.has(o.status))
   const pastOrders = orders.filter(o => PAST_STATUSES.has(o.status))
 
@@ -62,114 +71,127 @@ export default async function PortalOrdersPage({
         <Link
           href={`/portal/orders/${order.id}`}
           aria-label={`Order ${order.order_number}, ${order.status}, ${formatMoney(order.total_cents)}`}
-          className="tnum flex min-h-[60px] items-center gap-3 px-4 py-3 outline-none transition-colors duration-100 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 motion-reduce:transition-none"
+          className="group flex min-h-[68px] items-center gap-3 px-5 py-4 outline-none transition-colors duration-100 hover:bg-slate-50 dark:hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40"
         >
-          <span className="min-w-0 flex-1">
-            <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-xs font-medium">
-              <span className="truncate">{order.order_number}</span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+              <span className="font-mono text-xs font-bold text-foreground">
+                {order.order_number}
+              </span>
+              <span className="font-mono text-[11px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                {order.tracking_code}
+              </span>
               {isReady && (
-                <span className="inline-flex shrink-0 items-center gap-1 font-sans text-[11px] font-medium text-green-600 dark:text-green-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />
-                  Ready for pickup
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                  <ShoppingBag className="h-3 w-3" />
+                  Ready for pickup!
                 </span>
               )}
+            </div>
+            <p className="mt-1 truncate text-xs text-muted-foreground">
+              Counter Intake: {formatDateTime(order.received_at)}
+              {order.due_at ? ` · Target: ${formatDate(order.due_at)}` : ''}
+            </p>
+          </div>
+
+          <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-4">
+            <span className="font-mono text-sm font-bold text-foreground">
+              {formatMoney(order.total_cents)}
             </span>
-            <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-              Received {formatDateTime(order.received_at)}{order.due_at ? ` · Due ${formatDate(order.due_at)}` : ''}
-            </span>
-          </span>
-          <span className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
-            <span className="text-[13px] font-semibold">{formatMoney(order.total_cents)}</span>
             <StatusBadge status={order.status as OrderStatus} size="sm" />
-          </span>
+            <ArrowRight className="hidden sm:block h-4 w-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+          </div>
         </Link>
       </li>
     )
   }
 
   return (
-    <>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
-          title="My Orders"
-          description={total === 0 ? 'Your laundry orders will appear here' : `${total} order${total === 1 ? '' : 's'} · newest first`}
+          title="My Laundry Orders"
+          description={total === 0 ? 'Your counter drop-offs will appear here' : `${total} total order${total === 1 ? '' : 's'}`}
         />
-        <div className="shrink-0 flex items-center gap-2">
-          <Button render={<Link href="/portal/orders/new" />} size="sm">
-            <Plus className="h-4 w-4 mr-1" />
-            Book Laundry
+        <div className="shrink-0 flex items-center gap-2.5">
+          <Button variant="outline" size="sm" render={<Link href="/portal/pass" />}>
+            <QrCode className="h-4 w-4 mr-1.5 text-primary" />
+            My Walk-in Pass
           </Button>
-          <ClaimOrderDialog />
+          <ClaimOrderDialog triggerText="Claim Slip" />
         </div>
       </div>
 
       {orders.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 p-12 text-center bg-card shadow-xs">
-          <div className="rounded-full bg-primary/10 p-3 text-primary mb-3">
+        <div className="mt-6 flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/80 p-12 text-center bg-card shadow-xs">
+          <div className="rounded-2xl bg-primary/10 p-3 text-primary mb-3">
             <ClipboardList className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-semibold text-foreground">No orders found</h3>
+          <h3 className="text-base font-bold text-foreground">No active orders found</h3>
           <p className="mt-1.5 max-w-sm text-xs text-muted-foreground leading-relaxed">
-            When you drop off laundry at the shop, your orders will appear here. Or claim an existing
-            order using your receipt slip.
+            Drop off your laundry at our counter anytime. Show your Walk-in Pass for express intake,
+            or claim a paper slip using your tracking code.
           </p>
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
-            <Button render={<Link href="/portal/orders/new" />}>
-              <Plus className="h-4 w-4 mr-1" />
-              Book Laundry Online
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <Button render={<Link href="/portal/pass" />}>
+              <QrCode className="h-4 w-4 mr-1.5" />
+              Show Walk-in Pass
             </Button>
-            <ClaimOrderDialog triggerText="Claim an Order with Tracking Code" variant="outline" />
+            <ClaimOrderDialog triggerText="Claim Paper Slip Order" variant="outline" />
           </div>
         </div>
       ) : (
         <>
           {activeOrders.length > 0 && (
-            <section aria-label="Active orders" className="mt-6">
-              <div className="mb-2.5 flex items-baseline justify-between">
-                <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                  Active Orders ({activeOrders.length})
+            <section aria-label="Active orders" className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-primary" />
+                  Active In-Progress ({activeOrders.length})
                 </h2>
               </div>
-              <ul className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs" aria-label="Active orders">
+              <ul className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-slate-200/90 bg-card shadow-xs dark:border-border" aria-label="Active orders">
                 {activeOrders.map(order => (
                   <OrderRow key={order.id} order={order} />
                 ))}
               </ul>
             </section>
           )}
+
           {pastOrders.length > 0 && (
-            <section aria-label="Past orders" className="mt-6">
-              <div className="mb-2.5 flex items-baseline justify-between">
-                <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                  Past Orders ({pastOrders.length})
+            <section aria-label="Past orders" className="mt-8 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Order History ({pastOrders.length})
                 </h2>
               </div>
-              <ul className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs" aria-label="Past orders">
+              <ul className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-slate-200/90 bg-card shadow-xs dark:border-border" aria-label="Past orders">
                 {pastOrders.map(order => (
                   <OrderRow key={order.id} order={order} />
                 ))}
               </ul>
             </section>
           )}
+
           {totalPages > 1 && (
-            <nav className="mt-4 flex items-center justify-center gap-1" aria-label="Orders pagination">
-              {page > 1 && (
-                <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={`/portal/orders?page=${page - 1}`} aria-label={`Go to page ${page - 1}`} />}>
-                  <ChevronLeft aria-hidden="true" />
-                  Prev
-                </Button>
-              )}
-              <span className="tnum px-2 text-xs text-muted-foreground" aria-live="polite">Page {page} of {totalPages}</span>
-              {page < totalPages && (
-                <Button variant="ghost" size="sm" className="text-muted-foreground" render={<Link href={`/portal/orders?page=${page + 1}`} aria-label={`Go to page ${page + 1}`} />}>
-                  Next
-                  <ChevronRight aria-hidden="true" />
-                </Button>
-              )}
-            </nav>
+            <div className="flex items-center justify-between pt-4 text-xs text-muted-foreground">
+              <span>Page {page} of {totalPages}</span>
+              <div className="flex items-center gap-2">
+                {page > 1 && (
+                  <Button variant="outline" size="sm" render={<Link href={`/portal/orders?page=${page - 1}`} />}>
+                    <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                  </Button>
+                )}
+                {page < totalPages && (
+                  <Button variant="outline" size="sm" render={<Link href={`/portal/orders?page=${page + 1}`} />}>
+                    Next <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                )}
+              </div>
+            </div>
           )}
         </>
       )}
-    </>
+    </div>
   )
 }

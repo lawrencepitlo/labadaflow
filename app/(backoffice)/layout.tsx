@@ -20,7 +20,7 @@ export default async function BackofficeLayout({
   }
 
   if (!actor || !['ADMIN', 'STAFF'].includes(actor.role)) {
-    redirect('/portal')
+    redirect('/portal/orders')
   }
 
   return (

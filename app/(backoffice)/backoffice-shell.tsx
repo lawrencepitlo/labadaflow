@@ -140,28 +140,28 @@ export function BackofficeShell({ actor, children }: BackofficeShellProps) {
     <div className="flex h-dvh overflow-hidden bg-background text-foreground print:block print:h-auto print:overflow-visible">
       {/* Desktop sidebar */}
       <aside className="hidden w-[240px] shrink-0 flex-col border-r bg-sidebar lg:flex print:hidden">
-        <div className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
-            <Droplets className="h-3.5 w-3.5" aria-hidden="true" />
+        <div className="flex h-13 shrink-0 items-center gap-2.5 border-b border-border/80 px-3.5">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
+            <Droplets className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1 leading-tight">
-            <span className="block truncate text-[13px] font-semibold">LabadaFlow</span>
+            <span className="block truncate text-sm font-bold tracking-tight text-foreground">LabadaFlow</span>
             <span className="block truncate text-[11px] text-muted-foreground">Laundry operations</span>
           </span>
         </div>
 
-        <div className="px-2 pt-2">
-          <Button render={<Link href="/orders/new" />} className="w-full justify-start">
-            <Plus aria-hidden="true" />
-            New order
+        <div className="px-2.5 pt-3">
+          <Button render={<Link href="/orders/new" />} className="w-full justify-start rounded-xl shadow-xs font-semibold">
+            <Plus className="h-4 w-4 mr-1.5" aria-hidden="true" />
+            + Walk-in Intake
           </Button>
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="mt-1 flex h-7 w-full items-center gap-2 rounded-md px-2 text-[13px] text-muted-foreground transition-colors duration-100 outline-none hover:bg-accent/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none"
+            className="mt-1.5 flex h-8 w-full items-center gap-2 rounded-xl px-2.5 text-xs text-muted-foreground transition-colors border border-border/60 bg-muted/30 hover:bg-muted hover:text-foreground"
           >
-            <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="flex-1 text-left">Search</span>
+            <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="flex-1 text-left">Quick Search</span>
             <Kbd>⌘K</Kbd>
           </button>
         </div>

@@ -78,7 +78,7 @@ export function PortalOrderPass({
                 </span>
                 {source === 'PORTAL' && (
                   <span className="rounded bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-medium text-sky-600 dark:text-sky-400">
-                    Online Booking
+                    Express Drop-off
                   </span>
                 )}
               </div>

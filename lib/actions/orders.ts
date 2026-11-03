@@ -136,7 +136,7 @@ export async function createPortalOrder(input: {
       .single()
 
     if (custErr || !newCustomer) {
-      return { error: custErr?.message || 'Failed to initialize customer account for booking' }
+      return { error: custErr?.message || 'Failed to initialize customer account' }
     }
     customerId = newCustomer.id
   }
