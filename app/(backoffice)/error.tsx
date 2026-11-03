@@ -21,6 +21,40 @@ export default function BackofficeError({
     error.message?.includes('UNAUTHENTICATED') ||
     error.message?.toLowerCase() === 'access denied'
 
+  const isDbError =
+    error.message?.includes('fetch failed') ||
+    error.message?.includes('supabase') ||
+    error.message?.includes('ENOTFOUND') ||
+    error.message?.includes('Failed to fetch')
+
+  if (isDbError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center px-4 max-w-md mx-auto">
+        <div className="h-12 w-12 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
+          <AlertTriangle className="h-6 w-6" aria-hidden="true" />
+        </div>
+        <h2 className="text-xl font-bold tracking-tight mb-2">Database is Paused or Waking Up</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Supabase free-tier projects pause after 7 days of inactivity. Your data is safe. Please unpause or restore the project in your Supabase dashboard.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="https://supabase.com/dashboard/project/osqlpuclqturpnzisrup"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
+          >
+            Restore Project on Supabase ↗
+          </a>
+          <Button onClick={reset} variant="outline" size="sm">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   if (isAccessDenied) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center px-4 max-w-md mx-auto">

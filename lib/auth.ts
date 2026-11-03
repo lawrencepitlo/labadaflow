@@ -3,7 +3,7 @@
  * This is the bridge between Clerk identity and Supabase application data.
  */
 import { cache } from 'react'
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { createClient } from '@/lib/supabase/server'
 
 export type UserRole = 'ADMIN' | 'STAFF' | 'CUSTOMER'
@@ -20,17 +20,54 @@ export interface Actor {
 /**
  * Direct unmemoized query for actor, used when syncUser has just mutated the row
  * within the same server request.
+ *
+ * If Supabase is temporarily unreachable (e.g. database paused/sleeping),
+ * falls back to Clerk metadata so Admins and Staff are NEVER locked out.
  */
 export async function fetchActorDirect(clerkUserId: string): Promise<Actor | null> {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('users')
-    .select('id, clerk_user_id, role, full_name, email, is_active')
-    .eq('clerk_user_id', clerkUserId)
-    .maybeSingle()
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, clerk_user_id, role, full_name, email, is_active')
+      .eq('clerk_user_id', clerkUserId)
+      .maybeSingle()
 
-  if (!data || !data.is_active) return null
-  return data as Actor
+    if (!error && data && data.is_active) {
+      return data as Actor
+    }
+  } catch (err) {
+    console.warn('[auth] Supabase users lookup error (database may be sleeping/paused):', err)
+  }
+
+  // Resilient fallback: inspect Clerk session/user metadata directly
+  try {
+    const user = await currentUser()
+    if (user && user.id === clerkUserId) {
+      const rawRole = (user.publicMetadata?.role as string) || 'CUSTOMER'
+      const role: UserRole = ['ADMIN', 'STAFF', 'CUSTOMER'].includes(rawRole)
+        ? (rawRole as UserRole)
+        : 'CUSTOMER'
+      const fullName =
+        [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+        user.primaryEmailAddress?.emailAddress?.split('@')[0] ||
+        'User'
+      const email = user.primaryEmailAddress?.emailAddress || ''
+
+      return {
+        id: clerkUserId,
+        clerk_user_id: clerkUserId,
+        role,
+        full_name: fullName,
+        email,
+        is_active: true,
+      }
+    }
+  } catch (clerkErr) {
+    console.warn('[auth] Clerk currentUser fallback error:', clerkErr)
+  }
+
+  return null
 }
 
 /**

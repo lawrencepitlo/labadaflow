@@ -90,10 +90,46 @@ export default async function DashboardPage() {
 
   if (!stats) {
     return (
-      <EmptyState
-        title="Unable to load dashboard"
-        description="We encountered an issue retrieving dashboard statistics. Please refresh the page."
-      />
+      <div className="space-y-6">
+        <PageHeader
+          title="Dashboard"
+          description="Shop workspace"
+        />
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-6 text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="rounded-xl bg-amber-100 p-3 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 shrink-0">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="space-y-2 flex-1">
+              <h3 className="text-base font-semibold text-foreground">Database is Paused or Waking Up</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Your Supabase project (<code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">osqlpuclqturpnzisrup</code>) is currently paused or unreachable. Free-tier Supabase projects pause after 7 days of inactivity.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                <strong className="text-foreground">Your data is NOT deleted!</strong> All 50 orders, customer records, and shop services are intact. Click below to unpause / restore the project in your Supabase dashboard.
+              </p>
+              <div className="pt-2 flex flex-wrap gap-3">
+                <a
+                  href="https://supabase.com/dashboard/project/osqlpuclqturpnzisrup"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
+                >
+                  Restore Project on Supabase ↗
+                </a>
+                <a
+                  href="/dashboard"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+                >
+                  Refresh Dashboard
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     )
   }
 
