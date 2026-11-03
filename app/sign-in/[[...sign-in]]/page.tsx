@@ -1,13 +1,20 @@
-import { SignIn } from '@clerk/nextjs'
-import Link from 'next/link'
-import { Droplets, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react'
+'use client'
 
-export const metadata = {
-  title: 'Sign In — LabadaFlow',
-  description: 'Sign in to access your laundry shop dashboard or customer orders.',
-}
+import { useState, useEffect } from 'react'
+import { SignIn, ClerkLoaded, ClerkLoading } from '@clerk/nextjs'
+import Link from 'next/link'
+import { Droplets, ArrowRight, Sparkles, RefreshCw, AlertCircle } from 'lucide-react'
 
 export default function SignInPage() {
+  const [slowLoad, setSlowLoad] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSlowLoad(true)
+    }, 3500)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50/70 px-4 py-12 dark:bg-background">
       <div className="w-full max-w-md">
@@ -29,31 +36,67 @@ export default function SignInPage() {
           </p>
         </div>
 
-        {/* Clerk Sign In Card Container */}
-        <div className="flex justify-center">
-          <SignIn
-            path="/sign-in"
-            routing="path"
-            signUpUrl="/sign-up"
-            fallbackRedirectUrl="/auth/redirect"
-            appearance={{
-              variables: {
-                colorPrimary: '#2563eb',
-                borderRadius: '0.75rem',
-                fontFamily: 'inherit',
-              },
-              elements: {
-                rootBox: 'w-full shadow-lg shadow-slate-200/50 dark:shadow-none',
-                card: 'border border-border/80 bg-card rounded-2xl p-6 sm:p-8',
-                headerTitle: 'text-foreground font-semibold',
-                headerSubtitle: 'text-muted-foreground text-xs',
-                socialButtonsBlockButton: 'border border-border rounded-xl text-foreground font-medium hover:bg-muted/60 transition-colors',
-                formButtonPrimary: 'bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-xl h-10 shadow-sm transition-all',
-                formFieldInput: 'rounded-xl border-border focus:border-primary focus:ring-primary/20',
-                footerActionLink: 'text-primary hover:underline font-medium',
-              },
-            }}
-          />
+        {/* Clerk Sign In with Instant Skeleton Loading */}
+        <div className="flex flex-col items-center justify-center min-h-[380px]">
+          <ClerkLoading>
+            <div className="w-full rounded-2xl border border-border/80 bg-card p-7 shadow-sm">
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary/20 border-t-primary" />
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-foreground">Loading workspace sign in...</p>
+                  <p className="text-xs text-muted-foreground">Connecting securely</p>
+                </div>
+                <div className="w-full space-y-3 pt-3">
+                  <div className="h-10 w-full animate-pulse rounded-xl bg-muted/70" />
+                  <div className="h-10 w-full animate-pulse rounded-xl bg-muted/70" />
+                  <div className="h-10 w-full animate-pulse rounded-xl bg-muted/70" />
+                </div>
+              </div>
+            </div>
+          </ClerkLoading>
+
+          <ClerkLoaded>
+            <SignIn
+              path="/sign-in"
+              routing="path"
+              signUpUrl="/sign-up"
+              fallbackRedirectUrl="/auth/redirect"
+              appearance={{
+                variables: {
+                  colorPrimary: '#2563eb',
+                  borderRadius: '0.75rem',
+                  fontFamily: 'inherit',
+                },
+                elements: {
+                  rootBox: 'w-full shadow-lg shadow-slate-200/50 dark:shadow-none',
+                  card: 'border border-border/80 bg-card rounded-2xl p-6 sm:p-8',
+                  headerTitle: 'text-foreground font-semibold',
+                  headerSubtitle: 'text-muted-foreground text-xs',
+                  socialButtonsBlockButton: 'border border-border rounded-xl text-foreground font-medium hover:bg-muted/60 transition-colors',
+                  formButtonPrimary: 'bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-xl h-10 shadow-sm transition-all',
+                  formFieldInput: 'rounded-xl border-border focus:border-primary focus:ring-primary/20',
+                  footerActionLink: 'text-primary hover:underline font-medium',
+                },
+              }}
+            />
+          </ClerkLoaded>
+
+          {/* Slow connection or ad-blocker tip */}
+          {slowLoad && (
+            <div className="mt-4 flex w-full items-start gap-2.5 rounded-xl border border-amber-200/80 bg-amber-50/80 p-3 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <div className="flex-1 leading-relaxed">
+                <span>Taking longer to load? If using Brave or an ad blocker, try disabling shields for this domain or </span>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="font-bold underline hover:text-amber-950 dark:hover:text-amber-200 inline-flex items-center gap-0.5"
+                >
+                  <RefreshCw className="h-3 w-3" /> tap here to refresh
+                </button>.
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Public Tracking Shortcut Footer */}
