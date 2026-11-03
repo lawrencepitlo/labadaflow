@@ -17,6 +17,16 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
+      global: {
+        fetch: (url, options) => {
+          // Fast 3.5s timeout: prevents serverless functions from hanging
+          // when Supabase is sleeping or waking up
+          return fetch(url, {
+            ...options,
+            signal: options?.signal || AbortSignal.timeout(3500),
+          })
+        },
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll()
